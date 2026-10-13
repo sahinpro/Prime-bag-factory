@@ -1,0 +1,4 @@
+[run]
+# Run package scripts with the Bun runtime.
+# Next's launcher starts with `#!/usr/bin/env node`; this overrides that shebang.
+bun = true
