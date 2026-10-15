@@ -11,6 +11,7 @@ type LogoProps = {
   variant: LogoVariant;
   className?: string;
   alt?: string;
+  priority?: boolean;
 };
 
 const sources: Record<LogoVariant, string> = {
@@ -23,6 +24,7 @@ export function Logo({
   variant,
   className,
   alt = "Prime Bag Factory",
+  priority = false,
 }: LogoProps) {
   if (variant === "mark") {
     return (
@@ -31,6 +33,7 @@ export function Logo({
         alt={alt}
         width={32}
         height={32}
+        priority={priority}
         className={className}
       />
     );
@@ -42,6 +45,7 @@ export function Logo({
       alt={alt}
       width={HORIZONTAL.width}
       height={HORIZONTAL.height}
+      priority={priority}
       className={className}
     />
   );
@@ -53,11 +57,13 @@ export function ThemeLogo({ className }: { className?: string }) {
     <span className={className}>
       <Logo
         variant="light"
+        priority
         className="h-auto w-[min(100%,240px)] min-w-[120px] dark:hidden"
       />
       <Logo
         variant="dark"
         alt=""
+        priority
         className="hidden h-auto w-[min(100%,240px)] min-w-[120px] dark:block"
       />
     </span>

@@ -17,7 +17,7 @@ export async function SiteShell({ children }: { children: React.ReactNode }) {
       >
         {a11y("skipToContent")}
       </a>
-      <header className="flex items-center justify-between gap-4 border-b border-border px-4 py-3">
+      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-4 py-3">
         <ThemeLogo />
         <div className="flex items-center gap-2">
           <Suspense fallback={null}>
