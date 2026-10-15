@@ -488,7 +488,7 @@ Protected by Supabase Auth + middleware + RLS (never rely on UI hiding alone). B
 - [x] Add Supabase clients (`client.ts`, `server.ts`, `admin.ts`).
 - [x] Set up `next-intl` with `/en` and `/bn`, the language switcher, `format.ts` helpers and the `i18n:check` script (section 3c).
 - [x] Set up `next-themes`, light/dark semantic tokens (4a) and the theme toggle with no flash on load.
-- [ ] Accessibility base: skip link, focus ring, landmarks, reduced-motion styles (section 3c).
+- [x] Accessibility base: skip link, focus ring, landmarks, reduced-motion styles (section 3c).
 - [ ] Create `src/lib/env.ts` (zod-validated env), the `src/server/` folder with `server-only`, and a `requireRole()` stub (section 3b).
 - [ ] Tooling: Vitest, Playwright + axe, GitHub Actions CI (lint, typecheck, unit tests, build, i18n check).
 - [ ] Update `AGENTS.md` with the rules from section 0 and the conventions in section 12.

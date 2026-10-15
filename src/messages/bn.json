@@ -3,6 +3,9 @@
     "title": "Prime Bag Factory",
     "description": "ঢাকায় তৈরি কাস্টম ও তৈরি স্টকের ব্যাগ।"
   },
+  "a11y": {
+    "skipToContent": "মূল কনটেন্টে যান"
+  },
   "language": {
     "switcherLabel": "ভাষা"
   },

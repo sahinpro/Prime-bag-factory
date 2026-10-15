@@ -3,6 +3,9 @@
     "title": "Prime Bag Factory",
     "description": "Custom and ready-stock bags made in Dhaka, Bangladesh."
   },
+  "a11y": {
+    "skipToContent": "Skip to content"
+  },
   "language": {
     "switcherLabel": "Language"
   },
