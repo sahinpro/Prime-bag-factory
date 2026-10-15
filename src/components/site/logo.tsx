@@ -1,8 +1,8 @@
 import Image from "next/image";
 
 const HORIZONTAL = {
-  width: 240,
-  height: 53,
+  width: 1470,
+  height: 512,
 } as const;
 
 type LogoVariant = "light" | "dark" | "mark";
@@ -15,8 +15,8 @@ type LogoProps = {
 };
 
 const sources: Record<LogoVariant, string> = {
-  light: "/brand/logo-horizontal-on-light.svg",
-  dark: "/brand/logo-horizontal-on-dark.svg",
+  light: "/brand/Logo black.png",
+  dark: "/brand/Logo white.png",
   mark: "/brand/logo-mark.svg",
 };
 
@@ -45,6 +45,7 @@ export function Logo({
       alt={alt}
       width={HORIZONTAL.width}
       height={HORIZONTAL.height}
+      sizes="140px"
       priority={priority}
       className={className}
     />

@@ -46,9 +46,6 @@ export async function generateMetadata(
         "x-default": `${siteUrl}/en`,
       },
     },
-    icons: {
-      icon: "/brand/favicon-source.svg",
-    },
   };
 }
 
