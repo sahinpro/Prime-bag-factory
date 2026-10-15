@@ -481,7 +481,7 @@ Protected by Supabase Auth + middleware + RLS (never rely on UI hiding alone). B
 
 ### Phase 0: Setup
 - [x] Remove default `create-next-app` page content in `src/app/page.tsx`.
-- [ ] Add brand tokens (section 4) to `globals.css`; set fonts (Inter + Hind Siliguri).
+- [x] Add brand tokens (section 4) to `globals.css`; set fonts (Inter + Hind Siliguri).
 - [ ] Copy logo v1 assets into `public/brand/` (section 4b), build the `<Logo>` component (section 4c), wire favicon metadata (use the ivory favicon as a temporary fallback until the light/dark pair exists).
 - [ ] Init shadcn/ui; add base components (button, input, form, dialog, table, tabs, badge, toast, dropdown, sheet).
 - [ ] Create Supabase project, add env vars, `.env.example`.
