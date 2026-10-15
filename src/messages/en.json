@@ -1,0 +1,16 @@
+{
+  "metadata": {
+    "title": "Prime Bag Factory",
+    "description": "Custom and ready-stock bags made in Dhaka, Bangladesh."
+  },
+  "language": {
+    "switcherLabel": "Language"
+  },
+  "home": {
+    "title": "Prime Bag Factory",
+    "intro": "Placeholder home. The catalog arrives in a later phase."
+  },
+  "footer": {
+    "note": "Bags made in Dhaka."
+  }
+}
