@@ -491,7 +491,7 @@ Protected by Supabase Auth + middleware + RLS (never rely on UI hiding alone). B
 - [x] Accessibility base: skip link, focus ring, landmarks, reduced-motion styles (section 3c).
 - [x] Create `src/lib/env.ts` (zod-validated env), the `src/server/` folder with `server-only`, and a `requireRole()` stub (section 3b).
 - [x] Tooling: Vitest, Playwright + axe, GitHub Actions CI (lint, typecheck, unit tests, build, i18n check).
-- [ ] Update `AGENTS.md` with the rules from section 0 and the conventions in section 12.
+- [x] Update `AGENTS.md` with the rules from section 0 and the conventions in section 12.
 - **Done when:** app runs, tokens work in light and dark, `/en` and `/bn` render a placeholder home, theme toggle and language switcher work with no flash, CI is green.
 
 ### Phase 1: Database, auth, RLS
