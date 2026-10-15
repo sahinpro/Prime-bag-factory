@@ -1,8 +1,12 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
 
 /*
   Brand palette and semantic tokens (plan sections 4 and 4a).
-  Components use these tokens. Dark values apply when `next-themes` sets `.dark`.
+  shadcn primary maps to brand gold. Dark values apply when next-themes sets .dark.
 */
 :root {
   --brand: #c8962e;
@@ -13,42 +17,87 @@
   --ivory: #fbf8f1;
 
   --background: #fbf8f1;
-  --surface: #ffffff;
   --foreground: #1c1917;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --card-foreground: #1c1917;
+  --popover: #ffffff;
+  --popover-foreground: #1c1917;
+  --primary: #c8962e;
+  --primary-foreground: #1c1917;
+  --secondary: #f1e3b8;
+  --secondary-foreground: #1c1917;
+  --muted: #f1e3b8;
   --muted-foreground: #6b645c;
+  --accent: #1f5f4a;
+  --accent-foreground: #ffffff;
+  --destructive: #9f2d2d;
+  --destructive-foreground: #ffffff;
   --border: #e7e0d3;
+  --input: #8c8378;
   --input-border: #8c8378;
+  --ring: #1c1917;
   --brand-foreground: #1c1917;
   --gold-text: #8a6414;
   --focus: #1c1917;
-  --accent: #1f5f4a;
-  --accent-foreground: #ffffff;
 
-  --muted: #f1e3b8;
-  --secondary: #f1e3b8;
-  --secondary-foreground: #1c1917;
-  --destructive: #9f2d2d;
-  --destructive-foreground: #ffffff;
+  --chart-1: #c8962e;
+  --chart-2: #1f5f4a;
+  --chart-3: #8a6414;
+  --chart-4: #6b645c;
+  --chart-5: #1c1917;
+  --radius: 0.625rem;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1c1917;
+  --sidebar-primary: #c8962e;
+  --sidebar-primary-foreground: #1c1917;
+  --sidebar-accent: #f1e3b8;
+  --sidebar-accent-foreground: #1c1917;
+  --sidebar-border: #e7e0d3;
+  --sidebar-ring: #1c1917;
 }
 
 .dark {
   --background: #141210;
-  --surface: #1c1917;
   --foreground: #fbf8f1;
+  --surface: #1c1917;
+  --card: #1c1917;
+  --card-foreground: #fbf8f1;
+  --popover: #1c1917;
+  --popover-foreground: #fbf8f1;
+  --primary: #c8962e;
+  --primary-foreground: #1c1917;
+  --secondary: #2a2522;
+  --secondary-foreground: #fbf8f1;
+  --muted: #2a2522;
   --muted-foreground: #a8a29e;
+  --accent: #4fb08a;
+  --accent-foreground: #141210;
+  --destructive: #e07a7a;
+  --destructive-foreground: #141210;
   --border: #3a332e;
+  --input: #78716c;
   --input-border: #78716c;
+  --ring: #fbf8f1;
   --brand-foreground: #1c1917;
   --gold-text: #d9ae4f;
   --focus: #fbf8f1;
-  --accent: #4fb08a;
-  --accent-foreground: #141210;
 
-  --muted: #2a2522;
-  --secondary: #2a2522;
-  --secondary-foreground: #fbf8f1;
-  --destructive: #e07a7a;
-  --destructive-foreground: #141210;
+  --chart-1: #c8962e;
+  --chart-2: #4fb08a;
+  --chart-3: #d9ae4f;
+  --chart-4: #a8a29e;
+  --chart-5: #fbf8f1;
+
+  --sidebar: #1c1917;
+  --sidebar-foreground: #fbf8f1;
+  --sidebar-primary: #c8962e;
+  --sidebar-primary-foreground: #1c1917;
+  --sidebar-accent: #2a2522;
+  --sidebar-accent-foreground: #fbf8f1;
+  --sidebar-border: #3a332e;
+  --sidebar-ring: #fbf8f1;
 }
 
 @theme inline {
@@ -58,6 +107,7 @@
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
+  --color-input: var(--input);
   --color-input-border: var(--input-border);
   --color-brand: var(--brand);
   --color-brand-hover: var(--brand-hover);
@@ -74,8 +124,36 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-focus: var(--focus);
+  --color-ring: var(--ring);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-bangla: var(--font-hind-siliguri), var(--font-inter), sans-serif;
+  --font-heading: var(--font-sans);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 html[lang="bn"] body {
@@ -83,7 +161,14 @@ html[lang="bn"] body {
   line-height: 1.7;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
 }

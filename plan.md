@@ -483,7 +483,7 @@ Protected by Supabase Auth + middleware + RLS (never rely on UI hiding alone). B
 - [x] Remove default `create-next-app` page content in `src/app/page.tsx`.
 - [x] Add brand tokens (section 4) to `globals.css`; set fonts (Inter + Hind Siliguri).
 - [x] Copy logo v1 assets into `public/brand/` (section 4b), build the `<Logo>` component (section 4c), wire favicon metadata (use the ivory favicon as a temporary fallback until the light/dark pair exists).
-- [ ] Init shadcn/ui; add base components (button, input, form, dialog, table, tabs, badge, toast, dropdown, sheet).
+- [x] Init shadcn/ui; add base components (button, input, form, dialog, table, tabs, badge, toast, dropdown, sheet).
 - [ ] Create Supabase project, add env vars, `.env.example`.
 - [ ] Add Supabase clients (`client.ts`, `server.ts`, `admin.ts`).
 - [ ] Set up `next-intl` with `/en` and `/bn`, the language switcher, `format.ts` helpers and the `i18n:check` script (section 3c).
@@ -640,3 +640,4 @@ bKash/Nagad, card payments (SSLCommerz), courier API integration, full inventory
 - 2026-10-15: Logo v1 received (4 SVGs); usage rules in 4c, known issues in 4d. Owner will fix the logo himself.
 - 2026-10-15: Added architecture (3b), theme/language/accessibility (3c), semantic light/dark tokens (4a), launch readiness (9b) and matching schema, admin and phase changes.
 - 2026-10-15: Logo v1 SVGs copied into `public/brand/` with the section 4b names. The light/dark PNG favicon pair and `apple-icon.png` are not in the v1 pack, so metadata points at `favicon-source.svg`. The existing `src/app/favicon.ico` stays as the Safari fallback.
+- 2026-10-15: shadcn/ui uses the radix-nova style. The registry item `form` emits no files, so `src/components/ui/form.tsx` is the react-hook-form adapter and `field.tsx` is the current field layout. Toast is Sonner. `cn`, `radix-ui`, and `sonner` come with shadcn. Error red (`--destructive`) is not in the brand palette. shadcn `primary` maps to brand gold. Default buttons and inputs are 44px tall.
