@@ -19,6 +19,10 @@ const hindSiliguri = Hind_Siliguri({
 export const metadata: Metadata = {
   title: "Prime Bag Factory",
   description: "Custom and ready-stock bags made in Dhaka, Bangladesh.",
+  icons: {
+    // Ivory badge until the light/dark favicon pair exists (plan section 4b).
+    icon: "/brand/favicon-source.svg",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

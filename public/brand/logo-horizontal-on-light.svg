@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="190" viewBox="0 0 860 190">
+<rect width="860" height="190" fill="#FBF8F1"/>
+<svg x="15" y="15" width="160" height="160" viewBox="0 0 180 180">
+
+<path d="M52 76 V48 C52 23 68 10 88 10 C108 10 124 23 124 48 V76" fill="none" stroke="#FBF8F1" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M52 76 V48 C52 23 68 10 88 10 C108 10 124 23 124 48 V76" fill="none" stroke="#C8962E" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M29 62 H147 C156 62 163 69 163 78 V142 C163 151 156 158 147 158 H29 C20 158 13 151 13 142 V78 C13 69 20 62 29 62 Z" fill="#C8962E"/>
+<path d="M104 154 L157 101" fill="none" stroke="#FBF8F1" stroke-width="7" stroke-linecap="round"/>
+  <path d="M117 154 L157 114" fill="none" stroke="#FBF8F1" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="7 8"/>
+</svg>
+<text x="205" y="94" font-family="DejaVu Sans, Arial, sans-serif" font-size="66" font-weight="700" letter-spacing="8" fill="#1C1917">PRIME</text>
+<text x="207" y="137" font-family="DejaVu Sans, Arial, sans-serif" font-size="27" font-weight="700" letter-spacing="7.2" fill="#1C1917">BAG FACTORY</text>
+</svg>
