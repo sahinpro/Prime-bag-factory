@@ -6,6 +6,12 @@
   "language": {
     "switcherLabel": "Language"
   },
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
   "home": {
     "title": "Prime Bag Factory",
     "intro": "Placeholder home. The catalog arrives in a later phase."

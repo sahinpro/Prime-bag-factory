@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 
+import { ThemeProvider } from "@/components/site/theme-provider";
 import { isLocale, routing } from "@/i18n/routing";
 import { publicEnv } from "@/lib/env";
 
@@ -71,9 +72,11 @@ export default async function LocaleLayout({
       className={`${inter.variable} ${hindSiliguri.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">
-        <NextIntlClientProvider messages={messages}>
-          {children}
-        </NextIntlClientProvider>
+        <ThemeProvider>
+          <NextIntlClientProvider messages={messages}>
+            {children}
+          </NextIntlClientProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

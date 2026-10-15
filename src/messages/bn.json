@@ -6,6 +6,12 @@
   "language": {
     "switcherLabel": "ভাষা"
   },
+  "theme": {
+    "label": "থিম",
+    "light": "লাইট",
+    "dark": "ডার্ক",
+    "system": "সিস্টেম"
+  },
   "home": {
     "title": "Prime Bag Factory",
     "intro": "এটি একটি অস্থায়ী হোম পেজ। ক্যাটালগ পরের ধাপে আসবে।"
