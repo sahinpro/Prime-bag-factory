@@ -2,7 +2,7 @@
 
 import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 import {
   DropdownMenu,
@@ -14,14 +14,18 @@ import {
 
 const themes = ["light", "dark", "system"] as const;
 
+function useIsClient() {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+}
+
 export function ThemeToggle() {
   const t = useTranslations("theme");
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const isClient = useIsClient();
 
   return (
     <DropdownMenu>
@@ -33,7 +37,7 @@ export function ThemeToggle() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuRadioGroup
-          value={mounted ? theme : undefined}
+          value={isClient ? theme : undefined}
           onValueChange={setTheme}
         >
           {themes.map((value) => (

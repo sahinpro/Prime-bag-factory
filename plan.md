@@ -490,7 +490,7 @@ Protected by Supabase Auth + middleware + RLS (never rely on UI hiding alone). B
 - [x] Set up `next-themes`, light/dark semantic tokens (4a) and the theme toggle with no flash on load.
 - [x] Accessibility base: skip link, focus ring, landmarks, reduced-motion styles (section 3c).
 - [x] Create `src/lib/env.ts` (zod-validated env), the `src/server/` folder with `server-only`, and a `requireRole()` stub (section 3b).
-- [ ] Tooling: Vitest, Playwright + axe, GitHub Actions CI (lint, typecheck, unit tests, build, i18n check).
+- [x] Tooling: Vitest, Playwright + axe, GitHub Actions CI (lint, typecheck, unit tests, build, i18n check).
 - [ ] Update `AGENTS.md` with the rules from section 0 and the conventions in section 12.
 - **Done when:** app runs, tokens work in light and dark, `/en` and `/bn` render a placeholder home, theme toggle and language switcher work with no flash, CI is green.
 
@@ -643,3 +643,4 @@ bKash/Nagad, card payments (SSLCommerz), courier API integration, full inventory
 - 2026-10-15: shadcn/ui uses the radix-nova style. The registry item `form` emits no files, so `src/components/ui/form.tsx` is the react-hook-form adapter and `field.tsx` is the current field layout. Toast is Sonner. `cn`, `radix-ui`, and `sonner` come with shadcn. Error red (`--destructive`) is not in the brand palette. shadcn `primary` maps to brand gold. Default buttons and inputs are 44px tall.
 - 2026-10-15: No Supabase CLI or project credentials were available, so the hosted project was not created. `.env.example` documents the keys and `.env.local` uses placeholders so the app can boot. The service-role key is validated only in `src/lib/env.server.ts` (imported by `admin.ts`) so it stays out of the browser bundle. Public vars are validated in `src/lib/env.ts`.
 - 2026-10-15: Locale routing uses `src/proxy.ts` because Next.js 16 renamed middleware to proxy. `next-intl` 4.14 does not export `hasLocale`, so `isLocale()` lives in `src/i18n/routing.ts`. The locale cookie name `NEXT_LOCALE` is next-intl's default. `/` redirects by that cookie, then `Accept-Language`, then English.
+- 2026-10-15: GitHub Actions runs lint, typecheck, unit tests, `i18n:check`, and build. Playwright + axe is `bun run test:e2e` and is not in that workflow, matching the Phase 0 CI list.
