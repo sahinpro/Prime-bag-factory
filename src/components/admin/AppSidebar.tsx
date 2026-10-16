@@ -5,27 +5,37 @@ import { usePathname } from "next/navigation";
 import { Home, Package, FileText, Boxes, Users, Settings } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
+function SidebarItem({
+  href,
+  active,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <li>
+      <Link
+        href={href}
+        aria-current={active ? "page" : undefined}
+        className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+          active
+            ? "bg-sidebar-active text-gold-text"
+            : "text-sidebar-foreground hover:bg-surface"
+        }`}
+      >
+        {children}
+      </Link>
+    </li>
+  );
+}
+
 export default function AppSidebar() {
   const pathname = usePathname() || "/admin";
 
-  function Item({ href, children }: { href: string; children: React.ReactNode }) {
-    const active = pathname === href;
-    return (
-      <li>
-        <Link
-          href={href}
-          className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-            active ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground hover:bg-surface"
-          }`}
-        >
-          {children}
-        </Link>
-      </li>
-    );
-  }
-
   return (
-    <aside className="hidden md:block w-64 shrink-0 border-r border-sidebar-border bg-color-sidebar px-3 py-6">
+    <aside className="hidden w-64 shrink-0 border-r border-sidebar-border bg-sidebar px-3 py-6 md:block">
       <div className="mb-6 px-2">
         <Link href="/" className="inline-flex items-center gap-2">
           <span className="inline-block h-8 w-8 rounded bg-color-primary" />
@@ -35,36 +45,36 @@ export default function AppSidebar() {
 
       <nav aria-label="Admin" className="px-1">
         <ul className="space-y-1">
-          <Item href="/admin">
+          <SidebarItem href="/admin" active={pathname === "/admin"}>
             <Home className="h-4 w-4" />
             Dashboard
-          </Item>
+          </SidebarItem>
 
-          <Item href="/admin/products">
+          <SidebarItem href="/admin/products" active={pathname.startsWith("/admin/products")}>
             <Package className="h-4 w-4" />
             Products
-          </Item>
+          </SidebarItem>
 
-          <Item href="/admin/quotes">
+          <SidebarItem href="/admin/quotes" active={pathname.startsWith("/admin/quotes")}>
             <FileText className="h-4 w-4" />
             Quotes
             <Badge className="ml-auto">3</Badge>
-          </Item>
+          </SidebarItem>
 
-          <Item href="/admin/inventory">
+          <SidebarItem href="/admin/inventory" active={pathname.startsWith("/admin/inventory")}>
             <Boxes className="h-4 w-4" />
             Inventory
-          </Item>
+          </SidebarItem>
 
-          <Item href="/admin/users">
+          <SidebarItem href="/admin/users" active={pathname.startsWith("/admin/users")}>
             <Users className="h-4 w-4" />
             Users
-          </Item>
+          </SidebarItem>
 
-          <Item href="/admin/settings">
+          <SidebarItem href="/admin/settings" active={pathname.startsWith("/admin/settings")}>
             <Settings className="h-4 w-4" />
             Settings
-          </Item>
+          </SidebarItem>
         </ul>
       </nav>
 

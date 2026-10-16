@@ -5,6 +5,7 @@ import { getMessages, getTranslations, setRequestLocale } from "next-intl/server
 import { notFound } from "next/navigation";
 
 import { ThemeProvider } from "@/components/site/theme-provider";
+import { ThemeScript } from "@/components/site/theme-script";
 import { isLocale, routing } from "@/i18n/routing";
 import { publicEnv } from "@/lib/env";
 
@@ -71,6 +72,7 @@ export default async function LocaleLayout({
       className={`${inter.variable} ${notoSerifBengali.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">
+        <ThemeScript />
         <ThemeProvider>
           <NextIntlClientProvider messages={messages}>
             {children}

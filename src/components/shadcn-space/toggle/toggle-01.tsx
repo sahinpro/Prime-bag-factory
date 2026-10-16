@@ -3,8 +3,9 @@
 
 import { motion, useReducedMotion } from "motion/react";
 import { useTranslations } from "next-intl";
-import { useTheme } from "next-themes";
 import { useId, useRef, useSyncExternalStore } from "react";
+
+import { useTheme } from "@/components/site/theme-provider";
 
 const spring = { type: "spring", stiffness: 220, damping: 15 } as const;
 

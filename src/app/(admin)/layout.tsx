@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 
 import { ThemeProvider } from "@/components/site/theme-provider";
+import { ThemeScript } from "@/components/site/theme-script";
 
 import "../globals.css";
 
@@ -29,6 +30,7 @@ export default function AdminRootLayout({
       className={`${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-background font-sans text-foreground">
+        <ThemeScript />
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
