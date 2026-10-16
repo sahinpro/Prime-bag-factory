@@ -114,9 +114,14 @@
 - Supabase: Postgres, Auth, Storage, RLS, Supabase CLI migrations in `supabase/migrations`.
 - Forms: `react-hook-form` + `zod`. Tables: `@tanstack/react-table`. Server state: server components and server actions first.
 - i18n: `next-intl` (`/en` and `/bn` routes).
-- Fonts: `Inter` (Latin) + `Hind Siliguri` (Bangla) via `next/font/google`.
+- Fonts: `Inter` (Latin) + `Noto Serif Bengali` (Bangla glyphs only, variable, `--font-bn`) via `next/font/google`.
 - Theme: `next-themes`. Server guard: `server-only`. Testing: `vitest`, `@playwright/test`, `@axe-core/playwright`.
 - Optional later: Cloudflare Turnstile (spam), Resend (email).
+- Charts: `recharts` through the shadcn `chart` component. Fallback for sparklines: hand-written inline SVG.
+- Command palette: `cmdk` through the shadcn `command` component.
+- Drag-to-reorder (categories, swatches, images, tiers): `@dnd-kit/core` + `@dnd-kit/sortable` (must also offer keyboard-accessible Move up / Move down buttons).
+- shadcn components for the admin kit: `sidebar`, `card`, `badge`, `table`, `tabs`, `select`, `dropdown-menu`, `command`, `popover`, `tooltip`, `skeleton`, `separator`, `avatar`, `breadcrumb`, `sheet`, `checkbox`, `switch`, `textarea`, `calendar`, `chart`, `alert`, `progress`.
+- No other UI libraries. Dates and numbers use `Intl` via `src/lib/format.ts`, not `date-fns` or `moment`.
 
 ### Environment variables
 ```
@@ -170,7 +175,7 @@ NEXT_PUBLIC_WHATSAPP_NUMBER=
 
 ### Theme (light / dark)
 - `next-themes` with `attribute="class"`, `defaultTheme="system"`, `enableSystem`, `disableTransitionOnChange`; `<html suppressHydrationWarning>`.
-- Header and admin top bar get a theme menu with **Light, Dark, System**: translated labels, `aria-label`, keyboard operable, current choice indicated.
+- Header theme control is the animated sun/moon icon from shadcn-space toggle-01. It shows the sun in light and the moon in dark. A click switches to the other theme. Default stays **system** until that click. Admin can keep a Light / Dark / System menu later.
 - Components use semantic tokens only (section 4a). No raw hex in components; `dark:` utilities only for exceptions.
 - Logo: render both variants and switch with CSS (`dark:hidden` / `hidden dark:block`) so there is no flash.
 - Product photos sit on a neutral light container in dark mode so white-background photos do not look boxed.
@@ -179,13 +184,14 @@ NEXT_PUBLIC_WHATSAPP_NUMBER=
 
 ### Language (Bangla / English)
 - `next-intl`, routes `/en/...` and `/bn/...`, `localePrefix: "always"`. `/` redirects by `NEXT_LOCALE` cookie, then `Accept-Language`, then the default (English; changeable in `routing.ts`).
-- Header language switcher with labels "EN" and "বাংলা", each written in its own language; keeps the current page and query string; choice stored in the `NEXT_LOCALE` cookie.
+- Header language switcher is one toggle icon (languages glyph). It keeps the current page and query string; choice stored in the `NEXT_LOCALE` cookie. The accessible name is the target language written in that language ("EN" or "বাংলা").
 - `<html lang>` per locale; wrap inline text in another language with `lang`. `hreflang` alternates plus `x-default` on every public page.
 - UI strings in `src/messages/{en,bn}.json`, grouped by feature. `bun run i18n:check` fails CI when a key exists in one file only. No hard-coded user-facing strings in components.
 - DB content uses `_en` / `_bn` columns; Bangla falls back to English when empty. Admin shows a "Missing Bangla" badge and a dashboard counter.
 - All formatting goes through `src/lib/format.ts`: money with the ৳ symbol via `Intl.NumberFormat`, dates in `Asia/Dhaka`, numbers by locale (`bn-BD` shows Bangla digits).
 - **Input normalization:** accept Bangla digits (০-৯) in phone, quantity and size fields; convert to ASCII digits before zod validation and storage.
-- Fonts: Hind Siliguri for Bangla with roomier line-height (about 1.7 for body); subset weights 400/600/700; `display: swap`.
+- Fonts: Noto Serif Bengali is the only Bangla font (`next/font/google`, subset `bengali` only, variable, CSS variable `--font-bn`, `display: swap`). Apply it with `:lang(bn)`, with Inter as the fallback. `:lang(en)` and Latin letters always use Inter. Do not load Noto's latin subset, or English on `/bn` will switch to the serif face. Body line-height for Bangla is about 1.7.
+- On `/bn`, **main and footer** type is at least **18px**. The html rem stays **16px** in both locales so the header does not jump. Header height is fixed (`h-16`); language and theme controls are a shared 32px box. Bangla `line-height: 1.7` applies to main and footer only.
 - Search: Postgres has no Bangla stemmer, so use `pg_trgm` with `ilike` across both `_en` and `_bn` columns. Slugs stay English.
 - Admin UI is English first (content fields are bilingual). A Bangla admin UI is a later option.
 
@@ -302,7 +308,15 @@ src/
       categories/ products/ swatches/ inventory/ orders/ quotes/
       customers/ content/ users/ settings/
     sitemap.ts  robots.ts
-  components/ ui/ site/ admin/
+  components/
+    ui/ site/ admin/
+      admin/
+        shell/        admin-shell.tsx app-sidebar.tsx topbar.tsx breadcrumbs.tsx page-header.tsx command-palette.tsx
+        data/         data-table.tsx filter-bar.tsx tabs-bar.tsx status-badge.tsx table-skeleton.tsx
+        dashboard/    stat-card.tsx chart-card.tsx segment-bar.tsx radial-gauge.tsx activity-feed.tsx
+        forms/        form-section.tsx sticky-save-bar.tsx bilingual-field.tsx confirm-dialog.tsx image-uploader.tsx
+        catalog/      tier-editor.tsx swatch-picker.tsx swatch-chip.tsx
+        print/        print-sheet.tsx
   lib/
     supabase/ client.ts server.ts admin.ts
     validators/   # zod schemas
@@ -317,6 +331,8 @@ src/
 supabase/
   migrations/
   seed.sql
+src/app/(admin)/admin/design-system/page.tsx   # dev/staging only, 404 in production, noindex
+src/server/dashboard.ts                        # server-only DTOs for dashboard widgets
 ```
 Admin is English only and lives outside `[locale]`.
 
@@ -412,7 +428,7 @@ Low-stock: `available <= low_stock_threshold` shows in the admin dashboard. Prod
 
 ## 8. Public Site Spec
 
-**Header and footer (all pages):** logo, mega-menu, search, **language switcher (EN | বাংলা)**, **theme toggle (Light / Dark / System)**, Request a Quote button. Sticky WhatsApp and Messenger buttons. Footer: policy links (Terms, Privacy, Returns & Refunds, Shipping, Custom Order & Advance Payment), contact, social links, legal documents.
+**Header and footer (all pages):** logo, mega-menu, search, **language switcher (icon toggle)**, **theme toggle (active sun or moon icon, default system)**, Request a Quote button. Sticky WhatsApp and Messenger buttons. Footer: policy links (Terms, Privacy, Returns & Refunds, Shipping, Custom Order & Advance Payment), contact, social links, legal documents.
 
 **Home** (order of sections): hero + primary CTA (Request a Quote) → shop by category → shop by industry → featured products → why choose us (real specs, not generic words) → client proof wall → real work gallery → how ordering works (steps) → trust documents → video → quote form → reviews → footer. Sticky WhatsApp button on all pages.
 
@@ -457,6 +473,367 @@ Protected by Supabase Auth + middleware + RLS (never rely on UI hiding alone). B
 
 ---
 
+## 9c. Admin UI Design System
+
+The admin looks like a calm, modern SaaS dashboard (see references) in our **antique gold + ink + ivory** identity. Gold is an accent, never a flood. The palette stays inside the section 4 family (gold, ink, ivory, forest green) plus red and amber for errors and warnings only; no blue anywhere. Admin is English only; content fields stay bilingual.
+
+#### 9c.1 Principles
+
+1. **Quiet chrome, loud data.** Neutral surfaces, 1px borders, almost no shadow. Gold marks the active nav item, the primary button, the selected state and the first chart series only.
+2. **Information hierarchy per screen:** page title -> key numbers -> trend/charts -> work queue (tables) -> activity.
+3. **Status is never color alone.** Every badge, delta and priority has an icon and a text label.
+4. **Every list has loading (skeleton), empty (icon + one sentence + primary action) and error (message + Retry) states.**
+5. **One kit.** Admin pages compose only the components in 9c.5. If a needed component is missing, add it to the kit first, show it on `/admin/design-system`, then use it.
+6. **Both themes, always.** Every admin screen is checked in light and dark.
+7. **Mobile works.** Staff will approve orders and quotes from a phone. Nothing requires hover.
+8. **No emoji, no stock avatars, no decorative gradients.** Icons are `lucide-react` only, 16px in controls and nav, 20px in card headers, stroke 1.75, one outline style everywhere.
+
+#### 9c.2 Tokens (add to `globals.css`, light and dark; components use these only, no raw hex)
+
+Existing tokens from section 4a stay. Add:
+
+Token
+Light
+Dark
+Use
+
+`--sidebar`
+`#F4EFE4`
+`#181513`
+Sidebar background
+
+`--sidebar-foreground`
+`#1C1917`
+`#FBF8F1`
+Nav text
+
+`--sidebar-muted`
+`#6B645C`
+`#A8A29E`
+Group labels, inactive icons
+
+`--sidebar-border`
+`#E2DACA`
+`#2E2823`
+Sidebar dividers
+
+`--sidebar-active`
+`#FFFFFF`
+`#26211D`
+Active item pill (with 1px `--border` and shadow-xs in light)
+
+`--surface-2`
+`#F6F2E9`
+`#211D1A`
+Inset panels, table header, chart tray, skeletons
+
+`--success` / `--success-soft`
+`#1F5F4A` / `#E3F1EA`
+`#4FB08A` / `#16302A`
+Delivered, paid, won, positive delta
+
+`--warning` / `--warning-soft`
+`#8A5A00` / `#FBEBC8`
+`#E5A93C` / `#3A2C10`
+Pending, due soon, partial
+
+`--ink-badge` / `--ink-badge-soft`
+`#1C1917` / `#ECE6D8`
+`#FBF8F1` / `#2A2521`
+New, confirmed, shipped (derived from ink and ivory, no blue)
+
+`--destructive` / `--destructive-soft`
+`#B42318` / `#FDE7E4`
+`#F97066` / `#3A1816`
+Cancelled, failed, negative delta, delete
+
+`--chart-1`
+`#C8962E`
+`#D9AE4F`
+Primary series (gold)
+
+`--chart-2`
+`#3F3A36`
+`#D6D3D1`
+Second series (ink)
+
+`--chart-3`
+`#1F5F4A`
+`#4FB08A`
+Third series
+
+`--chart-4`
+`#8A6414`
+`#F1E3B8`
+Fourth series (gold-deep / gold-soft)
+
+`--chart-5`
+`#A8A29E`
+`#78716C`
+Remainder / "other"
+
+`--radius-card`
+`16px`
+
+Cards
+
+`--radius-control`
+`10px`
+
+Inputs, buttons, selects
+
+Rules: soft tokens are backgrounds, solid tokens are text/icon on them (target 4.5:1; re-verify with real components). Dark mode has no shadows, only borders. Spacing follows a 4/8 rhythm: card padding 20px, grid gap 16px, section gap 24px, page gutter 24px (16px under 768px).
+
+#### 9c.3 Typography (admin)
+
+- Font: Inter. Bangla input fields get `lang="bn"` so `:lang(bn)` applies Noto Serif Bengali.
+- Page title 24/32 semibold. Card title 14/20 medium. Stat value 28/32 semibold. Body and table 14/20. Meta/caption 12/16 (minimum text size in admin).
+- All numbers, money and IDs use `tabular-nums`. Money: `৳` via `format.ts` (`en-BD`).
+- Truncate long cells with `title` tooltip; never wrap table rows to 3+ lines.
+
+#### 9c.4 Shell layout
+
+```
++-----------+--------------------------------------------------------------+
+| SIDEBAR   | TOPBAR: breadcrumb | search (Cmd/Ctrl+K) | bell | theme | user |
+| 264px     +--------------------------------------------------------------+
+| (rail 72) | PAGE: header (title, subtitle, actions) then content grid     |
++-----------+--------------------------------------------------------------+
+```
+
+- **Sidebar:** logo (mark only when collapsed), a workspace chip ("Prime Bag Factory", static, no switcher), grouped nav, footer user card (avatar initials, name, role, menu with Profile, Theme, Sign out). Collapsible to a 72px icon rail (tooltips on icons); state persisted in a cookie. Below 768px it becomes a `Sheet` opened from a hamburger in the topbar. Active item: `--sidebar-active` pill, `--gold-text` icon, `aria-current="page"`. Count badges are `--gold-soft` pills with text (e.g. 12 new quotes).
+- **Nav groups and items (lucide icon, role gate):**
+
+- MAIN: Dashboard (`LayoutDashboard`), all roles.
+- CATALOG: Products (`Package`), Categories (`FolderTree`), Collections (`Layers`), Swatches (`Palette`); owner, manager, inventory (products only).
+- SALES: Quotes (`FileText`, badge = new quotes), Orders (`ShoppingCart`, badge = pending), Customers (`Users`); owner, manager, sales.
+- OPERATIONS: Inventory (`Boxes`, badge = low-stock variants); owner, manager, inventory.
+- CONTENT: Content (`PanelsTopLeft`); owner, manager.
+- SYSTEM: Users (`UserCog`), Settings (`Settings`), Audit log (`ScrollText`); owner (Settings and Users), owner and manager (Audit log).
+- Quotes expands to sub-items: All, New, Builder requests, Won/Lost (like the Kravio Tickets group). Orders expands: All, Pending, In production, Shipped.
+- **Topbar:** breadcrumbs (`Admin / Products / Edit`), search button opening the command palette (searches orders by number/phone, quotes by company/phone, products by title/SKU, plus quick actions like "New product"), notifications popover (new quotes/orders from `notifications` outbox `admin_alert`), theme toggle (same sun/moon control as the public site), user menu on mobile. Height `h-16`, sticky, `--background` with bottom border.
+- **Page header:** `<PageHeader title description actions />`. Title is the single `h1`. Primary action top right. On mobile actions collapse to one primary button plus a `...` menu.
+- **Content width:** fluid up to 1440px, centered beyond. Skip link and landmarks as in 3c. `noindex`.
+- **Responsive:** >=1280 full layout; 768-1279 sidebar rail, stat cards 2x2, two-column rows stack; <768 sheet nav, single column, tables become stacked cards (see DataTable).
+
+#### 9c.5 Component kit (`src/components/admin/`, shown on `/admin/design-system`)
+
+Component
+Spec
+
+`AdminShell`, `AppSidebar`, `Topbar`, `Breadcrumbs`, `PageHeader`
+As 9c.4
+
+`StatCard`
+Card with icon chip (`--surface-2`, 32px), label, value (28px), delta badge (arrow icon + `+7.1%` + "vs last week", success/destructive, never color-only), optional sparkline (SVG, 64x24, `--chart-1`, `aria-hidden` with the numbers also in text). Info tooltip icon is a real button with `aria-label`. Whole card is a link when it drills into a list (e.g. New quotes -> `/admin/quotes?status=new`).
+
+`ChartCard`
+Card header (icon, title, range `Select`), legend as real text chips, tray body on `--surface-2` is optional. Recharts bar + line combo with dashed gridlines, hover tooltip showing date and values (`Tue 584` style pill), y-axis in compact `৳` (10k, 1.2L). Includes a visually hidden data table for screen readers and an empty state.
+
+`SegmentBar`
+Horizontal stacked bar plus legend rows with counts (for orders by category, quotes by status). Each segment has a legend label and value, not just color.
+
+`RadialGauge`
+Optional, for fulfilment rate or quote win rate; the number sits in the center, same value in text.
+
+`StatusBadge`
+Pill, 12px/500, leading icon + label, `*-soft` background and solid text. Mapping table in 9c.6.
+
+`DataTable`
+`@tanstack/react-table` on shadcn table. Header on `--surface-2`; sticky header; sortable columns (button in header, `aria-sort`); row checkbox column; column visibility menu; pagination (10/25/50, "1-25 of 312"); row action `...` dropdown; URL-synced `page`, `sort`, `q`, filters via `searchParams`; selected-rows bar ("3 selected: Change status, Export, Clear") that appears above the table; row height 52px (44px min touch target for actions); horizontal scroll inside its own container with a sticky first data column; under 768px renders each row as a stacked card with the same actions. Skeleton rows while loading.
+
+`FilterBar`
+Search input (debounced 300ms), filter popovers (status, date range, source form/builder, assignee), active-filter chips with remove buttons, "Reset". Mirrors the Kravio filter button.
+
+`TabsBar`
+Pill tabs for Today / Yesterday / This week and for status pipelines (Quotes: New, Contacted, Quoted, Won, Lost with counts).
+
+`ActivityFeed`
+Vertical timeline with icon chips, title, one-line detail, relative time (`Intl.RelativeTimeFormat`), tab filter, "8 new activities today" header, search. Source: `audit_logs` plus `notifications`.
+
+`EmptyState`, `ErrorState`, `TableSkeleton`, `CardSkeleton`
+Skeletons match final dimensions (no layout shift).
+
+`FormSection`
+Two-column on desktop (label + help left, fields right), single column on mobile. Visible labels, errors via `aria-describedby`, error summary receives focus.
+
+`StickySaveBar`
+Appears when a form is dirty: "Unsaved changes" + Discard + Save (loading state, disabled while submitting). Blocks navigation with a confirm if dirty. Uses the `updated_at` optimistic check and shows a conflict dialog on mismatch.
+
+`BilingualField`
+EN / BN segmented tabs for any `_en` / `_bn` pair; "Missing Bangla" badge on the BN tab when empty.
+
+`ConfirmDialog`
+Required for delete, archive, cancel order, convert quote, block phone. Destructive style, names the object, focus on Cancel.
+
+`TierEditor`
+Table of rows (min, max, unit price) with auto-fill, inline validation, warning (not block) for price increases, live customer preview. Move up/down buttons for keyboard users.
+
+`SwatchPicker`, `SwatchChip`
+Round chips (texture or hex), checkmark + name for selected, labelled radio group.
+
+`ImageUploader`
+Drag-drop plus button, progress, client-side resize/WebP (about 300 KB), reorder (dnd-kit + buttons), alt text EN/BN per image, per-variant assignment.
+
+`CommandPalette`
+`cmdk` dialog, Cmd/Ctrl+K, grouped results (Pages, Orders, Quotes, Products, Actions).
+
+`PrintSheet`
+Print layout (A4) for invoice, packing slip, quotation, production spec sheet: no sidebar, black on white, logo on light, `@media print` rules, page-break control.
+
+#### 9c.6 Status badge mapping
+
+Domain
+Value -> style (icon)
+
+Quote
+new -> ink (`Sparkles`), contacted -> neutral (`Phone`), quoted -> gold-soft with `--gold-text` (`FileCheck`), won -> success (`Trophy`), lost -> destructive (`XCircle`)
+
+Order
+pending -> warning (`Clock`), confirmed -> ink (`CheckCircle2`), processing -> gold-soft (`Loader`), shipped -> ink (`Truck`), delivered -> success (`PackageCheck`), cancelled -> destructive (`Ban`), returned -> warning (`Undo2`)
+
+Payment
+unpaid -> neutral (`CircleDashed`), partially_paid -> warning (`CircleDot`), paid -> success (`BadgeCheck`), refunded -> neutral (`RotateCcw`)
+
+Production
+awaiting_artwork -> warning (`ImageUp`), artwork_approved -> ink (`Check`), in_production -> gold-soft (`Factory`), qc -> ink (`ScanSearch`), ready -> success (`PackageCheck`)
+
+Product
+draft -> neutral, published -> success, archived -> neutral outline
+
+Stock
+ok -> success, low (`available <= threshold`) -> warning (`AlertTriangle`), out -> destructive
+
+Urgency (quotes by `needed_by` / `valid_until`)
+overdue -> destructive (`AlarmClock`), due in <=2 days -> warning, later -> neutral. Shown like the priority column in the Kravio table
+
+#### 9c.7 Dashboard (`/admin`) spec
+
+Header: **"Hello, {firstName}"** (text only, no emoji), subtitle "Here is what needs attention today", range `Select` (Last 7 days default, Last 30 days) and a primary `New product` button.
+
+```
+Row 1  [Stat: New quotes] [Stat: Pending orders] [Stat: Sales BDT] [Stat: Low-stock variants]   (3 cols each of 12)
+Row 2  [ChartCard: Sales and quotes trend (8)        ] [SegmentBar card: Quote pipeline (4)   ]
+Row 3  [DataTable card: Recent orders (8)            ] [ActivityFeed: Latest updates (4)      ]
+Row 4  [DataTable card: Quotes needing action (8)    ] [Low-stock list (4)                    ]
+Strip  Missing Bangla translations: N items [Review]   (alert style, links to content filter)
+```
+
+Widget
+Data (via `src/server/dashboard.ts`, typed DTOs)
+
+New quotes
+count of `quote_requests` with `status = 'new'` in range, delta vs previous period, 7-point sparkline
+
+Pending orders
+count `orders.status = 'pending'`, delta, sparkline
+
+Sales
+sum `orders.total` where status not in (cancelled, returned), delta, sparkline
+
+Low-stock variants
+count `stock_qty - reserved_qty <= low_stock_threshold` on tracked products; links to Inventory filtered
+
+Sales and quotes trend
+bars = daily sales total (`--chart-1`), line = daily new quotes (`--chart-2`), legend, tooltip, hidden data table
+
+Quote pipeline
+segments new / contacted / quoted / won / lost with counts and win rate
+
+Recent orders
+last 5: order no, customer, date, total, status badge, row action; "View all"
+
+Quotes needing action
+`new` or `quoted` quotes ordered by urgency; columns: Company, Product, Qty, Source (form/builder), Assigned to, Status, Urgency
+
+Latest updates
+last 20 audit/notification events with Today / Yesterday / This week tabs
+
+Low-stock list
+variant SKU, product, available, threshold, "Adjust" link
+
+Missing Bangla
+count of `_bn` empty fields on published rows
+
+Until Phase 5, orders and sales widgets show `EmptyState` ("No orders yet. Orders appear here after the first checkout."), not fake data. Seed/demo data is allowed only in `seed.sql` for local dev.
+
+#### 9c.8 Module page layouts (all built from the kit)
+
+Page
+Layout
+
+Products list
+PageHeader (New product, Import CSV, Export), TabsBar (All, Published, Draft, Archived with counts), FilterBar (category, type, stock, customizable), DataTable (thumbnail, title EN + BN subline, type badge, categories, MOQ, price range, stock, status), bulk bar (Publish, Archive, Export)
+
+Product editor
+Header with status badge + Publish split button + Preview link; left tab list or top tabs (General, Pricing, Variants, Customization, Images, SEO); content in `FormSection`s; `StickySaveBar`; right rail (desktop) with checklist: title EN/BN, price tiers valid, >=1 image, SEO set, Bangla complete
+
+Categories
+Left tree (drag + move buttons), right editor panel; mobile: list then detail page
+
+Collections
+DataTable + side `Sheet` editor
+
+Swatch Library
+Groups as tabs; grid of `SwatchChip` cards with name, code, usage count; `Sheet` editor with texture upload
+
+Inventory
+StatCards (Total variants, Low stock, Out of stock, Reserved units), DataTable (SKU, product, available, reserved, threshold, status) with inline "Adjust" dialog (delta, reason, required note) and a Movements tab
+
+Orders list
+TabsBar by status with counts, FilterBar (date, payment, type retail/bulk, production), DataTable (order no, customer + phone, type, items, total, paid / balance, status, payment, date)
+
+Order detail
+Two columns: left items table + payments ledger + status timeline (`order_status_history`); right summary card (customer, address, courier + tracking, production status, confirmation-call toggle), actions (Change status, Record payment, Print invoice, Packing slip, Block phone)
+
+Quotes inbox
+TabsBar pipeline (counts), FilterBar (source form/builder, assignee, urgency), DataTable, row opens detail
+
+Quote detail
+Left: contact card, request details, builder selections as color chips + part list, attachment viewer; right: status stepper, assign, quoted amount, valid-until, internal notes; actions: Print production spec, Print quotation, Convert to order, WhatsApp, Call
+
+Customers
+DataTable grouped by phone, detail drawer with orders + quotes history
+
+Content
+Left list of content types, right `FormSection` editors; homepage sections have reorder + active toggle
+
+Users
+DataTable, Invite `Sheet`, role select, deactivate with `ConfirmDialog`
+
+Settings
+Vertical tabs (Company, Contact, Social, Shipping zones, VAT, SEO defaults, Feature flags, Notifications, Policies); flags use `Switch` with description and a confirm for `maintenance_mode`
+
+Audit log
+Read-only DataTable (when, actor, action, table, record), diff viewer in a `Sheet`, FilterBar
+
+Login (`/admin/login`)
+Centered card, logo, email + password, error summary, MFA step for owner/manager, no signup
+
+#### 9c.9 Interaction and motion
+
+- Transitions 150-200ms, `ease-out`, only on color, opacity and transform. Respect `prefers-reduced-motion` (disable chart animations, sidebar slide becomes instant).
+- Buttons with async work disable and show a spinner; mutations use optimistic UI where safe and roll back with an error toast.
+- Toasts: Sonner, also announced in `aria-live="polite"`; destructive actions offer Undo where possible.
+- Keyboard: Cmd/Ctrl+K palette, `/` focuses table search, Esc closes dialogs/sheets, focus returns to trigger, visible 2px `--focus` ring everywhere.
+- Hover is enhancement only; every hover reveal also works on focus and tap. Cursor pointer on clickable rows.
+- Tables and forms never lose input on error.
+
+#### 9c.10 Admin UI acceptance checklist (every admin page, before ticking its task)
+
+- [ ] Uses only kit components and semantic tokens; no raw hex, no emoji, no new icon family.
+- [ ] Loading, empty and error states present; no layout shift when data arrives.
+- [ ] Checked at 375, 768, 1280 and 1440 px; no horizontal page scroll; tables scroll inside their container or become cards.
+- [ ] Light and dark verified; axe clean in both.
+- [ ] Contrast: text 4.5:1, borders/controls 3:1, status never color-only.
+- [ ] Keyboard-only walkthrough works; focus order matches visual order; icon-only buttons have `aria-label`; one `h1`.
+- [ ] Touch targets at least 44x44 px on mobile; 8px minimum gap between targets.
+- [ ] Role gating enforced server side (`requireRole()`) and in nav.
+- [ ] Destructive actions use `ConfirmDialog`; forms validate with zod on client and server.
+- [ ] Money, dates, numbers formatted through `format.ts` (`Asia/Dhaka`).
+
+---
+
 ## 9b. Launch Readiness (e-commerce essentials, do not skip)
 
 | Area | Must be ready at launch |
@@ -481,7 +858,7 @@ Protected by Supabase Auth + middleware + RLS (never rely on UI hiding alone). B
 
 ### Phase 0: Setup
 - [x] Remove default `create-next-app` page content in `src/app/page.tsx`.
-- [x] Add brand tokens (section 4) to `globals.css`; set fonts (Inter + Hind Siliguri).
+- [x] Add brand tokens (section 4) to `globals.css`; set fonts (Inter + Noto Serif Bengali).
 - [x] Copy logo v1 assets into `public/brand/` (section 4b), build the `<Logo>` component (section 4c), wire favicon metadata (use the ivory favicon as a temporary fallback until the light/dark pair exists).
 - [x] Init shadcn/ui; add base components (button, input, form, dialog, table, tabs, badge, toast, dropdown, sheet).
 - [x] Create Supabase project, add env vars, `.env.example`.
@@ -490,21 +867,33 @@ Protected by Supabase Auth + middleware + RLS (never rely on UI hiding alone). B
 - [x] Set up `next-themes`, light/dark semantic tokens (4a) and the theme toggle with no flash on load.
 - [x] Accessibility base: skip link, focus ring, landmarks, reduced-motion styles (section 3c).
 - [x] Create `src/lib/env.ts` (zod-validated env), the `src/server/` folder with `server-only`, and a `requireRole()` stub (section 3b).
-- [x] Tooling: Vitest, Playwright + axe, GitHub Actions CI (lint, typecheck, unit tests, build, i18n check).
+- [x] Tooling: Vitest, Playwright + axe, GitHub Actions CI (lint, typecheck, unit tests, build, i18n check, e2e).
 - [x] Update `AGENTS.md` with the rules from section 0 and the conventions in section 12.
 - **Done when:** app runs, tokens work in light and dark, `/en` and `/bn` render a placeholder home, theme toggle and language switcher work with no flash, CI is green.
 
 ### Phase 1: Database, auth, RLS
-- [ ] Write migrations for all tables in section 7 (except coupons).
-- [ ] Add enums, indexes (slugs, foreign keys, status columns), `updated_at` triggers.
-- [ ] Write RLS policies and `has_role()`.
-- [ ] Write `place_order` RPC and inventory movement logic.
-- [ ] `seed.sql`: categories (section 6), swatch groups and sample swatches, one demo product with variants, quantity ranges and builder parts, shipping zones, settings.
-- [ ] Generate TypeScript types from the DB.
-- [ ] Auth: login page for staff, middleware protecting `/admin`, first owner user.
-- **Done when:** RLS tests prove anon cannot read drafts or write orders directly, and `place_order` blocks overselling.
+- [x] Write migrations for all tables in section 7 (except coupons).
+- [x] Add enums, indexes (slugs, foreign keys, status columns), `updated_at` triggers.
+- [x] Write RLS policies and `has_role()`.
+- [x] Write `place_order` RPC and inventory movement logic.
+- [x] `seed.sql`: categories (section 6), swatch groups and sample swatches, one demo product with variants, quantity ranges and builder parts, shipping zones, settings.
+- [x] Generate TypeScript types from the DB.
+- [x] Auth: staff login page, `src/proxy.ts` protection for `/admin`, server-side role gate, and first-owner provisioning script.
+- [x] Provision the first owner in Supabase with `bun run owner:setup -- <auth-user-id> "Full name"`.
+- [x] Apply the forward auth/order migration and run the Phase 1 pgTAP tests against the configured Supabase database.
+- **Done when:** generated types match the DB; the first owner can log in and `/admin` rejects unauthenticated and customer sessions; RLS tests prove anon cannot read drafts or write orders directly, and `place_order` blocks overselling.
 
 ### Phase 2: Admin catalog
+- [ ] Add admin tokens from 9c.2 to `globals.css` (light and dark) and verify contrast.
+- [ ] Install the shadcn components and libraries listed in A1.
+- [ ] Build the kit components from 9c.5 with typed props and the `/admin/design-system` page showing every component, every status badge and every state in both themes.
+- [ ] Admin shell: sidebar (collapsible, role-aware, count badges), topbar, breadcrumbs, command palette, mobile sheet nav, login page layout.
+- [ ] Dashboard (9c.7) with `src/server/dashboard.ts`, skeletons, empty and error states.
+- [ ] Playwright + axe for `/admin/login`, `/admin` and `/admin/design-system` in light and dark.
+- **Done when (UI kit):** the dashboard renders on real queries, passes 9c.10 at all four widths in both themes, and staff can navigate every module stub with keyboard only.
+
+Then continue with the existing Phase 2 tasks (Categories CRUD, Collections, Media upload, Swatch Library, Products CRUD, Customization tab), each page built from the kit and checked against 9c.8 and 9c.10.
+
 - [ ] Admin layout (sidebar, topbar, breadcrumbs, role-aware nav).
 - [ ] Categories CRUD (tree + reorder).
 - [ ] Collections CRUD.
@@ -580,6 +969,11 @@ bKash/Nagad, card payments (SSLCommerz), courier API integration, full inventory
 - Mobile-first check at 375px width.
 - Every list view has loading, empty and error states.
 - axe passes in both themes and both languages; `i18n:check` passes.
+- Playwright e2e runs under Node (`npx playwright test`), including axe on `/en` and `/bn` in light and dark.
+- On `/bn`, a Playwright walk of every visible text-bearing element (light and dark) asserts computed `font-size` ≥ 18px, excluding `.sr-only` text and SVG logos.
+- Admin pages pass the 9c.10 checklist.
+- Playwright + axe covers `/admin/login`, `/admin`, `/admin/design-system` and each new admin module in light and dark.
+- A visual smoke test at 375 / 768 / 1280 / 1440 px asserts no horizontal page overflow on admin pages.
 
 ---
 
@@ -643,5 +1037,15 @@ bKash/Nagad, card payments (SSLCommerz), courier API integration, full inventory
 - 2026-10-15: shadcn/ui uses the radix-nova style. The registry item `form` emits no files, so `src/components/ui/form.tsx` is the react-hook-form adapter and `field.tsx` is the current field layout. Toast is Sonner. `cn`, `radix-ui`, and `sonner` come with shadcn. Error red (`--destructive`) is not in the brand palette. shadcn `primary` maps to brand gold. Default buttons and inputs are 44px tall.
 - 2026-10-15: No Supabase CLI or project credentials were available, so the hosted project was not created. `.env.example` documents the keys and `.env.local` uses placeholders so the app can boot. The service-role key is validated only in `src/lib/env.server.ts` (imported by `admin.ts`) so it stays out of the browser bundle. Public vars are validated in `src/lib/env.ts`.
 - 2026-10-15: Locale routing uses `src/proxy.ts` because Next.js 16 renamed middleware to proxy. `next-intl` 4.14 does not export `hasLocale`, so `isLocale()` lives in `src/i18n/routing.ts`. The locale cookie name `NEXT_LOCALE` is next-intl's default. `/` redirects by that cookie, then `Accept-Language`, then English.
-- 2026-10-15: GitHub Actions runs lint, typecheck, unit tests, `i18n:check`, and build. Playwright + axe is `bun run test:e2e` and is not in that workflow, matching the Phase 0 CI list.
-- 2026-10-15: Owner supplied black and white horizontal logo PNGs and one favicon PNG; the header uses the supplied theme variants, and the app icon plus ICO fallback use that PNG. The favicon is shared across OS themes until the light/dark pair in section 4b is provided.
+- 2026-10-15: GitHub Actions `check` job runs lint, typecheck, unit tests, `i18n:check`, and build. The `e2e` job runs Playwright under Node.
+- 2026-10-15: Owner replaced Hind Siliguri with Tiro Bangla for Bangla text. Tiro Bangla on Google Fonts is weight 400 only, so Bangla bold is synthesized. The header language control is one languages icon that toggles locale, and the theme trigger is a sun/moon icon. Menu labels for Light, Dark, and System stay as text.
+- 2026-10-15: Header theme control is only sun and moon buttons. `defaultTheme` stays `system`. The accent dot follows the resolved appearance, including when the stored choice is still system.
+- 2026-10-15: Header theme button shows only the active icon. Clicking it sets the other theme. `defaultTheme` stays `system`.
+- 2026-10-15: Owner asked for the shadcn-space animated theme toggle. `motion` is installed for that icon. The header button uses it and still calls `setTheme`. Default stays system. The installer also rewrote `button.tsx` sizes and the primary hover; those edits were reverted so buttons stay 44px and use `bg-brand-hover`.
+- 2026-10-15: Tiro Bangla is removed. Noto Serif Bengali (`--font-bn`) is the Bangla face on `:lang(bn)`. `/bn` html is 17px; `text-xs`/`sm`/`base` are `max(1rem, 18px)` so the Playwright floor of 18px holds. Playwright e2e runs under Node; CI has a separate e2e job with axe in both themes and languages.
+- 2026-10-15: English on `/bn` was picking up Noto Serif because the font included a latin subset and `:lang(bn)` inherited onto Latin text. Noto is now bengali-only, Inter is the fallback, and `:lang(en)` forces Inter.
+- 2026-10-15: Locale switch was jumping the header because `/bn` used a 17px root, 18px `text-sm`, and line-height 1.7 on chrome. Html rem is 16px in both locales; header is `h-16`; 18px Bangla type is limited to main and footer.
+- 2026-10-15: Admin UI design system added (9c) from the Salesin and Kravio references: patterns only, gold/ink/ivory palette, no emoji, no copied assets. New libraries approved via section 3: `recharts` (shadcn chart), `cmdk` (shadcn command), `@dnd-kit/*`. New tokens: sidebar, surface-2, success/warning/ink-badge/destructive (+soft), chart-1..5. Dashboard data comes from `src/server/dashboard.ts`; order and sales widgets show empty states until Phase 5.
+- 2026-10-15: Phase 1 checkout validation rejects `quote_only` products; the auth/order forward migration and pgTAP suite must be applied and run on the configured Supabase database before Phase 1 is complete.
+- 2026-10-15: Applied and recorded migrations `202610150001` and `202610150002` on the linked Supabase project, provisioned and verified the first owner, and ran all 19 rollback-protected pgTAP assertions. The test file enables pgTAP in `extensions`; direct SQL execution was used because the CLI test runner requires Docker.
+- 2026-10-15: `has_role(roles text[])` compares `profiles.role::text` to the supplied roles, since `profiles.role` is a PostgreSQL enum and cannot be compared directly with text.

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Hind_Siliguri, Inter } from "next/font/google";
+import { Inter, Noto_Serif_Bengali } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -17,10 +17,9 @@ const inter = Inter({
   display: "swap",
 });
 
-const hindSiliguri = Hind_Siliguri({
-  subsets: ["bengali", "latin"],
-  weight: ["400", "600", "700"],
-  variable: "--font-hind-siliguri",
+const notoSerifBengali = Noto_Serif_Bengali({
+  subsets: ["bengali"],
+  variable: "--font-bn",
   display: "swap",
 });
 
@@ -46,6 +45,9 @@ export async function generateMetadata(
         "x-default": `${siteUrl}/en`,
       },
     },
+    icons: {
+      icon: "/brand/favicon-source.svg",
+    },
   };
 }
 
@@ -66,7 +68,7 @@ export default async function LocaleLayout({
     <html
       lang={locale}
       suppressHydrationWarning
-      className={`${inter.variable} ${hindSiliguri.variable} h-full antialiased`}
+      className={`${inter.variable} ${notoSerifBengali.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">
         <ThemeProvider>

@@ -13,7 +13,9 @@
     "label": "থিম",
     "light": "লাইট",
     "dark": "ডার্ক",
-    "system": "সিস্টেম"
+    "system": "সিস্টেম",
+    "switchToLight": "লাইট থিমে যান",
+    "switchToDark": "ডার্ক থিমে যান"
   },
   "home": {
     "title": "Prime Bag Factory",

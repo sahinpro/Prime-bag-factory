@@ -6,10 +6,15 @@ import { useSearchParams } from "next/navigation";
 import { Link, usePathname } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 
-const options: { locale: Locale; label: string; lang: Locale }[] = [
-  { locale: "en", label: "EN", lang: "en" },
-  { locale: "bn", label: "বাংলা", lang: "bn" },
-];
+const compact: Record<Locale, string> = {
+  en: "EN",
+  bn: "বাং",
+};
+
+const names: Record<Locale, string> = {
+  en: "EN",
+  bn: "বাং",
+};
 
 export function LanguageSwitcher() {
   const t = useTranslations("language");
@@ -18,25 +23,20 @@ export function LanguageSwitcher() {
   const searchParams = useSearchParams();
   const query = searchParams.toString();
   const href = query ? `${pathname}?${query}` : pathname;
+  const next: Locale = active === "bn" ? "en" : "bn";
 
   return (
-    <nav aria-label={t("switcherLabel")} className="flex items-center gap-2">
-      {options.map((option) => {
-        const current = active === option.locale;
-        return (
-          <Link
-            key={option.locale}
-            href={href}
-            locale={option.locale}
-            hrefLang={option.locale}
-            lang={option.lang}
-            aria-current={current ? "true" : undefined}
-            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md px-3 text-sm font-semibold text-foreground aria-[current=true]:bg-gold-soft aria-[current=true]:text-ink"
-          >
-            {option.label}
-          </Link>
-        );
-      })}
+    <nav aria-label={t("switcherLabel")} className="flex items-center">
+      <Link
+        href={href}
+        locale={next}
+        hrefLang={next}
+        lang={next}
+        aria-label={names[next]}
+        className="inline-flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md border border-input px-1 text-[13px] bg-primary leading-none font-normal text-foreground"
+      >
+        {compact[next]}
+      </Link>
     </nav>
   );
 }

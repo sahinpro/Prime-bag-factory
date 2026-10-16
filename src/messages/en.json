@@ -13,7 +13,9 @@
     "label": "Theme",
     "light": "Light",
     "dark": "Dark",
-    "system": "System"
+    "system": "System",
+    "switchToLight": "Switch to light",
+    "switchToDark": "Switch to dark"
   },
   "home": {
     "title": "Prime Bag Factory",

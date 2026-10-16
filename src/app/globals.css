@@ -16,7 +16,7 @@
   --ink: #1c1917;
   --ivory: #fbf8f1;
 
-  --background: #fbf8f1;
+  --background: #fff9ea;
   --foreground: #1c1917;
   --surface: #ffffff;
   --card: #ffffff;
@@ -145,7 +145,6 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-bangla: var(--font-hind-siliguri), var(--font-inter), sans-serif;
   --font-heading: var(--font-sans);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -156,9 +155,85 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-html[lang="bn"] body {
-  font-family: var(--font-bangla);
+html {
+  font-size: 16px;
+}
+
+html[lang="en"],
+html[lang="en"] body,
+[lang="en"] {
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+html[lang="bn"],
+html[lang="bn"] body,
+[lang="bn"] {
+  font-family: var(--font-bn), var(--font-inter), ui-sans-serif, sans-serif;
+}
+
+/*
+  Keep the html rem at 16px in both locales so header spacing does not jump.
+  Bangla 18px type and 1.7 line-height live in main and footer only.
+*/
+html[lang="bn"] main,
+html[lang="bn"] footer {
+  --text-xs: 17px;
+  --text-sm: 17px;
+  --text-base: 18px;
+  --text-xs--line-height: 1.7;
+  --text-sm--line-height: 1.7;
+  --text-base--line-height: 1.7;
+  font-size: 17px;
   line-height: 1.7;
+}
+
+html[lang="bn"] main :is(.text-xs, .text-sm, .text-base),
+html[lang="bn"] footer :is(.text-xs, .text-sm, .text-base) {
+  font-size: max(1rem, 18px);
+}
+
+html:lang(bn) [data-slot="badge"] {
+  height: auto;
+  min-height: 1.75rem;
+  padding-block: 0.25rem;
+  font-size: max(1rem, 18px);
+}
+
+html:lang(bn) [data-slot="button"]:not([data-size^="icon"]) {
+  min-height: 2.75rem;
+  height: auto;
+  font-size: max(1rem, 18px);
+}
+
+html:lang(bn) [data-slot="dropdown-menu-item"],
+html:lang(bn) [data-slot="dropdown-menu-checkbox-item"],
+html:lang(bn) [data-slot="dropdown-menu-radio-item"],
+html:lang(bn) [data-slot="dropdown-menu-sub-trigger"],
+html:lang(bn) [data-slot="dropdown-menu-label"],
+html:lang(bn) [data-slot="dropdown-menu-shortcut"] {
+  min-height: 2.75rem;
+  font-size: max(1rem, 18px);
+}
+
+html:lang(bn) [data-slot="table"],
+html:lang(bn) [data-slot="table-caption"],
+html:lang(bn) [data-slot="tabs-trigger"],
+html:lang(bn) [data-slot="tabs-content"],
+html:lang(bn) [data-slot="dialog-content"],
+html:lang(bn) [data-slot="dialog-description"],
+html:lang(bn) [data-slot="sheet-content"],
+html:lang(bn) [data-slot="sheet-description"],
+html:lang(bn) [data-slot="label"],
+html:lang(bn) [data-slot="form-description"],
+html:lang(bn) [data-slot="form-message"],
+html:lang(bn) [data-slot="field-description"],
+html:lang(bn) [data-slot="field-error"],
+html:lang(bn) [data-slot="input"] {
+  font-size: max(1rem, 18px);
+}
+
+html:lang(bn) [data-slot="tabs-trigger"] {
+  min-height: 2.75rem;
 }
 
 @layer base {

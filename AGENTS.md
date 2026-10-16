@@ -33,6 +33,20 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Never trust prices, totals, or stock from the client.
 - Slugs are lowercase, hyphenated English, and unique per table.
 - File names are kebab-case. Components are PascalCase. Database columns are snake_case.
-- Bangla text uses Hind Siliguri. Body line-height for Bangla is about 1.7.
+- Bangla text uses Noto Serif Bengali on `:lang(bn)`. Body line-height for Bangla is about 1.7. On `/bn`, visible text is at least 18px.
 - Routes under `src/app/[locale]` are public and bilingual. Admin stays outside `[locale]` and is English first.
 - Next.js 16 uses `src/proxy.ts`, not `middleware.ts`.
+
+### Admin UI rules
+
+- Before touching anything under `src/app/(admin)` or `src/components/admin`, read plan section 9c (Admin UI Design System) and 9c.10 (acceptance checklist).
+- Build admin pages only from the kit in `src/components/admin/`. If a component is missing, add it to the kit and to `/admin/design-system` first.
+- Use semantic tokens only (`bg-sidebar`, `bg-surface-2`, `text-success`, `bg-warning-soft`, `--chart-1..5`). No raw hex, no emoji, no icon library other than `lucide-react` (16px controls, 20px card headers, stroke 1.75).
+- Status is never color alone: every badge, delta and urgency indicator has an icon and a text label (mapping in plan 9c.6).
+- Every list and widget ships loading (skeleton), empty and error states. Skeletons match final dimensions.
+- Tables use `DataTable` with URL-synced `page`, `sort`, `q` and filters. Under 768px they render as stacked cards. No horizontal page scroll at 375px.
+- Forms use `FormSection`, `BilingualField`, `StickySaveBar`; validate with zod on client and server; destructive actions use `ConfirmDialog`.
+- Admin is English; bilingual content inputs get `lang="bn"` for the Bangla font. Money and dates go through `src/lib/format.ts`.
+- Respect `prefers-reduced-motion`; transitions 150-200ms; hover is never the only way to reach an action.
+- Check every admin page in light and dark, at 375 / 768 / 1280 / 1440 px, with axe, before ticking its task.
+- This is Next.js 16: read the relevant guide in `node_modules/next/dist/docs/` before using any API you are unsure of.

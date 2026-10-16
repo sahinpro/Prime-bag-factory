@@ -5,15 +5,16 @@ on:
   push:
     branches: [main]
 
+env:
+  NEXT_PUBLIC_SITE_URL: http://localhost:3000
+  NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: public-anon-placeholder
+  SUPABASE_SERVICE_ROLE_KEY: service-role-placeholder
+  NEXT_PUBLIC_WHATSAPP_NUMBER: "8801700000000"
+
 jobs:
   check:
     runs-on: ubuntu-latest
-    env:
-      NEXT_PUBLIC_SITE_URL: http://localhost:3000
-      NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: public-anon-placeholder
-      SUPABASE_SERVICE_ROLE_KEY: service-role-placeholder
-      NEXT_PUBLIC_WHATSAPP_NUMBER: "8801700000000"
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -25,3 +26,17 @@ jobs:
       - run: bun run test
       - run: bun run i18n:check
       - run: bun run build
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: bun install --frozen-lockfile
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test

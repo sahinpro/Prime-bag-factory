@@ -1,5 +1,5 @@
-import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 
 import { LanguageSwitcher } from "@/components/site/language-switcher";
 import { ThemeLogo } from "@/components/site/logo";
@@ -17,7 +17,7 @@ export async function SiteShell({ children }: { children: React.ReactNode }) {
       >
         {a11y("skipToContent")}
       </a>
-      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-4 py-3">
+      <header className="flex h-16 shrink-0 items-center justify-between gap-4 border-b border-border px-4">
         <ThemeLogo />
         <div className="flex items-center gap-2">
           <Suspense fallback={null}>
