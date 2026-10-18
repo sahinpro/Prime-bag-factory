@@ -25,9 +25,7 @@ async function openOrders(page: Page): Promise<boolean> {
 async function openFirstOrder(page: Page): Promise<boolean> {
   // The kit's action column is "Open" plus an sr-only ": order <no>", so the
   // computed name is "Open : order PBF-…" — the space before the colon is real.
-  const open = page
-    .getByRole("link", { name: /^Open\s*:\s*order / })
-    .first();
+  const open = page.getByRole("link", { name: /^Open\s*:\s*order / }).first();
   if ((await open.count()) === 0) return false;
   await open.click();
   await expect(
@@ -45,13 +43,24 @@ test("the orders list carries the pipeline and the advance columns", async ({
     "Set E2E_STAFF_EMAIL / E2E_STAFF_PASSWORD with a provisioned staff account.",
   );
 
-  const tabs = page.getByRole("navigation", { name: "Filter orders by status" });
+  const tabs = page.getByRole("navigation", {
+    name: "Filter orders by status",
+  });
   await expect(tabs).toBeVisible();
   for (const label of ["Pending", "Shipped", "Delivered", "Cancelled"]) {
-    await expect(tabs.getByRole("link", { name: new RegExp(label) })).toBeVisible();
+    await expect(
+      tabs.getByRole("link", { name: new RegExp(label) }),
+    ).toBeVisible();
   }
 
-  for (const column of ["Order", "Customer", "Total", "Paid", "Status", "Payment"]) {
+  for (const column of [
+    "Order",
+    "Customer",
+    "Total",
+    "Paid",
+    "Status",
+    "Payment",
+  ]) {
     await expect(
       page.getByRole("columnheader", { name: column, exact: true }),
     ).toBeVisible();
@@ -90,10 +99,9 @@ test("an order detail shows items, ledger, history and print links", async ({
     "href",
     /\/admin\/print\/orders\/.+\/invoice$/,
   );
-  await expect(page.getByRole("link", { name: "Packing slip" })).toHaveAttribute(
-    "href",
-    /\/admin\/print\/orders\/.+\/packing$/,
-  );
+  await expect(
+    page.getByRole("link", { name: "Packing slip" }),
+  ).toHaveAttribute("href", /\/admin\/print\/orders\/.+\/packing$/);
 
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations).toEqual([]);

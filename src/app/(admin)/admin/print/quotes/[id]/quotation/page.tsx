@@ -53,7 +53,8 @@ export default async function QuoteQuotationPage({
   const description = [
     quote.product_title ?? quote.category_name ?? "Custom bag",
     quote.custom_size ??
-      (quote.builder?.size && (quote.builder.size.width || quote.builder.size.height)
+      (quote.builder?.size &&
+      (quote.builder.size.width || quote.builder.size.height)
         ? `${quote.builder.size.width} × ${quote.builder.size.height}${quote.builder.size.gusset ? ` × ${quote.builder.size.gusset}` : ""} ${quote.builder.size.unit ?? "inch"}`
         : null),
     quote.custom_color ??
@@ -78,15 +79,15 @@ export default async function QuoteQuotationPage({
           <PrintRow label="Company">{quote.company_name ?? "—"}</PrintRow>
           <PrintRow label="Contact">{quote.contact_name}</PrintRow>
           <PrintRow label="Phone">{quote.phone}</PrintRow>
-          {quote.email ? <PrintRow label="Email">{quote.email}</PrintRow> : null}
+          {quote.email ? (
+            <PrintRow label="Email">{quote.email}</PrintRow>
+          ) : null}
         </dl>
       </PrintSection>
 
       <PrintSection title="Quoted items">
         <table className="w-full text-sm">
-          <caption className="sr-only">
-            Quoted items for request {ref}
-          </caption>
+          <caption className="sr-only">Quoted items for request {ref}</caption>
           <thead>
             <tr className="border-b-2 border-black text-left">
               <th scope="col" className="py-2 pr-3 font-semibold">
@@ -151,15 +152,15 @@ export default async function QuoteQuotationPage({
             50% advance due at order confirmation; the remaining 50% is cash on
             delivery (COD). Production starts after the advance is received.
           </PrintRow>
-          <PrintRow label="Currency">All amounts in Bangladeshi Taka (BDT).</PrintRow>
+          <PrintRow label="Currency">
+            All amounts in Bangladeshi Taka (BDT).
+          </PrintRow>
         </dl>
       </PrintSection>
 
       <PrintSection title="Authorization">
         <div className="grid grid-cols-2 gap-10 pt-6 text-sm">
-          <div className="border-t border-black pt-1">
-            For {company.name}
-          </div>
+          <div className="border-t border-black pt-1">For {company.name}</div>
           <div className="border-t border-black pt-1">
             Accepted by {quote.company_name ?? quote.contact_name}
           </div>

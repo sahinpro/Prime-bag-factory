@@ -46,7 +46,12 @@ export default async function OrderInvoicePage({
   ]);
   if (!order) notFound();
 
-  const address = [order.address_line, order.area, order.district, order.division]
+  const address = [
+    order.address_line,
+    order.area,
+    order.district,
+    order.division,
+  ]
     .filter(Boolean)
     .join(", ");
 
@@ -96,11 +101,16 @@ export default async function OrderInvoicePage({
           </thead>
           <tbody>
             {order.lines.map((line) => (
-              <tr key={line.id} className="border-b border-neutral-400 align-top">
+              <tr
+                key={line.id}
+                className="border-b border-neutral-400 align-top"
+              >
                 <td className="py-2 pr-3">
                   {line.title}
                   <span className="block text-xs text-neutral-700">
-                    {[line.sku, line.color, line.size].filter(Boolean).join(" · ")}
+                    {[line.sku, line.color, line.size]
+                      .filter(Boolean)
+                      .join(" · ")}
                   </span>
                 </td>
                 <td className="py-2 pr-3 text-right tabular-nums">
@@ -120,7 +130,9 @@ export default async function OrderInvoicePage({
 
       <PrintSection title="Payment">
         <dl>
-          <PrintRow label="Subtotal">{formatMoney(order.subtotal, "en")}</PrintRow>
+          <PrintRow label="Subtotal">
+            {formatMoney(order.subtotal, "en")}
+          </PrintRow>
           <PrintRow label="Shipping">
             {order.shipping_fee > 0
               ? formatMoney(order.shipping_fee, "en")
@@ -132,7 +144,9 @@ export default async function OrderInvoicePage({
             </PrintRow>
           ) : null}
           {order.vat_amount > 0 ? (
-            <PrintRow label="VAT">{formatMoney(order.vat_amount, "en")}</PrintRow>
+            <PrintRow label="VAT">
+              {formatMoney(order.vat_amount, "en")}
+            </PrintRow>
           ) : null}
           <PrintRow label="Total">
             <strong>{formatMoney(order.total, "en")}</strong>

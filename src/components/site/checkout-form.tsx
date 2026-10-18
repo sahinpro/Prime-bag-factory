@@ -4,10 +4,13 @@ import { ShieldCheck, ShoppingBag } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import * as React from "react";
 
-import { placeCheckoutOrder, lookupOrder } from "@/app/[locale]/(site)/checkout/actions";
 import { loadCart } from "@/app/[locale]/(site)/cart/actions";
-import { Media } from "@/components/site/media";
+import {
+  lookupOrder,
+  placeCheckoutOrder,
+} from "@/app/[locale]/(site)/checkout/actions";
 import { Field } from "@/components/site/form-field";
+import { Media } from "@/components/site/media";
 import { OrderStatus } from "@/components/site/order-status";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,8 +28,8 @@ import {
   subtotalOf,
 } from "@/lib/pricing";
 import { checkoutSchema } from "@/lib/validators/checkout";
-import type { ShippingZone } from "@/server/checkout";
 import type { CartLine } from "@/server/cart";
+import type { ShippingZone } from "@/server/checkout";
 import type { PublicOrder } from "@/server/orders";
 
 /**
@@ -90,9 +93,9 @@ export function CheckoutForm({ zones }: { zones: ShippingZone[] }) {
   }, [idsKey]);
 
   const [zoneId, setZoneId] = React.useState(zones[0]?.id ?? "");
-  const [fieldErrors, setFieldErrors] = React.useState<
-    Record<string, string>
-  >({});
+  const [fieldErrors, setFieldErrors] = React.useState<Record<string, string>>(
+    {},
+  );
   const [formError, setFormError] = React.useState<string | null>(null);
   const [pending, setPending] = React.useState(false);
   const [placed, setPlaced] = React.useState<Placed | null>(null);
@@ -156,7 +159,8 @@ export function CheckoutForm({ zones }: { zones: ShippingZone[] }) {
       idempotency_key: idempotencyRef.current || newIdempotencyKey(),
       website: String(fd.get("website") ?? ""),
     };
-    if (!idempotencyRef.current) idempotencyRef.current = payload.idempotency_key;
+    if (!idempotencyRef.current)
+      idempotencyRef.current = payload.idempotency_key;
 
     // Client pass of the server schema — instant field errors, no round trip.
     const parsed = checkoutSchema.safeParse(payload);
@@ -165,7 +169,8 @@ export function CheckoutForm({ zones }: { zones: ShippingZone[] }) {
       for (const issue of parsed.error.issues) {
         const field = String(issue.path[0] ?? "form");
         if (!errors[field]) {
-          errors[field] = issue.code === "custom" ? issue.message : "errRequired";
+          errors[field] =
+            issue.code === "custom" ? issue.message : "errRequired";
         }
       }
       setFieldErrors(errors);
@@ -232,7 +237,11 @@ export function CheckoutForm({ zones }: { zones: ShippingZone[] }) {
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-card border border-dashed px-6 py-16 text-center">
-        <ShoppingBag aria-hidden="true" strokeWidth={1.75} className="size-8 text-muted-foreground" />
+        <ShoppingBag
+          aria-hidden="true"
+          strokeWidth={1.75}
+          className="size-8 text-muted-foreground"
+        />
         <p className="font-medium">{t("emptyCart")}</p>
         <Button asChild>
           <Link href="/cart">{t("backToCart")}</Link>
@@ -289,18 +298,30 @@ export function CheckoutForm({ zones }: { zones: ShippingZone[] }) {
               const title =
                 locale === "bn" && line.titleBn ? line.titleBn : line.titleEn;
               return (
-                <li key={line.variantId} className="flex items-center gap-3 py-3">
+                <li
+                  key={line.variantId}
+                  className="flex items-center gap-3 py-3"
+                >
                   <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-control border bg-surface-2">
-                    <Media src={line.image} alt={title} sizes="48px" className="h-full w-full" />
+                    <Media
+                      src={line.image}
+                      alt={title}
+                      sizes="48px"
+                      className="h-full w-full"
+                    />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium">{title}</span>
+                    <span className="block truncate text-sm font-medium">
+                      {title}
+                    </span>
                     <span className="block truncate text-sm text-muted-foreground">
-                      {[line.color, line.size].filter(Boolean).join(" · ") || line.sku}
+                      {[line.color, line.size].filter(Boolean).join(" · ") ||
+                        line.sku}
                     </span>
                   </span>
                   <span className="text-sm text-muted-foreground">
-                    {formatNumber(qty, locale)} × {formatMoney(priced[i].unitPrice ?? 0, locale)}
+                    {formatNumber(qty, locale)} ×{" "}
+                    {formatMoney(priced[i].unitPrice ?? 0, locale)}
                   </span>
                 </li>
               );
@@ -312,7 +333,16 @@ export function CheckoutForm({ zones }: { zones: ShippingZone[] }) {
         <section className="flex flex-col gap-4 rounded-card border bg-surface p-4">
           <h2 className="font-medium">{t("contactTitle")}</h2>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field id="customer_name" label={t("name")} required error={fieldErrors.customer_name ? t(fieldErrors.customer_name) : undefined}>
+            <Field
+              id="customer_name"
+              label={t("name")}
+              required
+              error={
+                fieldErrors.customer_name
+                  ? t(fieldErrors.customer_name)
+                  : undefined
+              }
+            >
               <Input
                 id="customer_name"
                 name="customer_name"
@@ -321,7 +351,16 @@ export function CheckoutForm({ zones }: { zones: ShippingZone[] }) {
                 aria-invalid={!!fieldErrors.customer_name}
               />
             </Field>
-            <Field id="customer_phone" label={t("phone")} required error={fieldErrors.customer_phone ? t(fieldErrors.customer_phone) : undefined}>
+            <Field
+              id="customer_phone"
+              label={t("phone")}
+              required
+              error={
+                fieldErrors.customer_phone
+                  ? t(fieldErrors.customer_phone)
+                  : undefined
+              }
+            >
               <Input
                 id="customer_phone"
                 name="customer_phone"
@@ -333,7 +372,15 @@ export function CheckoutForm({ zones }: { zones: ShippingZone[] }) {
                 aria-invalid={!!fieldErrors.customer_phone}
               />
             </Field>
-            <Field id="customer_email" label={t("email")} error={fieldErrors.customer_email ? t(fieldErrors.customer_email) : undefined}>
+            <Field
+              id="customer_email"
+              label={t("email")}
+              error={
+                fieldErrors.customer_email
+                  ? t(fieldErrors.customer_email)
+                  : undefined
+              }
+            >
               <Input
                 id="customer_email"
                 name="customer_email"
@@ -350,17 +397,54 @@ export function CheckoutForm({ zones }: { zones: ShippingZone[] }) {
         <section className="flex flex-col gap-4 rounded-card border bg-surface p-4">
           <h2 className="font-medium">{t("deliveryTitle")}</h2>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field id="division" label={t("division")} error={fieldErrors.division ? t(fieldErrors.division) : undefined}>
-              <Input id="division" name="division" autoComplete="address-level1" aria-invalid={!!fieldErrors.division} />
+            <Field
+              id="division"
+              label={t("division")}
+              error={fieldErrors.division ? t(fieldErrors.division) : undefined}
+            >
+              <Input
+                id="division"
+                name="division"
+                autoComplete="address-level1"
+                aria-invalid={!!fieldErrors.division}
+              />
             </Field>
-            <Field id="district" label={t("district")} required error={fieldErrors.district ? t(fieldErrors.district) : undefined}>
-              <Input id="district" name="district" required aria-invalid={!!fieldErrors.district} />
+            <Field
+              id="district"
+              label={t("district")}
+              required
+              error={fieldErrors.district ? t(fieldErrors.district) : undefined}
+            >
+              <Input
+                id="district"
+                name="district"
+                required
+                aria-invalid={!!fieldErrors.district}
+              />
             </Field>
-            <Field id="area" label={t("area")} required error={fieldErrors.area ? t(fieldErrors.area) : undefined}>
-              <Input id="area" name="area" autoComplete="address-level2" required aria-invalid={!!fieldErrors.area} />
+            <Field
+              id="area"
+              label={t("area")}
+              required
+              error={fieldErrors.area ? t(fieldErrors.area) : undefined}
+            >
+              <Input
+                id="area"
+                name="area"
+                autoComplete="address-level2"
+                required
+                aria-invalid={!!fieldErrors.area}
+              />
             </Field>
           </div>
-          <Field id="address_line" label={t("address")} required error={fieldErrors.address_line ? t(fieldErrors.address_line) : undefined}>
+          <Field
+            id="address_line"
+            label={t("address")}
+            required
+            error={
+              fieldErrors.address_line ? t(fieldErrors.address_line) : undefined
+            }
+          >
             <Textarea
               id="address_line"
               name="address_line"
@@ -370,7 +454,15 @@ export function CheckoutForm({ zones }: { zones: ShippingZone[] }) {
               aria-invalid={!!fieldErrors.address_line}
             />
           </Field>
-          <Field id="customer_note" label={t("note")} error={fieldErrors.customer_note ? t(fieldErrors.customer_note) : undefined}>
+          <Field
+            id="customer_note"
+            label={t("note")}
+            error={
+              fieldErrors.customer_note
+                ? t(fieldErrors.customer_note)
+                : undefined
+            }
+          >
             <Textarea id="customer_note" name="customer_note" rows={2} />
           </Field>
         </section>
@@ -388,8 +480,8 @@ export function CheckoutForm({ zones }: { zones: ShippingZone[] }) {
                   className={[
                     "flex items-center justify-between gap-3 rounded-control border px-3 py-2.5 text-sm",
                     z.id === zoneId ? "border-brand bg-brand/10" : "",
-                  ].join(" ")
-                }>
+                  ].join(" ")}
+                >
                   <span className="flex items-center gap-2">
                     <input
                       type="radio"
@@ -459,7 +551,9 @@ export function CheckoutForm({ zones }: { zones: ShippingZone[] }) {
           </div>
           <div className="flex justify-between rounded-control bg-surface-2 px-2 py-1.5">
             <dt className="text-muted-foreground">{t("advanceDue")}</dt>
-            <dd className="font-medium">{formatMoney(advanceDue(total), locale)}</dd>
+            <dd className="font-medium">
+              {formatMoney(advanceDue(total), locale)}
+            </dd>
           </div>
           <div className="flex justify-between text-xs text-muted-foreground">
             <dt>{t("codBalance")}</dt>
@@ -482,7 +576,11 @@ export function CheckoutForm({ zones }: { zones: ShippingZone[] }) {
           {pending ? t("placing") : t("placeOrder")}
         </Button>
         <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
-          <ShieldCheck aria-hidden="true" strokeWidth={1.75} className="size-4 shrink-0" />
+          <ShieldCheck
+            aria-hidden="true"
+            strokeWidth={1.75}
+            className="size-4 shrink-0"
+          />
           {t("callNote")}
         </p>
         <p className="text-xs text-muted-foreground">{t("advanceNote")}</p>

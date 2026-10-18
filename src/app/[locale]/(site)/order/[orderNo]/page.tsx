@@ -1,7 +1,7 @@
-import { connection } from "next/server";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { Suspense } from "react";
 
 import { OrderLookup } from "@/components/site/order-status";
@@ -31,7 +31,10 @@ export default function OrderPage({
   return (
     <Suspense
       fallback={
-        <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-10" aria-busy="true">
+        <div
+          className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-10"
+          aria-busy="true"
+        >
           <div className="h-9 w-56 animate-pulse rounded-control bg-surface-2" />
           <div className="h-48 animate-pulse rounded-card bg-muted" />
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Inbox, Puzzle, ClipboardList } from "lucide-react";
+import { ClipboardList, Inbox, Puzzle } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
@@ -24,12 +24,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatDate } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import type {
   AdminQuote,
   AssignableStaff,
   QuoteStatusCounts,
 } from "@/server/quotes";
-import { cn } from "@/lib/utils";
 
 /**
  * QuotesTable — the quotes inbox (plan 9c.8 "TabsBar pipeline (counts),
@@ -159,7 +159,8 @@ export function QuotesTable({
   }, [quotes, query.q, source, assignee]);
 
   const activeStatus: StatusKey = status ?? "all";
-  const filtersActive = query.q !== "" || source !== "all" || assignee !== "all";
+  const filtersActive =
+    query.q !== "" || source !== "all" || assignee !== "all";
 
   const columns = React.useMemo<DataTableColumn<AdminQuote>[]>(
     () => [
@@ -177,24 +178,27 @@ export function QuotesTable({
           </div>
         ),
       }),
-      columnHelper.accessor((row) => row.product_title ?? row.category_name ?? "", {
-        id: "request",
-        header: "Request",
-        cell: ({ row }) => (
-          <div className="min-w-0">
-            <p className="truncate text-sm">
-              {row.original.product_title ??
-                row.original.category_name ??
-                "Custom request"}
-            </p>
-            <p className="text-xs text-muted-foreground tabular-nums">
-              {row.original.quantity != null
-                ? `${row.original.quantity.toLocaleString("en-US")} pcs`
-                : "Qty not set"}
-            </p>
-          </div>
-        ),
-      }),
+      columnHelper.accessor(
+        (row) => row.product_title ?? row.category_name ?? "",
+        {
+          id: "request",
+          header: "Request",
+          cell: ({ row }) => (
+            <div className="min-w-0">
+              <p className="truncate text-sm">
+                {row.original.product_title ??
+                  row.original.category_name ??
+                  "Custom request"}
+              </p>
+              <p className="text-xs text-muted-foreground tabular-nums">
+                {row.original.quantity != null
+                  ? `${row.original.quantity.toLocaleString("en-US")} pcs`
+                  : "Qty not set"}
+              </p>
+            </div>
+          ),
+        },
+      ),
       columnHelper.accessor("source", {
         header: "Source",
         cell: ({ getValue }) => <SourceBadge source={getValue()} />,
@@ -283,7 +287,9 @@ export function QuotesTable({
         <Button variant="outline" size="sm" asChild>
           <Link href={`/admin/quotes/${row.id}`}>
             Open
-            <span className="sr-only">: {row.company_name ?? row.contact_name}</span>
+            <span className="sr-only">
+              : {row.company_name ?? row.contact_name}
+            </span>
           </Link>
         </Button>
       </div>

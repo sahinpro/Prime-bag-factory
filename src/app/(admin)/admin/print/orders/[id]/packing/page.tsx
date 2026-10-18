@@ -45,7 +45,12 @@ export default async function OrderPackingPage({
   ]);
   if (!order) notFound();
 
-  const address = [order.address_line, order.area, order.district, order.division]
+  const address = [
+    order.address_line,
+    order.area,
+    order.district,
+    order.division,
+  ]
     .filter(Boolean)
     .join(", ");
   const unitCount = order.lines.reduce((sum, line) => sum + line.qty, 0);
@@ -65,7 +70,9 @@ export default async function OrderPackingPage({
           <PrintRow label="Phone">{order.customer_phone}</PrintRow>
           <PrintRow label="Address">{address || "—"}</PrintRow>
           <PrintRow label="Zone">{order.zone_name ?? "—"}</PrintRow>
-          <PrintRow label="Courier">{order.courier_name ?? "To be assigned"}</PrintRow>
+          <PrintRow label="Courier">
+            {order.courier_name ?? "To be assigned"}
+          </PrintRow>
           <PrintRow label="Tracking">
             {order.tracking_code ?? "Not yet shipped"}
           </PrintRow>
@@ -95,7 +102,10 @@ export default async function OrderPackingPage({
           </thead>
           <tbody>
             {order.lines.map((line) => (
-              <tr key={line.id} className="border-b border-neutral-400 align-top">
+              <tr
+                key={line.id}
+                className="border-b border-neutral-400 align-top"
+              >
                 <td className="py-2 pr-3">{line.title}</td>
                 <td className="py-2 pr-3">
                   {[line.color, line.size].filter(Boolean).join(" · ") || "—"}
@@ -109,8 +119,8 @@ export default async function OrderPackingPage({
           </tbody>
         </table>
         <p className="mt-2 text-sm">
-          Total pieces: <strong>{formatNumber(unitCount, "en")}</strong> · Lines:{" "}
-          {formatNumber(order.lines.length, "en")}
+          Total pieces: <strong>{formatNumber(unitCount, "en")}</strong> ·
+          Lines: {formatNumber(order.lines.length, "en")}
         </p>
       </PrintSection>
 

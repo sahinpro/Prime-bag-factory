@@ -56,11 +56,13 @@ type VariantNode = {
     stock_mode: "tracked" | "made_to_order";
     status: string;
     product_images: { path: string; sort_order: unknown }[] | null;
-    price_tiers: {
-      min_qty: unknown;
-      max_qty: unknown;
-      unit_price: unknown;
-    }[] | null;
+    price_tiers:
+      | {
+          min_qty: unknown;
+          max_qty: unknown;
+          unit_price: unknown;
+        }[]
+      | null;
   } | null;
 };
 
@@ -95,12 +97,7 @@ export async function loadCartLines(
   for (const id of unique) {
     const row = byId.get(id);
     const product = row?.products ?? null;
-    if (
-      !row ||
-      !row.is_active ||
-      !product ||
-      product.status !== "published"
-    ) {
+    if (!row || !row.is_active || !product || product.status !== "published") {
       missing.push(id);
       continue;
     }

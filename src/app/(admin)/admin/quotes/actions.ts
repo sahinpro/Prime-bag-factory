@@ -59,7 +59,9 @@ export async function updateQuoteStatus(
   return updateQuote(parsed.data.id, { status: parsed.data.status });
 }
 
-export async function assignQuote(payload: unknown): Promise<QuoteActionResult> {
+export async function assignQuote(
+  payload: unknown,
+): Promise<QuoteActionResult> {
   try {
     await requireRole(QUOTE_ROLES);
   } catch {
@@ -68,11 +70,14 @@ export async function assignQuote(payload: unknown): Promise<QuoteActionResult> 
   const parsed = assignQuoteSchema.safeParse(payload);
   if (!parsed.success) return { ok: false, error: "Invalid assignee." };
   return updateQuote(parsed.data.id, {
-    assigned_to: parsed.data.assigned_to === "" ? null : parsed.data.assigned_to,
+    assigned_to:
+      parsed.data.assigned_to === "" ? null : parsed.data.assigned_to,
   });
 }
 
-export async function saveQuoteDetails(payload: unknown): Promise<QuoteActionResult> {
+export async function saveQuoteDetails(
+  payload: unknown,
+): Promise<QuoteActionResult> {
   try {
     await requireRole(QUOTE_ROLES);
   } catch {

@@ -108,9 +108,7 @@ export function setCartQty(variantId: string, qty: number) {
     return;
   }
   persist(
-    items.map((i) =>
-      i.variantId === variantId ? { ...i, qty: quantity } : i,
-    ),
+    items.map((i) => (i.variantId === variantId ? { ...i, qty: quantity } : i)),
   );
 }
 

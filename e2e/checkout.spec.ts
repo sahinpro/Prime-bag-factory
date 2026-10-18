@@ -22,7 +22,9 @@ async function addFirstBuyNow(page: Page): Promise<boolean> {
   if ((await add.count()) === 0) return false;
   await expect(add).toBeEnabled({ timeout: 10_000 });
   await add.click();
-  await expect(page.getByRole("link", { name: "Added — view cart" })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Added — view cart" }),
+  ).toBeVisible();
   return true;
 }
 
@@ -37,9 +39,7 @@ test("the cart carries into checkout with the advance summary", async ({
   await toCheckout.click();
 
   await expect(page).toHaveURL(/\/en\/checkout$/);
-  await expect(
-    page.getByRole("heading", { name: "Your items" }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your items" })).toBeVisible();
   // One line, re-hydrated from the database rather than from localStorage.
   await expect(page.locator("form li")).toHaveCount(1);
   await expect(page.getByText("Shipping zone")).toBeVisible();

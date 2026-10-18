@@ -4,8 +4,8 @@ import { ChevronDown, Menu, Search } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Suspense, useEffect, useRef, useState } from "react";
 
-import { LanguageSwitcher } from "@/components/site/language-switcher";
 import { CartLink } from "@/components/site/cart-link";
+import { LanguageSwitcher } from "@/components/site/language-switcher";
 import { ThemeLogo } from "@/components/site/logo";
 import { ThemeToggle } from "@/components/site/theme-toggle";
 import { Button } from "@/components/ui/button";

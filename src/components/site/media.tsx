@@ -40,7 +40,7 @@ export function Media({
         fill
         sizes={sizes ?? "100vw"}
         priority={priority}
-        className={cn("h-full w-full object-cover", imgClassName)}
+        className={cn("h-full w-full object-contain", imgClassName)}
       />
     </div>
   );

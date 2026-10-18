@@ -157,7 +157,8 @@ export async function saveShippingDetails(
     return denied();
   }
   const parsed = orderShippingSchema.safeParse(payload);
-  if (!parsed.success) return { ok: false, error: "The courier details are too long." };
+  if (!parsed.success)
+    return { ok: false, error: "The courier details are too long." };
   const { id, ...fields } = parsed.data;
 
   const supabase = await createClient();

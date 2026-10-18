@@ -28,7 +28,12 @@ export type QuoteUrgency = "overdue" | "due_soon" | "later";
  */
 export type BuilderSnapshot = {
   category: { id?: string; slug?: string; name?: string } | null;
-  size: { width?: number; height?: number; gusset?: number; unit?: string } | null;
+  size: {
+    width?: number;
+    height?: number;
+    gusset?: number;
+    unit?: string;
+  } | null;
   material: string | null;
   colors: {
     primary: { name?: string; hex?: string } | null;
@@ -94,13 +99,14 @@ type Joined = {
 };
 
 /** A selected quote_requests row plus its to-one embeds (list projection). */
-type QuoteRow = Omit<AdminQuote, "urgency" | "product_title" | "category_name" | "assigned_name"> &
+type QuoteRow = Omit<
+  AdminQuote,
+  "urgency" | "product_title" | "category_name" | "assigned_name"
+> &
   Joined;
 
 /** PostgREST to-one embeds may come back as an object or a 1-item array. */
-function unwrap<T extends object>(
-  value: T | T[] | null | undefined,
-): T | null {
+function unwrap<T extends object>(value: T | T[] | null | undefined): T | null {
   if (!value) return null;
   return Array.isArray(value) ? (value[0] ?? null) : value;
 }
@@ -110,13 +116,17 @@ function unwrap<T extends object>(
  * validity window takes over. No date → no urgency badge.
  */
 function computeUrgency(
-  row: { status: QuoteStatus; needed_by: string | null; valid_until: string | null },
+  row: {
+    status: QuoteStatus;
+    needed_by: string | null;
+    valid_until: string | null;
+  },
   nowMs: number,
 ): QuoteUrgency | null {
   const target =
     row.status === "quoted"
-      ? row.valid_until ?? row.needed_by
-      : row.needed_by ?? row.valid_until;
+      ? (row.valid_until ?? row.needed_by)
+      : (row.needed_by ?? row.valid_until);
   if (!target) return null;
   const dayMs = 86_400_000;
   const days = Math.floor(
@@ -173,19 +183,14 @@ function parseBuilder(value: unknown): BuilderSnapshot | null {
             typeof printing.method === "string" ? printing.method : undefined,
           text: typeof printing.text === "string" ? printing.text : undefined,
           artwork:
-            typeof printing.artwork === "string"
-              ? printing.artwork
-              : undefined,
+            typeof printing.artwork === "string" ? printing.artwork : undefined,
         }
       : null,
     quantity: typeof v.quantity === "number" ? v.quantity : null,
   };
 }
 
-function toAdminQuote(
-  row: QuoteRow,
-  nowMs: number,
-): AdminQuote {
+function toAdminQuote(row: QuoteRow, nowMs: number): AdminQuote {
   return {
     id: row.id as string,
     source: row.source as QuoteSource,
@@ -205,12 +210,13 @@ function toAdminQuote(
     message: (row.message as string | null) ?? null,
     attachment_path: (row.attachment_path as string | null) ?? null,
     estimated_unit_price:
-      row.estimated_unit_price == null ? null : Number(row.estimated_unit_price),
+      row.estimated_unit_price == null
+        ? null
+        : Number(row.estimated_unit_price),
     estimated_total:
       row.estimated_total == null ? null : Number(row.estimated_total),
     status: row.status as QuoteStatus,
-    quoted_amount:
-      row.quoted_amount == null ? null : Number(row.quoted_amount),
+    quoted_amount: row.quoted_amount == null ? null : Number(row.quoted_amount),
     valid_until: (row.valid_until as string | null) ?? null,
     assigned_to: (row.assigned_to as string | null) ?? null,
     assigned_name: unwrap(row.assignee)?.full_name ?? null,
@@ -264,7 +270,9 @@ export async function countQuotesByStatus(): Promise<QuoteStatusCounts> {
   return counts;
 }
 
-export async function getAdminQuote(id: string): Promise<AdminQuoteDetail | null> {
+export async function getAdminQuote(
+  id: string,
+): Promise<AdminQuoteDetail | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("quote_requests")

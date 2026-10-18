@@ -11,10 +11,7 @@ export default async function ProtectedAdminLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   await connection();
-  const [user, alerts] = await Promise.all([
-    getAdminUser(),
-    listAdminAlerts(),
-  ]);
+  const [user, alerts] = await Promise.all([getAdminUser(), listAdminAlerts()]);
 
   if (!user) {
     redirect("/admin/login");

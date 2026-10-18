@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   ORDER_STATUSES,
-  PAYMENT_METHOD_LABELS,
-  PAYMENT_METHODS,
   orderNoteSchema,
   orderShippingSchema,
+  PAYMENT_METHOD_LABELS,
+  PAYMENT_METHODS,
   recordPaymentSchema,
   setOrderStatusSchema,
 } from "./order-admin";
@@ -66,9 +66,10 @@ describe("setOrderStatusSchema", () => {
 
 describe("recordPaymentSchema", () => {
   it("coerces the form string and rounds to paisa", () => {
-    expect(recordPaymentSchema.parse({ id: UUID, amount: "9945", method: "cod" }).amount).toBe(
-      9945,
-    );
+    expect(
+      recordPaymentSchema.parse({ id: UUID, amount: "9945", method: "cod" })
+        .amount,
+    ).toBe(9945);
     expect(
       recordPaymentSchema.parse({
         id: UUID,
@@ -132,6 +133,8 @@ describe("orderShippingSchema and orderNoteSchema", () => {
       orderNoteSchema.safeParse({ id: UUID, admin_note: "x".repeat(4001) })
         .success,
     ).toBe(false);
-    expect(orderNoteSchema.parse({ id: UUID, admin_note: "" }).admin_note).toBeNull();
+    expect(
+      orderNoteSchema.parse({ id: UUID, admin_note: "" }).admin_note,
+    ).toBeNull();
   });
 });

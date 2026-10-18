@@ -46,7 +46,13 @@ describe("bdPhone", () => {
   });
 
   it("rejects landlines, short numbers and wrong operators", () => {
-    for (const raw of ["012345678", "0123456789", "029567890", "0112345678", "not-a-phone"]) {
+    for (const raw of [
+      "012345678",
+      "0123456789",
+      "029567890",
+      "0112345678",
+      "not-a-phone",
+    ]) {
       expect(bdPhone.safeParse(raw).success).toBe(false);
     }
   });
@@ -63,7 +69,13 @@ describe("orderNo", () => {
   });
 
   it("rejects anything else, including an injected LIKE", () => {
-    for (const raw of ["PBF-251018-007", "ORDER-1", "%", "PBF-251018-0001--", ""]) {
+    for (const raw of [
+      "PBF-251018-007",
+      "ORDER-1",
+      "%",
+      "PBF-251018-0001--",
+      "",
+    ]) {
       expect(orderNo.safeParse(raw).success).toBe(false);
     }
   });
@@ -95,7 +107,8 @@ describe("checkoutSchema", () => {
       checkoutSchema.safeParse(basePayload({ address_line: "abc" })).success,
     ).toBe(false);
     expect(
-      checkoutSchema.safeParse(basePayload({ shipping_zone_id: "nope" })).success,
+      checkoutSchema.safeParse(basePayload({ shipping_zone_id: "nope" }))
+        .success,
     ).toBe(false);
     expect(
       checkoutSchema.safeParse(basePayload({ district: "  " })).success,

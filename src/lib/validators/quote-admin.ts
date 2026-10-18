@@ -27,7 +27,10 @@ export const updateQuoteStatusSchema = z.object({
 export const assignQuoteSchema = z.object({
   id,
   // Empty string means "unassign"; the action normalizes it to null.
-  assigned_to: z.union([z.guid({ error: "Invalid staff member." }), z.literal("")]),
+  assigned_to: z.union([
+    z.guid({ error: "Invalid staff member." }),
+    z.literal(""),
+  ]),
 });
 
 export const quoteDetailsSchema = z.object({
@@ -35,12 +38,7 @@ export const quoteDetailsSchema = z.object({
   // numeric(12,2) in the DB — clamp to the same width.
   quoted_amount: z.preprocess(
     (v) => (v === "" || v == null ? null : v),
-    z.coerce
-      .number()
-      .min(0)
-      .max(9_999_999_999.99)
-      .nullable()
-      .default(null),
+    z.coerce.number().min(0).max(9_999_999_999.99).nullable().default(null),
   ),
   valid_until: z.preprocess(
     (v) => (v === "" || v == null ? null : v),

@@ -3,8 +3,8 @@
 import {
   ArrowLeft,
   Check,
-  ClipboardList,
   Circle,
+  ClipboardList,
   ExternalLink,
   FileText,
   MessageCircle,
@@ -15,10 +15,18 @@ import {
 import Link from "next/link";
 import * as React from "react";
 
-import { ColorChip } from "@/components/admin/quotes/color-chip";
+import {
+  assignQuote,
+  saveQuoteDetails,
+  updateQuoteStatus,
+} from "@/app/(admin)/admin/quotes/actions";
 import { StatusBadge, ToneBadge } from "@/components/admin/data/status-badge";
+import {
+  FlashLine,
+  useActionSave,
+} from "@/components/admin/products/use-action-save";
+import { ColorChip } from "@/components/admin/quotes/color-chip";
 import { PageHeader } from "@/components/admin/shell/page-header";
-import { FlashLine, useActionSave } from "@/components/admin/products/use-action-save";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,11 +39,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  assignQuote,
-  saveQuoteDetails,
-  updateQuoteStatus,
-} from "@/app/(admin)/admin/quotes/actions";
 import { formatDate, formatMoney } from "@/lib/format";
 import { QUOTE_STATUSES } from "@/lib/validators/quote-admin";
 import type { AdminQuoteDetail, AssignableStaff } from "@/server/quotes";
@@ -112,7 +115,8 @@ export function QuoteDetail({
   const [notes, setNotes] = React.useState(quote.internal_notes ?? "");
 
   const detailsDirty =
-    amount !== (quote.quoted_amount != null ? String(quote.quoted_amount) : "") ||
+    amount !==
+      (quote.quoted_amount != null ? String(quote.quoted_amount) : "") ||
     validUntil !== (quote.valid_until ?? "") ||
     notes !== (quote.internal_notes ?? "");
 
@@ -146,13 +150,24 @@ export function QuoteDetail({
             </Button>
             <Button variant="outline" size="sm" asChild>
               <a href={`tel:+${phoneDigits}`}>
-                <Phone aria-hidden="true" strokeWidth={1.75} className="size-4" />
+                <Phone
+                  aria-hidden="true"
+                  strokeWidth={1.75}
+                  className="size-4"
+                />
                 Call
               </a>
             </Button>
             <Button variant="outline" size="sm" asChild>
-              <Link href={`/admin/print/quotes/${quote.id}/spec`} target="_blank">
-                <Printer aria-hidden="true" strokeWidth={1.75} className="size-4" />
+              <Link
+                href={`/admin/print/quotes/${quote.id}/spec`}
+                target="_blank"
+              >
+                <Printer
+                  aria-hidden="true"
+                  strokeWidth={1.75}
+                  className="size-4"
+                />
                 Spec sheet
               </Link>
             </Button>
@@ -186,7 +201,11 @@ export function QuoteDetail({
         ) : null}
         <Button variant="ghost" size="sm" asChild className="ml-auto">
           <Link href="/admin/quotes">
-            <ArrowLeft aria-hidden="true" strokeWidth={1.75} className="size-4" />
+            <ArrowLeft
+              aria-hidden="true"
+              strokeWidth={1.75}
+              className="size-4"
+            />
             Back to inbox
           </Link>
         </Button>
@@ -263,9 +282,7 @@ export function QuoteDetail({
                 <DetailRow label="Custom size">{quote.custom_size}</DetailRow>
               ) : null}
               {quote.custom_color ? (
-                <DetailRow label="Custom color">
-                  {quote.custom_color}
-                </DetailRow>
+                <DetailRow label="Custom color">{quote.custom_color}</DetailRow>
               ) : null}
               <DetailRow label="Logo printing">
                 {quote.needs_logo_print ? (
@@ -331,7 +348,9 @@ export function QuoteDetail({
                     <DetailRow label="Size">
                       <span className="tabular-nums">
                         {builder.size.width} × {builder.size.height}
-                        {builder.size.gusset ? ` × ${builder.size.gusset}` : ""}{" "}
+                        {builder.size.gusset
+                          ? ` × ${builder.size.gusset}`
+                          : ""}{" "}
                         {builder.size.unit ?? "inch"}
                       </span>
                     </DetailRow>
@@ -427,7 +446,8 @@ export function QuoteDetail({
               ).map(([value, label]) => {
                 const current = quote.status === value;
                 const done =
-                  !current && pipelineIndex(quote.status) > pipelineIndex(value);
+                  !current &&
+                  pipelineIndex(quote.status) > pipelineIndex(value);
                 return (
                   <li key={value}>
                     <Button
@@ -439,7 +459,8 @@ export function QuoteDetail({
                       disabled={saving || current}
                       onClick={() =>
                         run(
-                          () => updateQuoteStatus({ id: quote.id, status: value }),
+                          () =>
+                            updateQuoteStatus({ id: quote.id, status: value }),
                           `Marked as ${label}.`,
                         )
                       }
@@ -464,7 +485,9 @@ export function QuoteDetail({
                         />
                       )}
                       {label}
-                      {current ? <span className="sr-only">(current)</span> : null}
+                      {current ? (
+                        <span className="sr-only">(current)</span>
+                      ) : null}
                     </Button>
                   </li>
                 );
@@ -554,7 +577,11 @@ export function QuoteDetail({
                   onChange={(e) => setNotes(e.target.value)}
                 />
               </div>
-              <Button type="submit" size="sm" disabled={saving || !detailsDirty}>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={saving || !detailsDirty}
+              >
                 {saving ? "Saving…" : "Save details"}
               </Button>
             </form>

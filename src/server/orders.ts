@@ -300,7 +300,8 @@ export async function listAdminOrders(
   const { data: paymentRows, error: paymentError } = await supabase
     .from("payments")
     .select("order_id, amount");
-  if (paymentError) throw new Error("Failed to load payments.", { cause: paymentError });
+  if (paymentError)
+    throw new Error("Failed to load payments.", { cause: paymentError });
 
   const paidByOrder = new Map<string, number[]>();
   for (const payment of rows(paymentRows)) {
@@ -355,7 +356,10 @@ export async function getAdminOrder(id: string): Promise<AdminOrder | null> {
   if (!data) return null;
 
   const row = data as unknown as Record<string, unknown>;
-  const base = toListItem(row, paidTotal(rows(row.payments).map((p) => num(p.amount))));
+  const base = toListItem(
+    row,
+    paidTotal(rows(row.payments).map((p) => num(p.amount))),
+  );
 
   return {
     ...base,

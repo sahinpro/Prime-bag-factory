@@ -284,7 +284,11 @@ export function ProductConfigurator({
                 ) : null}
                 {/* COD orders are retail; the quote flow stays available for
                     customers who prefer to negotiate. */}
-                <Button variant="ghost" asChild className="text-muted-foreground">
+                <Button
+                  variant="ghost"
+                  asChild
+                  className="text-muted-foreground"
+                >
                   <Link href={quoteHref} locale={locale}>
                     {c("requestQuote")}
                   </Link>

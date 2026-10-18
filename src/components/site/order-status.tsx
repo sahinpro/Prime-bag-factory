@@ -13,13 +13,13 @@ import { useLocale, useTranslations } from "next-intl";
 import * as React from "react";
 
 import { lookupOrder } from "@/app/[locale]/(site)/checkout/actions";
-import { Button } from "@/components/ui/button";
 import { Field } from "@/components/site/form-field";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
-import { formatDate, formatMoney, formatNumber } from "@/lib/format";
 import { publicEnv } from "@/lib/env";
+import { formatDate, formatMoney, formatNumber } from "@/lib/format";
 import { advanceDue, balanceDue } from "@/lib/pricing";
 import { orderLookupSchema } from "@/lib/validators/checkout";
 import type { PublicOrder } from "@/server/orders";
@@ -38,7 +38,11 @@ import type { PublicOrder } from "@/server/orders";
  * a component identity that was chosen during render.
  */
 function StatusIcon({ status }: { status: string }) {
-  const props = { "aria-hidden": true, strokeWidth: 1.75, className: "size-4" } as const;
+  const props = {
+    "aria-hidden": true,
+    strokeWidth: 1.75,
+    className: "size-4",
+  } as const;
   switch (status) {
     case "confirmed":
       return <PhoneCall {...props} />;
@@ -98,14 +102,22 @@ export function OrderStatus({
             {t(`status.${order.status}`)}
           </span>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 px-3 py-1 text-sm">
-            <PhoneCall aria-hidden="true" strokeWidth={1.75} className="size-4" />
+            <PhoneCall
+              aria-hidden="true"
+              strokeWidth={1.75}
+              className="size-4"
+            />
             {t(`payment.${order.paymentStatus}`)}
           </span>
         </div>
 
         {justPlaced ? (
           <p className="mt-4 flex items-start gap-2 rounded-control bg-brand/10 px-3 py-2 text-sm">
-            <PhoneCall aria-hidden="true" strokeWidth={1.75} className="mt-0.5 size-4 shrink-0 text-gold-text" />
+            <PhoneCall
+              aria-hidden="true"
+              strokeWidth={1.75}
+              className="mt-0.5 size-4 shrink-0 text-gold-text"
+            />
             <span>{t("callNote")}</span>
           </p>
         ) : null}
@@ -170,15 +182,21 @@ export function OrderStatus({
         </h3>
         <ul className="mt-3 flex flex-col divide-y">
           {order.items.map((item, i) => (
-            <li key={i} className="flex items-baseline justify-between gap-4 py-2.5 text-sm">
+            <li
+              key={i}
+              className="flex items-baseline justify-between gap-4 py-2.5 text-sm"
+            >
               <span className="min-w-0">
                 <span className="block truncate font-medium">{item.title}</span>
                 <span className="block truncate text-muted-foreground">
-                  {[item.color, item.size].filter(Boolean).join(" · ") || item.sku || ""}
+                  {[item.color, item.size].filter(Boolean).join(" · ") ||
+                    item.sku ||
+                    ""}
                 </span>
               </span>
               <span className="shrink-0 text-right text-muted-foreground">
-                {formatNumber(item.qty, locale)} × {formatMoney(item.unitPrice, locale)}
+                {formatNumber(item.qty, locale)} ×{" "}
+                {formatMoney(item.unitPrice, locale)}
                 <span className="block font-medium text-foreground">
                   {formatMoney(item.lineTotal, locale)}
                 </span>
@@ -200,9 +218,13 @@ export function OrderStatus({
           <span className="block font-medium text-foreground">
             {order.customerName}
           </span>
-          {order.addressLine ? <span className="block">{order.addressLine}</span> : null}
+          {order.addressLine ? (
+            <span className="block">{order.addressLine}</span>
+          ) : null}
           <span className="block">
-            {[order.area, order.district, order.division].filter(Boolean).join(", ")}
+            {[order.area, order.district, order.division]
+              .filter(Boolean)
+              .join(", ")}
           </span>
           <span className="block">{order.customerPhone}</span>
         </address>
@@ -210,14 +232,18 @@ export function OrderStatus({
           <p className="mt-3 text-sm">
             {t("tracking")}:{" "}
             <span className="font-medium text-foreground">
-              {[order.courierName, order.trackingCode].filter(Boolean).join(" · ")}
+              {[order.courierName, order.trackingCode]
+                .filter(Boolean)
+                .join(" · ")}
             </span>
           </p>
         ) : null}
         {order.shippedAt || order.deliveredAt ? (
           <p className="mt-1 text-sm text-muted-foreground">
             {order.shippedAt
-              ? t("shippedOn", { date: formatDate(new Date(order.shippedAt), locale) })
+              ? t("shippedOn", {
+                  date: formatDate(new Date(order.shippedAt), locale),
+                })
               : ""}
             {order.deliveredAt
               ? ` · ${t("deliveredOn", { date: formatDate(new Date(order.deliveredAt), locale) })}`
@@ -235,7 +261,11 @@ export function OrderStatus({
             target="_blank"
             rel="noopener noreferrer"
           >
-            <PhoneCall aria-hidden="true" strokeWidth={1.75} className="size-4" />
+            <PhoneCall
+              aria-hidden="true"
+              strokeWidth={1.75}
+              className="size-4"
+            />
             {t("contactUs")}
           </a>
         </Button>
@@ -294,7 +324,11 @@ export function OrderLookup({ orderNo }: { orderNo: string }) {
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4 rounded-card border bg-surface p-6">
+    <form
+      onSubmit={onSubmit}
+      noValidate
+      className="flex flex-col gap-4 rounded-card border bg-surface p-6"
+    >
       <p className="text-sm text-muted-foreground">{t("lookupHint")}</p>
       {state.kind === "error" ? (
         <p role="alert" className="text-sm text-destructive">

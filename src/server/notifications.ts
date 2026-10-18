@@ -158,8 +158,7 @@ function toAlert(row: {
     source: typeof p.source === "string" ? p.source : "form",
     contactName:
       typeof p.contact_name === "string" ? p.contact_name : "Unknown",
-    companyName:
-      typeof p.company_name === "string" ? p.company_name : null,
+    companyName: typeof p.company_name === "string" ? p.company_name : null,
     createdAt: row.created_at,
     unread: row.status === "pending",
   };
@@ -187,5 +186,6 @@ export async function markAdminAlertsRead(): Promise<void> {
     .update({ status: "sent", sent_at: new Date().toISOString() })
     .eq("channel", "admin_alert")
     .eq("status", "pending");
-  if (error) throw new Error("Could not mark alerts as read.", { cause: error });
+  if (error)
+    throw new Error("Could not mark alerts as read.", { cause: error });
 }

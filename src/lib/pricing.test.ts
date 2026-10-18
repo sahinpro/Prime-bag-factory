@@ -92,8 +92,16 @@ describe("priceLines (quantity-range pricing across the cart)", () => {
       { productId: "p1", qty: 25, priceDelta: 10, tiers: TIERS },
     ]);
     // product qty 55 → tier 100; blue 100, green 110.
-    expect(priced[0]).toEqual({ unitPrice: 100, lineTotal: 3000, productQty: 55 });
-    expect(priced[1]).toEqual({ unitPrice: 110, lineTotal: 2750, productQty: 55 });
+    expect(priced[0]).toEqual({
+      unitPrice: 100,
+      lineTotal: 3000,
+      productQty: 55,
+    });
+    expect(priced[1]).toEqual({
+      unitPrice: 110,
+      lineTotal: 2750,
+      productQty: 55,
+    });
     expect(subtotalOf(priced)).toBe(5750);
   });
 

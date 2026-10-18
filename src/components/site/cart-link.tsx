@@ -1,9 +1,9 @@
 import { ShoppingBag } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
-import { cartCount, useCartItems } from "@/lib/cart";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
+import { cartCount, useCartItems } from "@/lib/cart";
 
 /**
  * Header cart link (plan Phase 5 task 1). Count comes from the persisted

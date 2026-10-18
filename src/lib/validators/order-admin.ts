@@ -42,13 +42,10 @@ const id = z.guid({ error: "Invalid order." });
 
 /** Blank (or whitespace-only) input means "clear the column", not "" in the DB. */
 function nullableText(max: number) {
-  return z.preprocess(
-    (v) => {
-      const trimmed = typeof v === "string" ? v.trim() : v;
-      return trimmed === "" || trimmed == null ? null : trimmed;
-    },
-    z.string().trim().max(max).nullable().default(null),
-  );
+  return z.preprocess((v) => {
+    const trimmed = typeof v === "string" ? v.trim() : v;
+    return trimmed === "" || trimmed == null ? null : trimmed;
+  }, z.string().trim().max(max).nullable().default(null));
 }
 
 export const setOrderStatusSchema = z.object({

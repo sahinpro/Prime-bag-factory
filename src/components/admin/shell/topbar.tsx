@@ -89,9 +89,7 @@ export function Topbar({
             variant="ghost"
             size="icon"
             aria-label={
-              unread > 0
-                ? `Notifications, ${unread} unread`
-                : "Notifications"
+              unread > 0 ? `Notifications, ${unread} unread` : "Notifications"
             }
             className="relative"
           >

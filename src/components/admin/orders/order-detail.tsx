@@ -19,8 +19,11 @@ import {
   saveShippingDetails,
   setOrderStatus,
 } from "@/app/(admin)/admin/orders/actions";
+import {
+  ORDER_STATUS_META,
+  StatusBadge,
+} from "@/components/admin/data/status-badge";
 import { ConfirmDialog } from "@/components/admin/forms/confirm-dialog";
-import { ORDER_STATUS_META, StatusBadge } from "@/components/admin/data/status-badge";
 import {
   FlashLine,
   useActionSave,
@@ -178,7 +181,11 @@ export function OrderDetail({ order }: Readonly<{ order: AdminOrder }>) {
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" size="sm" asChild>
               <Link href="/admin/orders">
-                <ArrowLeft aria-hidden="true" strokeWidth={1.75} className="size-4" />
+                <ArrowLeft
+                  aria-hidden="true"
+                  strokeWidth={1.75}
+                  className="size-4"
+                />
                 All orders
               </Link>
             </Button>
@@ -188,25 +195,41 @@ export function OrderDetail({ order }: Readonly<{ order: AdminOrder }>) {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <MessageCircle aria-hidden="true" strokeWidth={1.75} className="size-4" />
+                <MessageCircle
+                  aria-hidden="true"
+                  strokeWidth={1.75}
+                  className="size-4"
+                />
                 WhatsApp
               </a>
             </Button>
             <Button variant="outline" size="sm" asChild>
               <a href={`tel:${phoneDigits}`}>
-                <Phone aria-hidden="true" strokeWidth={1.75} className="size-4" />
+                <Phone
+                  aria-hidden="true"
+                  strokeWidth={1.75}
+                  className="size-4"
+                />
                 Call
               </a>
             </Button>
             <Button variant="outline" size="sm" asChild>
               <Link href={`/admin/print/orders/${order.id}/invoice`}>
-                <Printer aria-hidden="true" strokeWidth={1.75} className="size-4" />
+                <Printer
+                  aria-hidden="true"
+                  strokeWidth={1.75}
+                  className="size-4"
+                />
                 Invoice
               </Link>
             </Button>
             <Button variant="outline" size="sm" asChild>
               <Link href={`/admin/print/orders/${order.id}/packing`}>
-                <Printer aria-hidden="true" strokeWidth={1.75} className="size-4" />
+                <Printer
+                  aria-hidden="true"
+                  strokeWidth={1.75}
+                  className="size-4"
+                />
                 Packing slip
               </Link>
             </Button>
@@ -229,10 +252,16 @@ export function OrderDetail({ order }: Readonly<{ order: AdminOrder }>) {
                     <th scope="col" className="py-2 pr-3 font-medium">
                       Product
                     </th>
-                    <th scope="col" className="py-2 pr-3 text-right font-medium">
+                    <th
+                      scope="col"
+                      className="py-2 pr-3 text-right font-medium"
+                    >
                       Qty
                     </th>
-                    <th scope="col" className="py-2 pr-3 text-right font-medium">
+                    <th
+                      scope="col"
+                      className="py-2 pr-3 text-right font-medium"
+                    >
                       Unit price
                     </th>
                     <th scope="col" className="py-2 text-right font-medium">
@@ -293,8 +322,9 @@ export function OrderDetail({ order }: Readonly<{ order: AdminOrder }>) {
           >
             {order.payments.length === 0 ? (
               <p className="rounded-control bg-surface-2 px-3 py-2 text-sm text-muted-foreground">
-                Nothing received yet. The 50% advance (<Money value={order.advance_due} />)
-                is collected by hand and recorded here.
+                Nothing received yet. The 50% advance (
+                <Money value={order.advance_due} />) is collected by hand and
+                recorded here.
               </p>
             ) : (
               <ul className="space-y-2">
@@ -373,13 +403,16 @@ export function OrderDetail({ order }: Readonly<{ order: AdminOrder }>) {
                       }
                     />
                     {paymentError ? (
-                      <p id="payment-amount-error" className="text-xs text-destructive">
+                      <p
+                        id="payment-amount-error"
+                        className="text-xs text-destructive"
+                      >
                         {paymentError}
                       </p>
                     ) : (
                       <p className="text-xs text-muted-foreground">
-                        Advance due <Money value={order.advance_due} /> · balance{" "}
-                        <Money value={order.balance} />
+                        Advance due <Money value={order.advance_due} /> ·
+                        balance <Money value={order.balance} />
                       </p>
                     )}
                   </div>
@@ -387,7 +420,9 @@ export function OrderDetail({ order }: Readonly<{ order: AdminOrder }>) {
                     <Label htmlFor="payment-method">Method</Label>
                     <Select
                       value={method}
-                      onValueChange={(value) => setMethod(value as PaymentMethod)}
+                      onValueChange={(value) =>
+                        setMethod(value as PaymentMethod)
+                      }
                     >
                       <SelectTrigger id="payment-method">
                         <SelectValue placeholder="Method" />
@@ -403,7 +438,8 @@ export function OrderDetail({ order }: Readonly<{ order: AdminOrder }>) {
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="payment-reference">
-                      Reference <span className="text-muted-foreground">(optional)</span>
+                      Reference{" "}
+                      <span className="text-muted-foreground">(optional)</span>
                     </Label>
                     <Input
                       id="payment-reference"
@@ -417,7 +453,8 @@ export function OrderDetail({ order }: Readonly<{ order: AdminOrder }>) {
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="payment-note">
-                      Note <span className="text-muted-foreground">(optional)</span>
+                      Note{" "}
+                      <span className="text-muted-foreground">(optional)</span>
                     </Label>
                     <Input
                       id="payment-note"
@@ -429,8 +466,16 @@ export function OrderDetail({ order }: Readonly<{ order: AdminOrder }>) {
                     />
                   </div>
                 </div>
-                <Button type="submit" size="sm" disabled={saving || Boolean(paymentError)}>
-                  <BadgeCheck aria-hidden="true" strokeWidth={1.75} className="size-4" />
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={saving || Boolean(paymentError)}
+                >
+                  <BadgeCheck
+                    aria-hidden="true"
+                    strokeWidth={1.75}
+                    className="size-4"
+                  />
                   {saving ? "Recording…" : "Record payment"}
                 </Button>
               </form>
@@ -447,7 +492,11 @@ export function OrderDetail({ order }: Readonly<{ order: AdminOrder }>) {
                 {order.history.map((event) => (
                   <li key={event.id} className="flex gap-3">
                     <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted-foreground">
-                      <CircleDot aria-hidden="true" strokeWidth={1.75} className="size-3.5" />
+                      <CircleDot
+                        aria-hidden="true"
+                        strokeWidth={1.75}
+                        className="size-3.5"
+                      />
                     </span>
                     <div className="min-w-0">
                       <p className="text-sm text-foreground">
@@ -484,7 +533,9 @@ export function OrderDetail({ order }: Readonly<{ order: AdminOrder }>) {
                       className="w-full justify-start"
                       aria-current={current ? "step" : undefined}
                       disabled={saving || current || closed}
-                      onClick={() => void changeStatus(value, statusLabel(value))}
+                      onClick={() =>
+                        void changeStatus(value, statusLabel(value))
+                      }
                     >
                       {current ? "Current: " : "Mark "}
                       {statusLabel(value)}
@@ -516,7 +567,11 @@ export function OrderDetail({ order }: Readonly<{ order: AdminOrder }>) {
                 confirmLabel="Cancel order"
                 trigger={
                   <Button variant="outline" size="sm" className="w-full">
-                    <Ban aria-hidden="true" strokeWidth={1.75} className="size-4" />
+                    <Ban
+                      aria-hidden="true"
+                      strokeWidth={1.75}
+                      className="size-4"
+                    />
                     Cancel order
                   </Button>
                 }
@@ -533,7 +588,11 @@ export function OrderDetail({ order }: Readonly<{ order: AdminOrder }>) {
                 confirmLabel="Mark returned"
                 trigger={
                   <Button variant="outline" size="sm" className="w-full">
-                    <Undo2 aria-hidden="true" strokeWidth={1.75} className="size-4" />
+                    <Undo2
+                      aria-hidden="true"
+                      strokeWidth={1.75}
+                      className="size-4"
+                    />
                     Returned
                   </Button>
                 }
@@ -557,7 +616,12 @@ export function OrderDetail({ order }: Readonly<{ order: AdminOrder }>) {
               </DetailRow>
               <DetailRow label="Email">{order.customer_email ?? "—"}</DetailRow>
               <DetailRow label="Address">
-                {[order.address_line, order.area, order.district, order.division]
+                {[
+                  order.address_line,
+                  order.area,
+                  order.district,
+                  order.division,
+                ]
                   .filter(Boolean)
                   .join(", ") || "—"}
               </DetailRow>
@@ -570,7 +634,9 @@ export function OrderDetail({ order }: Readonly<{ order: AdminOrder }>) {
                   order.payment_method}
               </DetailRow>
               {order.customer_note ? (
-                <DetailRow label="Customer note">{order.customer_note}</DetailRow>
+                <DetailRow label="Customer note">
+                  {order.customer_note}
+                </DetailRow>
               ) : null}
             </dl>
           </SectionCard>

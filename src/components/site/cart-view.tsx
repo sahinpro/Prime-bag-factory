@@ -49,8 +49,7 @@ export function CartView() {
   );
   // Re-fetch only when the set of variants changes, not on every qty edit.
   const idsKey = React.useMemo(
-    () =>
-      [...qtyByVariant.keys()].sort().join(","),
+    () => [...qtyByVariant.keys()].sort().join(","),
     [qtyByVariant],
   );
 
@@ -75,7 +74,12 @@ export function CartView() {
       .then((result) => {
         if (!active) return;
         if (result.ok) {
-          setData({ status: "ready", key: idsKey, lines: result.lines, missing: result.missing });
+          setData({
+            status: "ready",
+            key: idsKey,
+            lines: result.lines,
+            missing: result.missing,
+          });
         } else {
           setData({ status: "error", text: result.error });
         }
@@ -93,7 +97,11 @@ export function CartView() {
   if (items.length === 0 && (!data || data.status === "ready")) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-card border border-dashed px-6 py-16 text-center">
-        <ShoppingBag aria-hidden="true" strokeWidth={1.75} className="size-8 text-muted-foreground" />
+        <ShoppingBag
+          aria-hidden="true"
+          strokeWidth={1.75}
+          className="size-8 text-muted-foreground"
+        />
         <p className="font-medium">{t("empty")}</p>
         <p className="text-sm text-muted-foreground">{t("emptyHint")}</p>
         <Button asChild>
@@ -166,9 +174,7 @@ export function CartView() {
       <div className="flex flex-col gap-3">
         {data.missing.length > 0 && (
           <div className="flex items-center justify-between gap-3 rounded-control border border-warning/40 bg-warning-soft px-3 py-2 text-sm text-warning-foreground">
-            <span>
-              {t("missingNote", { count: data.missing.length })}
-            </span>
+            <span>{t("missingNote", { count: data.missing.length })}</span>
             <Button
               size="sm"
               variant="outline"
@@ -217,9 +223,8 @@ export function CartView() {
                         {title}
                       </Link>
                       <p className="truncate text-sm text-muted-foreground">
-                        {[line.color, line.size]
-                          .filter(Boolean)
-                          .join(" · ") || line.sku}
+                        {[line.color, line.size].filter(Boolean).join(" · ") ||
+                          line.sku}
                         {productQty > qty
                           ? ` · ${t("pricedWithCart", { count: formatNumber(productQty, locale) })}`
                           : ""}
@@ -231,7 +236,11 @@ export function CartView() {
                       aria-label={t("removeAria", { title })}
                       onClick={() => removeFromCart(line.variantId)}
                     >
-                      <Trash2 aria-hidden="true" strokeWidth={1.75} className="size-4" />
+                      <Trash2
+                        aria-hidden="true"
+                        strokeWidth={1.75}
+                        className="size-4"
+                      />
                     </Button>
                   </div>
 
@@ -245,9 +254,16 @@ export function CartView() {
                         disabled={qty <= 1}
                         onClick={() => setCartQty(line.variantId, qty - 1)}
                       >
-                        <Minus aria-hidden="true" strokeWidth={1.75} className="size-3.5" />
+                        <Minus
+                          aria-hidden="true"
+                          strokeWidth={1.75}
+                          className="size-3.5"
+                        />
                       </Button>
-                      <label className="sr-only" htmlFor={`qty-${line.variantId}`}>
+                      <label
+                        className="sr-only"
+                        htmlFor={`qty-${line.variantId}`}
+                      >
                         {t("quantity")}
                       </label>
                       <Input
@@ -271,7 +287,11 @@ export function CartView() {
                         aria-label={t("increaseAria")}
                         onClick={() => setCartQty(line.variantId, qty + 1)}
                       >
-                        <Plus aria-hidden="true" strokeWidth={1.75} className="size-3.5" />
+                        <Plus
+                          aria-hidden="true"
+                          strokeWidth={1.75}
+                          className="size-3.5"
+                        />
                       </Button>
                     </div>
                     <div className="ml-auto text-right">
@@ -304,12 +324,18 @@ export function CartView() {
                   )}
                   {overStock && line.available !== null && (
                     <p className="text-sm text-destructive">
-                      {t("overStock", { count: formatNumber(line.available, locale) })}
+                      {t("overStock", {
+                        count: formatNumber(line.available, locale),
+                      })}
                     </p>
                   )}
-                  {line.stockMode === "made_to_order" && !belowMoq && !overStock && (
-                    <p className="text-sm text-muted-foreground">{c("madeToOrder")}</p>
-                  )}
+                  {line.stockMode === "made_to_order" &&
+                    !belowMoq &&
+                    !overStock && (
+                      <p className="text-sm text-muted-foreground">
+                        {c("madeToOrder")}
+                      </p>
+                    )}
                 </div>
               </li>
             );
@@ -340,8 +366,14 @@ export function CartView() {
             <dd>{formatMoney(subtotal, locale)}</dd>
           </div>
         </dl>
-        <p className="text-xs text-muted-foreground">{t("shippingAtCheckout")}</p>
-        <Button asChild className="w-full" disabled={blockers.length > 0 || lines.length === 0}>
+        <p className="text-xs text-muted-foreground">
+          {t("shippingAtCheckout")}
+        </p>
+        <Button
+          asChild
+          className="w-full"
+          disabled={blockers.length > 0 || lines.length === 0}
+        >
           <Link href="/checkout">{t("checkout")}</Link>
         </Button>
         {blockers.length > 0 && (

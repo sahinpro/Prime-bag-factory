@@ -80,7 +80,9 @@ export default async function QuoteSpecSheetPage({
           <PrintRow label="Company">{quote.company_name ?? "—"}</PrintRow>
           <PrintRow label="Contact">{quote.contact_name}</PrintRow>
           <PrintRow label="Phone">{quote.phone}</PrintRow>
-          {quote.email ? <PrintRow label="Email">{quote.email}</PrintRow> : null}
+          {quote.email ? (
+            <PrintRow label="Email">{quote.email}</PrintRow>
+          ) : null}
         </dl>
       </PrintSection>
 
@@ -90,9 +92,7 @@ export default async function QuoteSpecSheetPage({
             {quote.product_title ?? quote.category_name ?? "Custom bag"}
           </PrintRow>
           <PrintRow label="Source">
-            {quote.source === "builder"
-              ? "Custom Bag Builder"
-              : "Quote form"}
+            {quote.source === "builder" ? "Custom Bag Builder" : "Quote form"}
           </PrintRow>
           <PrintRow label="Quantity">
             {quote.quantity != null
@@ -100,7 +100,9 @@ export default async function QuoteSpecSheetPage({
               : "—"}
           </PrintRow>
           <PrintRow label="Needed by">
-            {quote.needed_by ? formatDate(new Date(quote.needed_by), "en") : "—"}
+            {quote.needed_by
+              ? formatDate(new Date(quote.needed_by), "en")
+              : "—"}
           </PrintRow>
           <PrintRow label="Size">{size ?? "Standard"}</PrintRow>
           <PrintRow label="Body color">{primary ?? "—"}</PrintRow>
@@ -110,9 +112,7 @@ export default async function QuoteSpecSheetPage({
               {quote.custom_color}
             </PrintRow>
           ) : null}
-          <PrintRow label="Material">
-            {builder?.material ?? "—"}
-          </PrintRow>
+          <PrintRow label="Material">{builder?.material ?? "—"}</PrintRow>
           <PrintRow label="Printing">
             {quote.needs_logo_print || builder?.printing
               ? [

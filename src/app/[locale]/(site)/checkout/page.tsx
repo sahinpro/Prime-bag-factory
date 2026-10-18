@@ -1,6 +1,6 @@
-import { connection } from "next/server";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { connection } from "next/server";
 
 import { CheckoutForm } from "@/components/site/checkout-form";
 import { isLocale, type Locale } from "@/i18n/routing";

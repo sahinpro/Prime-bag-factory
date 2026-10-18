@@ -1,6 +1,12 @@
 // Generated from the deployed Supabase public schema and Phase 1 migration.
 // Regenerate with the Supabase CLI after linking the project.
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
 
 export type Database = {
   public: {
@@ -34,7 +40,13 @@ export type Database = {
           created_at?: string;
         };
         Relationships: [
-          { foreignKeyName: "audit_logs_actor_id_fkey"; columns: ["actor_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] }
+          {
+            foreignKeyName: "audit_logs_actor_id_fkey";
+            columns: ["actor_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
         ];
       };
       blocked_contacts: {
@@ -63,7 +75,13 @@ export type Database = {
           created_at?: string;
         };
         Relationships: [
-          { foreignKeyName: "blocked_contacts_created_by_fkey"; columns: ["created_by"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] }
+          {
+            foreignKeyName: "blocked_contacts_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
         ];
       };
       categories: {
@@ -122,7 +140,13 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [
-          { foreignKeyName: "categories_parent_id_fkey"; columns: ["parent_id"]; isOneToOne: false; referencedRelation: "categories"; referencedColumns: ["id"] }
+          {
+            foreignKeyName: "categories_parent_id_fkey";
+            columns: ["parent_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
         ];
       };
       clients: {
@@ -292,8 +316,20 @@ export type Database = {
           created_at?: string;
         };
         Relationships: [
-          { foreignKeyName: "inventory_movements_variant_id_fkey"; columns: ["variant_id"]; isOneToOne: false; referencedRelation: "product_variants"; referencedColumns: ["id"] },
-          { foreignKeyName: "inventory_movements_created_by_fkey"; columns: ["created_by"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] }
+          {
+            foreignKeyName: "inventory_movements_variant_id_fkey";
+            columns: ["variant_id"];
+            isOneToOne: false;
+            referencedRelation: "product_variants";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "inventory_movements_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
         ];
       };
       legal_documents: {
@@ -409,8 +445,20 @@ export type Database = {
           created_at?: string;
         };
         Relationships: [
-          { foreignKeyName: "order_items_order_id_fkey"; columns: ["order_id"]; isOneToOne: false; referencedRelation: "orders"; referencedColumns: ["id"] },
-          { foreignKeyName: "order_items_variant_id_fkey"; columns: ["variant_id"]; isOneToOne: false; referencedRelation: "product_variants"; referencedColumns: ["id"] }
+          {
+            foreignKeyName: "order_items_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "order_items_variant_id_fkey";
+            columns: ["variant_id"];
+            isOneToOne: false;
+            referencedRelation: "product_variants";
+            referencedColumns: ["id"];
+          },
         ];
       };
       order_status_history: {
@@ -442,8 +490,20 @@ export type Database = {
           created_at?: string;
         };
         Relationships: [
-          { foreignKeyName: "order_status_history_order_id_fkey"; columns: ["order_id"]; isOneToOne: false; referencedRelation: "orders"; referencedColumns: ["id"] },
-          { foreignKeyName: "order_status_history_changed_by_fkey"; columns: ["changed_by"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] }
+          {
+            foreignKeyName: "order_status_history_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "order_status_history_changed_by_fkey";
+            columns: ["changed_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
         ];
       };
       orders: {
@@ -544,7 +604,13 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [
-          { foreignKeyName: "orders_shipping_zone_id_fkey"; columns: ["shipping_zone_id"]; isOneToOne: false; referencedRelation: "shipping_zones"; referencedColumns: ["id"] }
+          {
+            foreignKeyName: "orders_shipping_zone_id_fkey";
+            columns: ["shipping_zone_id"];
+            isOneToOne: false;
+            referencedRelation: "shipping_zones";
+            referencedColumns: ["id"];
+          },
         ];
       };
       payments: {
@@ -582,8 +648,20 @@ export type Database = {
           created_at?: string;
         };
         Relationships: [
-          { foreignKeyName: "payments_order_id_fkey"; columns: ["order_id"]; isOneToOne: false; referencedRelation: "orders"; referencedColumns: ["id"] },
-          { foreignKeyName: "payments_recorded_by_fkey"; columns: ["recorded_by"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] }
+          {
+            foreignKeyName: "payments_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "payments_recorded_by_fkey";
+            columns: ["recorded_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
         ];
       };
       posts: {
@@ -666,7 +744,13 @@ export type Database = {
           created_at?: string;
         };
         Relationships: [
-          { foreignKeyName: "price_tiers_product_id_fkey"; columns: ["product_id"]; isOneToOne: false; referencedRelation: "products"; referencedColumns: ["id"] }
+          {
+            foreignKeyName: "price_tiers_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
         ];
       };
       product_categories: {
@@ -692,8 +776,20 @@ export type Database = {
           created_at?: string;
         };
         Relationships: [
-          { foreignKeyName: "product_categories_product_id_fkey"; columns: ["product_id"]; isOneToOne: false; referencedRelation: "products"; referencedColumns: ["id"] },
-          { foreignKeyName: "product_categories_category_id_fkey"; columns: ["category_id"]; isOneToOne: false; referencedRelation: "categories"; referencedColumns: ["id"] }
+          {
+            foreignKeyName: "product_categories_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "product_categories_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
         ];
       };
       product_collections: {
@@ -716,8 +812,20 @@ export type Database = {
           created_at?: string;
         };
         Relationships: [
-          { foreignKeyName: "product_collections_product_id_fkey"; columns: ["product_id"]; isOneToOne: false; referencedRelation: "products"; referencedColumns: ["id"] },
-          { foreignKeyName: "product_collections_collection_id_fkey"; columns: ["collection_id"]; isOneToOne: false; referencedRelation: "collections"; referencedColumns: ["id"] }
+          {
+            foreignKeyName: "product_collections_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "product_collections_collection_id_fkey";
+            columns: ["collection_id"];
+            isOneToOne: false;
+            referencedRelation: "collections";
+            referencedColumns: ["id"];
+          },
         ];
       };
       product_custom_parts: {
@@ -770,8 +878,20 @@ export type Database = {
           created_at?: string;
         };
         Relationships: [
-          { foreignKeyName: "product_custom_parts_product_id_fkey"; columns: ["product_id"]; isOneToOne: false; referencedRelation: "products"; referencedColumns: ["id"] },
-          { foreignKeyName: "product_custom_parts_swatch_group_id_fkey"; columns: ["swatch_group_id"]; isOneToOne: false; referencedRelation: "swatch_groups"; referencedColumns: ["id"] }
+          {
+            foreignKeyName: "product_custom_parts_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "product_custom_parts_swatch_group_id_fkey";
+            columns: ["swatch_group_id"];
+            isOneToOne: false;
+            referencedRelation: "swatch_groups";
+            referencedColumns: ["id"];
+          },
         ];
       };
       product_images: {
@@ -806,7 +926,13 @@ export type Database = {
           created_at?: string;
         };
         Relationships: [
-          { foreignKeyName: "product_images_product_id_fkey"; columns: ["product_id"]; isOneToOne: false; referencedRelation: "products"; referencedColumns: ["id"] }
+          {
+            foreignKeyName: "product_images_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
         ];
       };
       product_part_swatches: {
@@ -835,8 +961,20 @@ export type Database = {
           created_at?: string;
         };
         Relationships: [
-          { foreignKeyName: "product_part_swatches_part_id_fkey"; columns: ["part_id"]; isOneToOne: false; referencedRelation: "product_custom_parts"; referencedColumns: ["id"] },
-          { foreignKeyName: "product_part_swatches_swatch_id_fkey"; columns: ["swatch_id"]; isOneToOne: false; referencedRelation: "swatches"; referencedColumns: ["id"] }
+          {
+            foreignKeyName: "product_part_swatches_part_id_fkey";
+            columns: ["part_id"];
+            isOneToOne: false;
+            referencedRelation: "product_custom_parts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "product_part_swatches_swatch_id_fkey";
+            columns: ["swatch_id"];
+            isOneToOne: false;
+            referencedRelation: "swatches";
+            referencedColumns: ["id"];
+          },
         ];
       };
       product_variants: {
@@ -889,7 +1027,13 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [
-          { foreignKeyName: "product_variants_product_id_fkey"; columns: ["product_id"]; isOneToOne: false; referencedRelation: "products"; referencedColumns: ["id"] }
+          {
+            foreignKeyName: "product_variants_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
         ];
       };
       products: {
@@ -1080,9 +1224,27 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [
-          { foreignKeyName: "quote_requests_product_id_fkey"; columns: ["product_id"]; isOneToOne: false; referencedRelation: "products"; referencedColumns: ["id"] },
-          { foreignKeyName: "quote_requests_category_id_fkey"; columns: ["category_id"]; isOneToOne: false; referencedRelation: "categories"; referencedColumns: ["id"] },
-          { foreignKeyName: "quote_requests_assigned_to_fkey"; columns: ["assigned_to"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] }
+          {
+            foreignKeyName: "quote_requests_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "quote_requests_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "quote_requests_assigned_to_fkey";
+            columns: ["assigned_to"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
         ];
       };
       rate_limits: {
@@ -1297,7 +1459,13 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [
-          { foreignKeyName: "swatches_group_id_fkey"; columns: ["group_id"]; isOneToOne: false; referencedRelation: "swatch_groups"; referencedColumns: ["id"] }
+          {
+            foreignKeyName: "swatches_group_id_fkey";
+            columns: ["group_id"];
+            isOneToOne: false;
+            referencedRelation: "swatch_groups";
+            referencedColumns: ["id"];
+          },
         ];
       };
       testimonials: {
@@ -1359,14 +1527,38 @@ export type Database = {
     };
     Enums: {
       blocked_contact_type: "phone" | "ip_hash";
-      movement_reason: "opening" | "purchase" | "sale" | "return" | "adjustment" | "damage" | "cancel_release";
+      movement_reason:
+        | "opening"
+        | "purchase"
+        | "sale"
+        | "return"
+        | "adjustment"
+        | "damage"
+        | "cancel_release";
       notification_channel: "email" | "sms" | "whatsapp" | "admin_alert";
       notification_status: "pending" | "sent" | "failed";
-      order_status: "pending" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled" | "returned";
+      order_status:
+        | "pending"
+        | "confirmed"
+        | "processing"
+        | "shipped"
+        | "delivered"
+        | "cancelled"
+        | "returned";
       order_type: "retail" | "bulk";
-      payment_method: "cod" | "bkash_manual" | "nagad_manual" | "bank_transfer" | "cash";
+      payment_method:
+        | "cod"
+        | "bkash_manual"
+        | "nagad_manual"
+        | "bank_transfer"
+        | "cash";
       payment_status: "unpaid" | "partially_paid" | "paid" | "refunded";
-      product_custom_input_type: "swatch" | "select" | "dimensions" | "file" | "text";
+      product_custom_input_type:
+        | "swatch"
+        | "select"
+        | "dimensions"
+        | "file"
+        | "text";
       product_status: "draft" | "published" | "archived";
       product_stock_mode: "tracked" | "made_to_order";
       product_type: "buy_now" | "quote_only";

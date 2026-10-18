@@ -17,13 +17,7 @@ export const instant = false;
 export const metadata = { title: "Quotes" };
 
 type QuoteStatus = Database["public"]["Enums"]["quote_status"];
-const STATUSES: QuoteStatus[] = [
-  "new",
-  "contacted",
-  "quoted",
-  "won",
-  "lost",
-];
+const STATUSES: QuoteStatus[] = ["new", "contacted", "quoted", "won", "lost"];
 
 function readStatus(raw?: string): QuoteStatus | undefined {
   return STATUSES.includes(raw as QuoteStatus)
