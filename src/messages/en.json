@@ -147,6 +147,9 @@
     "sending": "Sending…",
     "successTitle": "Request received",
     "successBody": "We'll be in touch shortly. Your reference:",
+    "whatsappContinue": "Continue on WhatsApp",
+    "whatsappPrefill": "Hello! I just sent a quote request (ref: {ref}). Please get in touch.",
+    "successCall": "Or call us:",
     "backHome": "Back to home",
     "anotherQuote": "Send another",
     "required": "Required",
@@ -217,7 +220,12 @@
     "view": "View document",
     "updated": "Updated {date}",
     "empty": "No documents posted yet.",
-    "notFoundTitle": "Document not found"
+    "notFoundTitle": "Document not found",
+    "termsTitle": "Terms of service",
+    "terms1": "Custom bags from the Bag Builder are quote-based: the final price is confirmed after we review your request.",
+    "terms2": "For standard products, 50% of the order value is payable in advance at order confirmation; the remaining 50% is cash on delivery (COD).",
+    "terms3": "Production starts after the advance payment is received. Artwork approval is required before printing.",
+    "terms4": "Prices and delivery timelines quoted are valid until the date stated on the quotation."
   },
   "clients": {
     "title": "Our clients",

@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { quoteSchema } from "@/lib/validators/quote";
+import { notifyNewQuote } from "@/server/notifications";
 
 /**
  * Public quote submission. There is NO anon insert policy on `quote_requests`
@@ -125,5 +126,19 @@ export async function submitQuote(
 
   // Short, friendly reference the visitor can quote back to us.
   const ref = inserted.id.slice(0, 8).toUpperCase();
+
+  // 6. Notify the owner (admin bell + Resend email, Phase 4 task 2).
+  // Best-effort inside — a delivery failure never rejects the submission.
+  await notifyNewQuote({
+    id: inserted.id,
+    source: data.source,
+    contactName: data.contact_name,
+    companyName: data.company_name ?? null,
+    phone: data.phone,
+    quantity: data.quantity ?? null,
+    neededBy: data.needed_by ?? null,
+    message: data.message ?? null,
+  });
+
   return { ok: true, ref };
 }

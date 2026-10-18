@@ -42,6 +42,25 @@ export default async function LegalPage({
     >
       <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
 
+      {/* Terms of service (owner decision 2026-10-18, Phase 4): the commercial
+          policy — builder requests are quote-based, standard products are COD
+          with a 50% advance — is stated here until the owner publishes the
+          real signed legal documents (Phase 7). */}
+      <section
+        aria-labelledby="tos-heading"
+        className="rounded-card border bg-surface p-6"
+      >
+        <h2 id="tos-heading" className="text-xl font-semibold">
+          {t("termsTitle")}
+        </h2>
+        <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-muted-foreground marker:text-foreground">
+          <li>{t("terms1")}</li>
+          <li>{t("terms2")}</li>
+          <li>{t("terms3")}</li>
+          <li>{t("terms4")}</li>
+        </ol>
+      </section>
+
       {docs.length > 0 ? (
         <ul className="flex flex-col divide-y rounded-card border bg-surface">
           {docs.map((doc, i) => (

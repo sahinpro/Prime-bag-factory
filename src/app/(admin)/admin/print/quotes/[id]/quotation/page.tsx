@@ -104,7 +104,7 @@ export default async function QuoteQuotationPage({
             </tr>
           </thead>
           <tbody>
-            <tr className="border-b border-black/40 align-top">
+            <tr className="border-b border-neutral-400 align-top">
               <td className="py-2 pr-3">{description}</td>
               <td className="py-2 pr-3 text-right tabular-nums">
                 {quote.quantity != null
@@ -129,7 +129,7 @@ export default async function QuoteQuotationPage({
           </tbody>
         </table>
         {total != null && quote.quoted_amount == null ? (
-          <p className="mt-2 text-xs text-black/70">
+          <p className="mt-2 text-xs text-neutral-700">
             Indicative builder estimate — final price subject to confirmation.
           </p>
         ) : null}
@@ -147,7 +147,10 @@ export default async function QuoteQuotationPage({
               ? `Target delivery ${formatDate(new Date(quote.needed_by), "en")} — to be confirmed.`
               : "Delivery timeline to be confirmed with the order."}
           </PrintRow>
-          <PrintRow label="Payment">Advance and balance terms to be agreed before production.</PrintRow>
+          <PrintRow label="Payment">
+            50% advance due at order confirmation; the remaining 50% is cash on
+            delivery (COD). Production starts after the advance is received.
+          </PrintRow>
           <PrintRow label="Currency">All amounts in Bangladeshi Taka (BDT).</PrintRow>
         </dl>
       </PrintSection>

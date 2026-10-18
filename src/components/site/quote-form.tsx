@@ -1,5 +1,6 @@
 "use client";
 
+import { MessageCircle, PhoneCall } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useActionState, useState } from "react";
 
@@ -13,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { publicEnv } from "@/lib/env";
 
 export type QuoteOption = { id: string; title: string };
 
@@ -58,6 +60,16 @@ export function QuoteForm({
   >(submitQuote, null);
 
   if (state?.ok) {
+    // WhatsApp handoff (Phase 4 task 2, owner decision): the submitter sends
+    // the finished request to our WhatsApp number with the ref prefilled, so
+    // the quote "arrives on our WhatsApp" without a paid messaging API.
+    const waDigits =
+      publicEnv.NEXT_PUBLIC_WHATSAPP_NUMBER.replace(/[^\d]/g, "");
+    const waHref = state.ref
+      ? `https://wa.me/${waDigits}?text=${encodeURIComponent(
+          t("whatsappPrefill", { ref: state.ref }),
+        )}`
+      : `https://wa.me/${waDigits}`;
     return (
       <div className="rounded-card border bg-surface p-8 text-center">
         <h2 className="text-xl font-semibold">{t("successTitle")}</h2>
@@ -71,13 +83,27 @@ export function QuoteForm({
         ) : (
           <p className="mt-2 text-muted-foreground">{t("successBody")}</p>
         )}
-        <div className="mt-6 flex justify-center gap-3">
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          {state.ref ? (
+            <Button asChild>
+              <a href={waHref} target="_blank" rel="noopener noreferrer">
+                <MessageCircle className="size-4" aria-hidden="true" />
+                {t("whatsappContinue")}
+              </a>
+            </Button>
+          ) : null}
           {onDone ? (
             <Button variant="outline" type="button" onClick={onDone}>
               {t("anotherQuote")}
             </Button>
           ) : null}
         </div>
+        {state.ref ? (
+          <p className="mt-4 flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
+            <PhoneCall className="size-4" aria-hidden="true" />
+            {t("successCall")} {publicEnv.NEXT_PUBLIC_WHATSAPP_NUMBER}
+          </p>
+        ) : null}
       </div>
     );
   }

@@ -4,19 +4,24 @@ import { Topbar } from "@/components/admin/shell/topbar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import type { AdminUser } from "@/lib/auth";
+import type { AdminAlert } from "@/server/notifications";
 
 /**
  * AdminShell (plan 9c.4): providers plus the collapsible, role-aware sidebar and
  * the sticky topbar around a content area capped at 1440px and centered beyond.
  * A skip link is the first focusable element (accessibility, plan 3c).
+ * `alerts` feeds the topbar bell (Phase 4 task 2); fetched in the protected
+ * layout through the RLS-scoped client (owner/manager see rows, others none).
  */
 export function AdminShell({
   user,
   counts,
+  alerts = [],
   children,
 }: {
   user: AdminUser;
   counts?: Partial<Record<BadgeKey, number>>;
+  alerts?: AdminAlert[];
   children: React.ReactNode;
 }) {
   return (
@@ -30,7 +35,7 @@ export function AdminShell({
         </a>
         <AppSidebar user={user} counts={counts} />
         <SidebarInset>
-          <Topbar user={user} />
+          <Topbar user={user} alerts={alerts} />
           {/* SidebarInset already renders the single <main> landmark; this is a
               plain content wrapper (the skip-link target). */}
           <div
