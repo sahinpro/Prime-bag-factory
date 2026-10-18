@@ -70,8 +70,11 @@ async function auditFirstProduct(
     .catch(() => null);
   test.skip(!href, "no product in the catalog to audit");
   await gotoWithTheme(page, href!, theme);
-  await expect(page.locator("main")).toBeVisible();
+  // The product segment is streamed (Partial Rendering): while the client swaps
+  // the resumed subtree in, dev keeps a second copy of the layout's <main> in the
+  // DOM, so let the stream settle and match the landmark leniently before auditing.
   await page.waitForLoadState("networkidle");
+  await expect(page.locator("main").first()).toBeVisible();
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations).toEqual([]);
 }

@@ -19,17 +19,28 @@ export function PrintSheet({
   documentNumber,
   issuedOn,
   company,
+  backHref,
+  backLabel,
   children,
 }: Readonly<{
   documentTitle: string;
   documentNumber: string;
   issuedOn: string;
   company: CompanyProfile;
+  backHref?: string;
+  backLabel?: string;
   children: React.ReactNode;
 }>) {
   return (
-    <main id="main" className="min-h-screen bg-surface-2 py-8 print:bg-white print:py-0">
-      <PrintToolbar documentTitle={documentTitle} />
+    <main
+      id="main"
+      className="min-h-screen bg-surface-2 py-8 print:bg-white print:py-0"
+    >
+      <PrintToolbar
+        documentTitle={documentTitle}
+        backHref={backHref}
+        backLabel={backLabel}
+      />
       <article
         aria-label={documentTitle}
         className="mx-auto w-full max-w-[210mm] bg-white px-6 py-8 text-black shadow-lg sm:px-[16mm] sm:py-[14mm] print:max-w-none print:px-0 print:py-0 print:shadow-none"
@@ -48,9 +59,7 @@ export function PrintSheet({
                 {company.name}
               </p>
               <p className="text-xs text-black/70">
-                {[company.phone, company.email]
-                  .filter(Boolean)
-                  .join(" · ")}
+                {[company.phone, company.email].filter(Boolean).join(" · ")}
               </p>
             </div>
           </div>
@@ -104,9 +113,7 @@ export function PrintRow({
 }
 
 /** Empty checkbox squares for the production checklist (print, not a form). */
-export function PrintChecklist({
-  items,
-}: Readonly<{ items: string[] }>) {
+export function PrintChecklist({ items }: Readonly<{ items: string[] }>) {
   return (
     <ul className="space-y-1.5 text-sm">
       {items.map((item) => (

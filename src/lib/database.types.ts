@@ -1338,6 +1338,24 @@ export type Database = {
     Functions: {
       has_role: { Args: { roles: string[] }; Returns: boolean };
       place_order: { Args: { payload: Json }; Returns: string };
+      admin_set_order_status: {
+        Args: {
+          p_order_id: string;
+          p_to_status: Database["public"]["Enums"]["order_status"];
+          p_note?: string | null;
+        };
+        Returns: string;
+      };
+      admin_record_payment: {
+        Args: {
+          p_order_id: string;
+          p_amount: number;
+          p_method: Database["public"]["Enums"]["payment_method"];
+          p_reference?: string | null;
+          p_note?: string | null;
+        };
+        Returns: string;
+      };
     };
     Enums: {
       blocked_contact_type: "phone" | "ip_hash";

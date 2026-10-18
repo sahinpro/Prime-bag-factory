@@ -24,7 +24,11 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
-      testIgnore: [/.*\.setup\.ts/, /a11y-admin\.spec\.ts/],
+      testIgnore: [
+        /.*\.setup\.ts/,
+        /a11y-admin\.spec\.ts/,
+        /admin-orders\.spec\.ts/,
+      ],
     },
     {
       name: "admin",
@@ -33,7 +37,8 @@ export default defineConfig({
         storageState: "e2e/.auth/admin.json",
       },
       dependencies: ["setup"],
-      testMatch: /a11y-admin\.spec\.ts/,
+      // Authenticated admin screens: the axe matrix and the orders feature spec.
+      testMatch: [/a11y-admin\.spec\.ts/, /admin-orders\.spec\.ts/],
       // Supabase SSR refreshes the session cookie on each authed request; many
       // parallel workers sharing one storageState race that refresh and abort
       // connections (ECONNRESET). Run these serially.
