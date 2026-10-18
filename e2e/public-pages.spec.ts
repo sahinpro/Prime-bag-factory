@@ -11,6 +11,10 @@ const PAGES = [
   "/builder",
   "/search",
   "/cart",
+  "/checkout",
+  // The lookup form for an order that does not exist — the only public order
+  // page reachable without a real order number.
+  "/order/PBF-251018-0001",
   "/about",
   "/contact",
   "/faq",

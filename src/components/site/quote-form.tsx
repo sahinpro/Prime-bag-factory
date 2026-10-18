@@ -9,10 +9,10 @@ import {
   type QuoteResult,
 } from "@/app/[locale]/(site)/quote/actions";
 import { ArtworkUpload } from "@/components/site/artwork-upload";
+import { Field } from "@/components/site/form-field";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { publicEnv } from "@/lib/env";
 
@@ -63,8 +63,10 @@ export function QuoteForm({
     // WhatsApp handoff (Phase 4 task 2, owner decision): the submitter sends
     // the finished request to our WhatsApp number with the ref prefilled, so
     // the quote "arrives on our WhatsApp" without a paid messaging API.
-    const waDigits =
-      publicEnv.NEXT_PUBLIC_WHATSAPP_NUMBER.replace(/[^\d]/g, "");
+    const waDigits = publicEnv.NEXT_PUBLIC_WHATSAPP_NUMBER.replace(
+      /[^\d]/g,
+      "",
+    );
     const waHref = state.ref
       ? `https://wa.me/${waDigits}?text=${encodeURIComponent(
           t("whatsappPrefill", { ref: state.ref }),
@@ -295,36 +297,5 @@ export function QuoteForm({
         </span>
       </div>
     </form>
-  );
-}
-
-function Field({
-  id,
-  label,
-  required,
-  error,
-  className,
-  children,
-}: {
-  id: string;
-  label: string;
-  required?: boolean;
-  error?: string;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className={`flex flex-col gap-1.5 ${className ?? ""}`}>
-      <Label htmlFor={id}>
-        {label}
-        {required ? <span className="text-destructive"> *</span> : null}
-      </Label>
-      {children}
-      {error ? (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
-      ) : null}
-    </div>
   );
 }

@@ -267,7 +267,7 @@ function Wizard({
                 className={cn(
                   "flex items-center gap-1.5 rounded-control px-2 py-1.5 text-xs font-medium",
                   current
-                    ? "bg-brand text-white"
+                    ? "bg-brand text-brand-foreground"
                     : done
                       ? "bg-brand/15 text-gold-text"
                       : "bg-surface-2 text-muted-foreground",
