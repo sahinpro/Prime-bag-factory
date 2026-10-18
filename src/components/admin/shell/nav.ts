@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   Package,
   Palette,
-  PanelsTopLeft,
   ScrollText,
   Settings,
   ShoppingCart,
@@ -115,17 +114,6 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: Boxes,
         roles: ["owner", "manager", "inventory"],
         badgeKey: "inventory_low",
-      },
-    ],
-  },
-  {
-    label: "Content",
-    items: [
-      {
-        label: "Content",
-        href: "/admin/content",
-        icon: PanelsTopLeft,
-        roles: OWNER_MANAGER,
       },
     ],
   },
