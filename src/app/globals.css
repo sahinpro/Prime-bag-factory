@@ -362,3 +362,20 @@ html:lang(bn) [data-slot="tabs-trigger"] {
 .theme-toggle .theme-toggle-rays {
   transform-origin: 50% 50%;
   transform-box: view-box;
+}
+
+/*
+  Print documents (plan 9c.5 PrintSheet): A4 sheets printed from the admin
+  print routes. Margins live on the page, not the sheet, so the document
+  controls its own layout; the on-screen tray colors are dropped on paper.
+*/
+@page {
+  size: A4;
+  margin: 14mm;
+}
+@media print {
+  html,
+  body {
+    background: white;
+  }
+}

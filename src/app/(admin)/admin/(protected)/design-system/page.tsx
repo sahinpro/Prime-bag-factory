@@ -34,6 +34,12 @@ import { BilingualField } from "@/components/admin/forms/bilingual-field";
 import { ConfirmDialog } from "@/components/admin/forms/confirm-dialog";
 import { FormSection } from "@/components/admin/forms/form-section";
 import { ImageUploader } from "@/components/admin/forms/image-uploader";
+import {
+  PrintChecklist,
+  PrintRow,
+  PrintSection,
+} from "@/components/admin/print/print-sheet";
+import { ColorChip } from "@/components/admin/quotes/color-chip";
 import { PageHeader } from "@/components/admin/shell/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -431,6 +437,30 @@ export default function DesignSystemPage() {
 
         <DemoCard title="Image uploader (Media)">
           <ImageUploaderDemo />
+        </DemoCard>
+
+        <DemoCard title="Print sheet parts (9c.5)">
+          {/* Paper is always black-on-white (plan print spec), so the demo
+              sits on a forced-white block in both themes. The full sheet
+              renders outside the shell on the /admin/print/… routes. */}
+          <div className="rounded-control bg-white p-4 text-black">
+            <PrintSection title="Customer">
+              <dl>
+                <PrintRow label="Company">Acme Foods Ltd.</PrintRow>
+                <PrintRow label="Quantity">1,000 pcs</PrintRow>
+              </dl>
+            </PrintSection>
+            <PrintChecklist
+              items={["Artwork proof approved", "Stitching QC passed"]}
+            />
+          </div>
+        </DemoCard>
+
+        <DemoCard title="Color chips (quotes)">
+          <div className="flex flex-wrap gap-2">
+            <ColorChip label="Body" name="Natural Jute" hex="#c8a86a" />
+            <ColorChip label="Handle" name="Ink Canvas" hex="#1c1917" />
+          </div>
         </DemoCard>
       </div>
     </div>

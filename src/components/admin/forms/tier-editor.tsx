@@ -219,7 +219,7 @@ export function TierEditor({
                       })
                     }
                     aria-invalid={hasError || undefined}
-                    className="w-full max-w-[10rem]"
+                    className="w-full max-w-40"
                   />
                 </div>
                 <div className="ml-auto flex items-center gap-1">

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 
 import { PageHeader } from "@/components/admin/shell/page-header";
 import { SwatchesManager } from "@/components/admin/swatches/swatches-manager";
@@ -13,6 +14,11 @@ export const metadata = { title: "Swatch Library" };
 // the role inside each server action). The whole library loads in one read and
 // group tab switching is client-side, so there are no URL params here.
 export default async function SwatchesPage() {
+  // Force request-time rendering: a layout's `await connection()` does not
+  // cover this page segment, so the session check below (supabase auth
+  // compares token expiry with Date.now) would trip the Next 16 PPR
+  // "blocking-prerender-current-time" error during dev prerender.
+  await connection();
   const user = await getAdminUser();
   if (!user) redirect("/admin/login");
 

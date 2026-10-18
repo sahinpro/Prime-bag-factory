@@ -98,3 +98,33 @@ values
   ('4bb7d420-5342-4364-b4bd-e354c5237b07', 'company', '{"name":"Prime Bag Factory","phone":"+8801700000000","email":"info@primebagfactorybd.com","whatsapp":"8801700000000"}'),
   ('a9dbf4cb-7fc5-4b31-adf2-34b7ab17ce3d', 'checkout', '{"cod_enabled": true, "checkout_enabled": true, "custom_order_mode": "quote"}')
 on conflict do nothing;
+
+-- Demo quote requests for local dev (plan §10: seed/demo data allowed only in
+-- seed.sql). One form request against the demo product and one builder request
+-- with a customization snapshot, so the admin quotes inbox is not empty.
+insert into public.quote_requests (
+  id, source, company_name, contact_name, phone, email, product_id, category_id,
+  quantity, custom_size, custom_color, needs_logo_print, customization,
+  estimated_unit_price, estimated_total, needed_by, message, status, valid_until
+)
+values
+  (
+    '6b7a557d-13ad-4dcf-99ce-a738826b0a5e', 'form', 'Fresh Mart Ltd.',
+    'Rafiq Ahmed', '+8801711111111', 'rafiq@freshmart.example',
+    'd73595db-6b1d-4b9b-a057-22e3497ca3ef', 'c89dd35e-6cf0-4fe0-84cc-aec76fe164a1',
+    200, null, null, false, null, null, null,
+    current_date + 30,
+    'We need 200 insulated delivery bags with our logo. Please share bulk pricing.',
+    'new', null
+  ),
+  (
+    'a2cf0b4e-15f1-4c65-8345-3f31630ca855', 'builder', 'NGO Relief Alliance',
+    'Sumaya Karim', '+8801822222222', null, null,
+    'c89dd35e-6cf0-4fe0-84cc-aec76fe164a1',
+    1000, '14x14x6 inch', null, true,
+    '{"category":{"slug":"grocery-milk","name":"Grocery & Milk"},"size":{"width":14,"height":14,"gusset":6,"unit":"inch"},"material":"Non-woven 80gsm","colors":{"primary":{"name":"Ivory","hex":"#F5F1E8"},"handle":{"name":"Black","hex":"#111111"}},"printing":{"method":"Screen print 1 color","text":"NGO Relief Alliance","artwork":null},"quantity":1000}',
+    48.50, 48500.00, current_date + 12,
+    'Seminar giveaway bags, jute feel, one-color screen print.',
+    'contacted', current_date + 20
+  )
+on conflict do nothing;

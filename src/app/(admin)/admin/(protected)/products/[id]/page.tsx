@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { connection } from "next/server";
 
 import { ProductEditor } from "@/components/admin/products/product-editor";
 import { PageHeader } from "@/components/admin/shell/page-header";
@@ -21,6 +22,10 @@ export default async function EditProductPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ tab?: string }>;
 }>) {
+  // Request-time rendering: the layout's `await connection()` does not cover
+  // this page segment, and the session check reads Date.now internally
+  // (Next 16 PPR "blocking-prerender-current-time").
+  await connection();
   const user = await getAdminUser();
   if (!user) redirect("/admin/login");
 

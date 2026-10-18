@@ -18,6 +18,7 @@ const pages = [
   { path: "/admin/swatches", heading: "Swatch Library" },
   { path: "/admin/products", heading: "Products" },
   { path: "/admin/products/new", heading: "New product" },
+  { path: "/admin/quotes", heading: "Quotes" },
 ] as const;
 
 async function gotoAdminWithTheme(
