@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Suspense, useEffect, useRef, useState } from "react";
 
 import { LanguageSwitcher } from "@/components/site/language-switcher";
+import { CartLink } from "@/components/site/cart-link";
 import { ThemeLogo } from "@/components/site/logo";
 import { ThemeToggle } from "@/components/site/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -160,6 +161,8 @@ export function SiteHeader({ categories }: { categories: HeaderCategory[] }) {
             </Link>
           </Button>
 
+          <CartLink />
+
           <Button size="sm" asChild className="hidden sm:inline-flex">
             <Link href="/quote">{t("quote")}</Link>
           </Button>
@@ -244,6 +247,14 @@ export function SiteHeader({ categories }: { categories: HeaderCategory[] }) {
                     className="rounded-md px-3 py-2 text-base font-medium hover:bg-muted"
                   >
                     {t("search")}
+                  </Link>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Link
+                    href="/cart"
+                    className="rounded-md px-3 py-2 text-base font-medium hover:bg-muted"
+                  >
+                    {t("cart")}
                   </Link>
                 </SheetClose>
                 <div className="mt-3 px-3">

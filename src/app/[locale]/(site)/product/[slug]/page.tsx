@@ -190,6 +190,7 @@ async function ProductContent({ params }: { params: Promise<RouteParams> }) {
         title={title}
         moq={product.moq}
         stockMode={product.stock_mode}
+        productType={product.type}
         variants={variants}
         tiers={tiers}
         images={images}

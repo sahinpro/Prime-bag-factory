@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "cn";
+import { Check, ShoppingBag } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
+import { addToCart } from "@/lib/cart";
 import { formatMoney, formatNumber } from "@/lib/format";
 
 export type ConfigVariant = {
@@ -41,6 +43,7 @@ export function ProductConfigurator({
   title,
   moq,
   stockMode,
+  productType,
   variants,
   tiers,
   images,
@@ -51,6 +54,7 @@ export function ProductConfigurator({
   title: string;
   moq: number;
   stockMode: "tracked" | "made_to_order";
+  productType: "buy_now" | "quote_only";
   variants: ConfigVariant[];
   tiers: ConfigTier[];
   images: ConfigImage[];
@@ -65,6 +69,9 @@ export function ProductConfigurator({
   );
   const [qty, setQty] = useState<number>(moq > 0 ? moq : 1);
   const [activeImage, setActiveImage] = useState(0);
+  // Add-to-cart confirmation; re-selecting any option clears it so the badge
+  // never claims a cart holds a quantity that was just changed.
+  const [added, setAdded] = useState(false);
 
   const variant = variants.find((v) => v.id === variantId) ?? null;
 
@@ -155,7 +162,10 @@ export function ProductConfigurator({
                   <button
                     key={v.id}
                     type="button"
-                    onClick={() => setVariantId(v.id)}
+                    onClick={() => {
+                      setVariantId(v.id);
+                      setAdded(false);
+                    }}
                     aria-pressed={selected}
                     aria-label={v.color ?? v.sku}
                     className={cn(
@@ -214,7 +224,10 @@ export function ProductConfigurator({
                 inputMode="numeric"
                 min={moq > 0 ? moq : 1}
                 value={qty}
-                onChange={(e) => setQty(clampQty(Number(e.target.value)))}
+                onChange={(e) => {
+                  setQty(clampQty(Number(e.target.value)));
+                  setAdded(false);
+                }}
                 className="w-32"
               />
             </label>
@@ -227,12 +240,63 @@ export function ProductConfigurator({
             <p className="text-sm text-muted-foreground">{c("madeToOrder")}</p>
           ) : null}
 
+          {variant?.available != null && qty > variant.available ? (
+            <p className="text-sm text-destructive">
+              {t("insufficientStock", {
+                count: formatNumber(variant.available, locale),
+              })}
+            </p>
+          ) : null}
+
           <div className="flex flex-wrap gap-2">
-            <Button asChild>
-              <Link href={quoteHref} locale={locale}>
-                {c("requestQuote")}
-              </Link>
-            </Button>
+            {productType === "buy_now" ? (
+              <>
+                <Button
+                  onClick={() => {
+                    if (!variantId || qty < 1) return;
+                    addToCart(variantId, qty);
+                    setAdded(true);
+                  }}
+                  disabled={
+                    !variantId ||
+                    qty < 1 ||
+                    (variant?.available != null && qty > variant.available)
+                  }
+                >
+                  <ShoppingBag
+                    aria-hidden="true"
+                    strokeWidth={1.75}
+                    className="size-4"
+                  />
+                  {t("addToCart")}
+                </Button>
+                {added ? (
+                  <Button variant="outline" asChild>
+                    <Link href="/cart">
+                      <Check
+                        aria-hidden="true"
+                        strokeWidth={1.75}
+                        className="size-4 text-success"
+                      />
+                      {t("addedViewCart")}
+                    </Link>
+                  </Button>
+                ) : null}
+                {/* COD orders are retail; the quote flow stays available for
+                    customers who prefer to negotiate. */}
+                <Button variant="ghost" asChild className="text-muted-foreground">
+                  <Link href={quoteHref} locale={locale}>
+                    {c("requestQuote")}
+                  </Link>
+                </Button>
+              </>
+            ) : (
+              <Button asChild>
+                <Link href={quoteHref} locale={locale}>
+                  {c("requestQuote")}
+                </Link>
+              </Button>
+            )}
             {customizationEnabled ? (
               <Button variant="outline" asChild>
                 <Link

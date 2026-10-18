@@ -10,6 +10,7 @@ const PAGES = [
   "/quote",
   "/builder",
   "/search",
+  "/cart",
   "/about",
   "/contact",
   "/faq",

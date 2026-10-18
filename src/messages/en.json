@@ -50,7 +50,9 @@
     "faq": "FAQ",
     "legal": "Legal",
     "clients": "Clients",
-    "contact": "Contact"
+    "contact": "Contact",
+    "cart": "Cart",
+    "cartAria": "Cart, {count} items"
   },
   "contact": {
     "whatsapp": "Chat on WhatsApp",
@@ -97,7 +99,10 @@
     "minOrderNote": "Minimum order {moq} pcs",
     "priceRange": "Price range",
     "notFoundTitle": "Product not found",
-    "notFoundBody": "This product is no longer available."
+    "notFoundBody": "This product is no longer available.",
+    "addToCart": "Add to cart",
+    "addedViewCart": "Added — view cart",
+    "insufficientStock": "Only {count} pcs available"
   },
   "category": {
     "products": "products",
@@ -120,6 +125,33 @@
     "count": "{count} products found",
     "none": "No products match your search.",
     "tryKeywords": "Try a different keyword."
+  },
+  "cart": {
+    "title": "Your cart",
+    "empty": "Your cart is empty",
+    "emptyHint": "Browse the catalog and add the bags you want to order.",
+    "browse": "Browse products",
+    "loadError": "Could not load the cart. Please try again.",
+    "retry": "Try again",
+    "removeAria": "Remove {title} from cart",
+    "quantity": "Quantity",
+    "increaseAria": "Increase quantity",
+    "decreaseAria": "Decrease quantity",
+    "pricedWithCart": "priced at {count} pcs in cart",
+    "belowMoq": "Minimum order is {moq} pcs",
+    "overStock": "Only {count} pcs in stock",
+    "quoteOnly": "This item is quote-only.",
+    "missingNote": "{count, plural, one {# item is no longer available.} other {# items are no longer available.}}",
+    "removeMissing": "Remove unavailable",
+    "continueShopping": "Continue shopping",
+    "summary": "Order summary",
+    "summaryAria": "Cart summary",
+    "items": "{count} pcs in cart",
+    "subtotal": "Subtotal",
+    "shippingAtCheckout": "Shipping is calculated at checkout by zone.",
+    "checkout": "Proceed to checkout",
+    "fixBeforeCheckout": "Fix the highlighted items before checkout.",
+    "advanceNote": "Cash on delivery with 50% advance payment to confirm the order."
   },
   "quote": {
     "title": "Request a quote",
