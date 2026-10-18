@@ -33,6 +33,14 @@ function ensureConfigured(): void {
   configured = true;
 }
 
+/**
+ * All project media lives under one Cloudinary root folder so Prime Bag Factory
+ * assets stay separate from other work in the account (Logos, portfolios, …).
+ * Uploads land in `Primebagfactory/<entity>` — e.g. `Primebagfactory/products`.
+ * Note: Cloudinary folder names are case-sensitive; this must match exactly.
+ */
+const ROOT_FOLDER = "Primebagfactory";
+
 /** Delivery presets per usage, so stored URLs are already resized + compressed. */
 const TRANSFORM = {
   // Large hero / product master images.
@@ -72,10 +80,20 @@ export async function uploadImage(
 ): Promise<UploadedMedia> {
   ensureConfigured();
   const preset = options.preset ?? "standard";
+  const targetFolder = `${ROOT_FOLDER}/${options.folder}`;
 
   const result = await new Promise<UploadApiResponse>((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
-      { folder: options.folder, resource_type: "image" },
+      {
+        // `folder` sets the public-id prefix; `asset_folder` sets the Media
+        // Library location. Both are set explicitly so the account's default
+        // upload preset (whose asset_folder points at /portfolios) cannot
+        // redirect this project's assets out of the Primebagfactory tree.
+        folder: targetFolder,
+        asset_folder: targetFolder,
+        use_asset_folder_as_public_id_prefix: true,
+        resource_type: "image",
+      },
       (error, res) => {
         if (error || !res) {
           reject(error ?? new Error("Cloudinary upload failed."));
@@ -101,5 +119,53 @@ export async function uploadImage(
     height: result.height,
     format: result.format,
     bytes: result.bytes,
+  };
+}
+
+/** Public image folders the browser may upload into (fixed, never free text). */
+const SIGNABLE_FOLDERS = ["artwork", "products"] as const;
+export type SignableFolder = (typeof SIGNABLE_FOLDERS)[number];
+
+export type SignedUploadParams = {
+  cloudName: string;
+  apiKey: string;
+  timestamp: number;
+  signature: string;
+  folder: string;
+  endpoint: string;
+};
+
+/**
+ * Signature for a browser → Cloudinary direct upload (plan 8 "uploads … signed").
+ * The api_secret stays on the server; the client only ever receives a signature
+ * locked to one `timestamp`, one folder and one preset, so it cannot upload
+ * elsewhere or without expiring. Returns null when Cloudinary is not configured
+ * so the caller can degrade instead of throwing.
+ */
+export function buildSignedUploadParams(
+  folder: string,
+): SignedUploadParams | null {
+  if (!process.env.CLOUDINARY_URL) return null;
+  if (!(SIGNABLE_FOLDERS as readonly string[]).includes(folder)) {
+    throw new Error("Unsupported upload folder.");
+  }
+  ensureConfigured();
+  const cfg = cloudinary.config();
+  if (!cfg.cloud_name || !cfg.api_key || !cfg.api_secret) return null;
+
+  const timestamp = Math.round(Date.now() / 1000);
+  const targetFolder = `${ROOT_FOLDER}/${folder}`;
+  const signature = cloudinary.utils.api_sign_request(
+    { timestamp, folder: targetFolder },
+    cfg.api_secret,
+  );
+
+  return {
+    cloudName: cfg.cloud_name,
+    apiKey: cfg.api_key,
+    timestamp,
+    signature,
+    folder: targetFolder,
+    endpoint: `https://api.cloudinary.com/v1_1/${cfg.cloud_name}/image/upload`,
   };
 }

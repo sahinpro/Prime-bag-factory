@@ -16,5 +16,5 @@ export default async function SiteLayout({
 
   setRequestLocale(locale);
 
-  return <SiteShell>{children}</SiteShell>;
+  return <SiteShell locale={locale}>{children}</SiteShell>;
 }

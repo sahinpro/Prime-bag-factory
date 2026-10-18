@@ -1,13 +1,18 @@
 import type { Metadata } from "next";
-import { Inter, Noto_Serif_Bengali } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
+import {
+  getMessages,
+  getTranslations,
+  setRequestLocale,
+} from "next-intl/server";
+import { Inter, Noto_Serif_Bengali } from "next/font/google";
 import { notFound } from "next/navigation";
 
 import { ThemeProvider } from "@/components/site/theme-provider";
 import { ThemeScript } from "@/components/site/theme-script";
 import { isLocale, routing } from "@/i18n/routing";
 import { publicEnv } from "@/lib/env";
+import { jsonLd, siteUrl } from "@/lib/seo";
 
 import "../globals.css";
 
@@ -64,6 +69,23 @@ export default async function LocaleLayout({
 
   setRequestLocale(locale);
   const messages = await getMessages();
+  const t = await getTranslations({ locale, namespace: "metadata" });
+
+  // Site-wide Organization schema (plan 8 SEO). LocalBusiness/PostalAddress are
+  // added at launch with the real address; a bare Organization with logo +
+  // contact-point is safe now and lets Google build the entity graph early.
+  const organization = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: t("title"),
+    url: siteUrl(`/${locale}`),
+    logo: siteUrl("/brand/Logo black.png"),
+    sameAs: publicEnv.NEXT_PUBLIC_WHATSAPP_NUMBER
+      ? [
+          `https://wa.me/${publicEnv.NEXT_PUBLIC_WHATSAPP_NUMBER.replace(/[^\d]/g, "")}`,
+        ]
+      : undefined,
+  };
 
   return (
     <html
@@ -72,6 +94,7 @@ export default async function LocaleLayout({
       className={`${inter.variable} ${notoSerifBengali.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">
+        {jsonLd(organization)}
         <ThemeScript />
         <ThemeProvider>
           <NextIntlClientProvider messages={messages}>

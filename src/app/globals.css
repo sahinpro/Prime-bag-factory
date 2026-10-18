@@ -224,12 +224,20 @@ html[lang="bn"] footer {
   --text-xs--line-height: 1.7;
   --text-sm--line-height: 1.7;
   --text-base--line-height: 1.7;
-  font-size: 17px;
+  font-size: 18px;
   line-height: 1.7;
 }
 
 html[lang="bn"] main :is(.text-xs, .text-sm, .text-base),
 html[lang="bn"] footer :is(.text-xs, .text-sm, .text-base) {
+  font-size: max(1rem, 18px);
+}
+
+/*
+  The floating WhatsApp launcher sits outside <main>, so give its label the same
+  18px Bangla floor the plan requires on /bn (the sr-only variant is hidden).
+*/
+html[lang="bn"] [data-sticky-contact] a {
   font-size: max(1rem, 18px);
 }
 
@@ -291,6 +299,27 @@ html:lang(bn) [data-slot="tabs-trigger"] {
     outline: 2px solid var(--focus);
     outline-offset: 2px;
   }
+  /*
+    Restore the pointer cursor on interactive controls. Tailwind v4 preflight
+    defaults <button> to the arrow cursor, so buttons and clickable inputs lost
+    it. Radix dropdown/select options are divs (role=menuitem/option), so they
+    set cursor-pointer per component instead.
+  */
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  a[href],
+  summary,
+  label:has(:is(input, select, textarea)),
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="range"],
+  input[type="color"],
+  input[type="file"],
+  input[type="submit"],
+  input[type="button"],
+  input[type="reset"] {
+    cursor: pointer;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -306,3 +335,30 @@ html:lang(bn) [data-slot="tabs-trigger"] {
     transition-duration: 0.01ms !important;
   }
 }
+
+/*
+  Theme toggle sun<->moon morph (plan 3c animated toggle). CSS-driven so the
+  `motion` library is not on the critical path of every public page (Lighthouse
+  LCP). The dynamic geometry is set inline on the element; reduced-motion users
+  are neutralised by the global transition-duration override above.
+*/
+.theme-toggle {
+  --toggle-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.theme-toggle svg {
+  transform-origin: 50% 50%;
+  transition: transform 0.45s var(--toggle-ease);
+}
+.theme-toggle mask circle,
+.theme-toggle .theme-toggle-core,
+.theme-toggle .theme-toggle-rays {
+  transition:
+    cx 0.45s var(--toggle-ease),
+    cy 0.45s var(--toggle-ease),
+    r 0.45s var(--toggle-ease),
+    transform 0.45s var(--toggle-ease),
+    opacity 0.45s var(--toggle-ease);
+}
+.theme-toggle .theme-toggle-rays {
+  transform-origin: 50% 50%;
+  transform-box: view-box;

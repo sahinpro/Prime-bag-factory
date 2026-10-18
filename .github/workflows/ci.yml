@@ -40,3 +40,26 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test
+
+  lighthouse:
+    name: Lighthouse (mobile perf)
+    runs-on: ubuntu-latest
+    needs: check
+    env:
+      LIGHTHOUSE_BASE_URL: http://localhost:3000
+      LIGHTHOUSE_PATHS: /en,/en/quote
+      LIGHTHOUSE_MIN_PERF: "90"
+      CHROME_PATH: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - name: Start production server
+        run: |
+          bun run start &
+          for i in $(seq 1 60); do curl -sf http://localhost:3000/en > /dev/null && break; sleep 1; done
+      - name: Lighthouse mobile audit
+        run: bun run perf:lighthouse

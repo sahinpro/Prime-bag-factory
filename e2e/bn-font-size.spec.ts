@@ -1,6 +1,16 @@
 import { expect, test, type Page } from "@playwright/test";
 
-const bnPages = ["/bn"];
+const bnPages = [
+  "/bn",
+  "/bn/quote",
+  "/bn/builder",
+  "/bn/search",
+  "/bn/about",
+  "/bn/contact",
+  "/bn/faq",
+  "/bn/legal",
+  "/bn/clients",
+];
 const themes = ["light", "dark"] as const;
 const minPx = 18;
 
@@ -11,7 +21,11 @@ type TooSmall = {
   className: string;
 };
 
-async function gotoWithTheme(page: Page, path: string, theme: (typeof themes)[number]) {
+async function gotoWithTheme(
+  page: Page,
+  path: string,
+  theme: (typeof themes)[number],
+) {
   await page.addInitScript((value) => {
     localStorage.setItem("theme", value);
   }, theme);
@@ -23,13 +37,20 @@ async function gotoWithTheme(page: Page, path: string, theme: (typeof themes)[nu
 async function collectTooSmall(page: Page): Promise<TooSmall[]> {
   return page.evaluate((min) => {
     const failures: TooSmall[] = [];
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    const walker = document.createTreeWalker(
+      document.body,
+      NodeFilter.SHOW_TEXT,
+    );
 
     const isExcluded = (el: Element | null) => {
       if (!el) {
         return true;
       }
-      if (el.closest("svg") || el.closest("nextjs-portal") || el.closest("script")) {
+      if (
+        el.closest("svg") ||
+        el.closest("nextjs-portal") ||
+        el.closest("script")
+      ) {
         return true;
       }
       if (el.closest(".sr-only") || el.closest("header")) {
@@ -88,11 +109,15 @@ for (const path of bnPages) {
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
       expect(await collectTooSmall(page)).toEqual([]);
 
+      // Plan §3c: on :lang(bn) Noto Serif Bengali is applied with Inter as the
+      // fallback. getComputedStyle().fontFamily returns the whole declared stack,
+      // so a Bengali heading must list both faces (Noto first, Inter present).
       const headingFont = await page
         .getByRole("heading", { level: 1 })
         .evaluate((el) => getComputedStyle(el).fontFamily);
-      expect(headingFont.toLowerCase()).toContain("inter");
-      expect(headingFont.toLowerCase()).not.toContain("noto");
+      const headingFontLower = headingFont.toLowerCase();
+      expect(headingFontLower).toContain("noto serif bengali");
+      expect(headingFontLower).toContain("inter");
     });
   }
 }

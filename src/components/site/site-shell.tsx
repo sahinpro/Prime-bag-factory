@@ -1,13 +1,32 @@
 import { getTranslations } from "next-intl/server";
-import { Suspense } from "react";
 
-import { LanguageSwitcher } from "@/components/site/language-switcher";
-import { ThemeLogo } from "@/components/site/logo";
-import { ThemeToggle } from "@/components/site/theme-toggle";
+import { SiteFooter } from "@/components/site/site-footer";
+import { SiteHeader, type HeaderCategory } from "@/components/site/site-header";
+import { StickyContact } from "@/components/site/sticky-contact";
+import { getNavCategories } from "@/server/catalog";
 
-export async function SiteShell({ children }: { children: React.ReactNode }) {
-  const t = await getTranslations("footer");
-  const a11y = await getTranslations("a11y");
+/**
+ * Public site chrome (plan §8): skip link, sticky header with a category
+ * mega-menu built from the DB, the page content (each page owns its own `<main
+ * id="main">` so there is exactly one main landmark), the footer and the floating
+ * WhatsApp control. Category reads degrade to an empty nav if the DB is
+ * unreachable, so a transient outage never blocks a page render.
+ */
+export async function SiteShell({
+  children,
+  locale,
+}: {
+  children: React.ReactNode;
+  locale: string;
+}) {
+  const a11y = await getTranslations({ locale, namespace: "a11y" });
+
+  let categories: HeaderCategory[] = [];
+  try {
+    categories = await getNavCategories();
+  } catch {
+    categories = [];
+  }
 
   return (
     <>
@@ -17,19 +36,10 @@ export async function SiteShell({ children }: { children: React.ReactNode }) {
       >
         {a11y("skipToContent")}
       </a>
-      <header className="flex h-16 shrink-0 items-center justify-between gap-4 border-b border-border px-4">
-        <ThemeLogo />
-        <div className="flex items-center gap-2">
-          <Suspense fallback={null}>
-            <LanguageSwitcher />
-          </Suspense>
-          <ThemeToggle />
-        </div>
-      </header>
+      <SiteHeader categories={categories} />
       {children}
-      <footer className="mt-auto border-t border-border px-4 py-6 text-sm text-muted-foreground">
-        <p>{t("note")}</p>
-      </footer>
+      <SiteFooter locale={locale} />
+      <StickyContact />
     </>
   );
 }

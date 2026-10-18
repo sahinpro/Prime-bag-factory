@@ -36,6 +36,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Bangla text uses Noto Serif Bengali on `:lang(bn)`. Body line-height for Bangla is about 1.7. On `/bn`, visible text is at least 18px.
 - Routes under `src/app/[locale]` are public and bilingual. Admin stays outside `[locale]` and is English first.
 - Next.js 16 uses `src/proxy.ts`, not `middleware.ts`.
+- Public catalog media uploads go to Cloudinary via the server-signed SDK (`src/lib/cloudinary.ts`, `import "server-only"`; the API secret never reaches the browser). Every asset is scoped under the `Primebagfactory/` root folder (`Primebagfactory/<entity>`, entity from the fixed folder enum). Because the Cloudinary account has a default upload preset whose asset folder is `/portfolios`, `uploadImage` must set `asset_folder` and `use_asset_folder_as_public_id_prefix: true` (not just `folder`) or uploads land in `/portfolios`. Private quote attachments stay on Supabase Storage.
 
 ### Admin UI rules
 

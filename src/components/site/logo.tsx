@@ -53,7 +53,17 @@ export function Logo({
   );
 }
 
-/** Theme-aware horizontal logo. CSS switches variants so there is no flash. */
+/**
+ * Theme-aware horizontal logo. CSS switches variants so there is no flash.
+ *
+ * Not `priority`: the logo is a small decorative (`alt=""`) header asset and is
+ * never the intended LCP on the public marketing pages (home = hero copy,
+ * product = `<h1>` title), both server-rendered text. Eagerly preloading two
+ * large raster variants (light + dark) just competed with the real LCP and the
+ * critical JS in Lighthouse's throttled window. As a top-of-viewport image the
+ * browser still fetches it on the first frame via lazy-loading's immediate
+ * intersection. See plan Phase 3 T8 / Decision Log 2026-10-18.
+ */
 export function ThemeLogo({ className }: { className?: string }) {
   return (
     <Link href="/" aria-label="Prime Bag Factory">
@@ -61,13 +71,11 @@ export function ThemeLogo({ className }: { className?: string }) {
         <Logo
           variant="light"
           alt=""
-          priority
           className="h-auto max-w-40 dark:hidden"
         />
         <Logo
           variant="dark"
           alt=""
-          priority
           className="hidden h-auto max-w-40 dark:block"
         />
       </span>

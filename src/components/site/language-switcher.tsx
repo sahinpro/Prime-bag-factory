@@ -33,7 +33,7 @@ export function LanguageSwitcher() {
         hrefLang={next}
         lang={next}
         aria-label={names[next]}
-        className="inline-flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md border border-input px-1 text-[13px] bg-primary leading-none font-normal text-foreground"
+        className="inline-flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md border border-input px-1 text-[13px] bg-primary leading-none font-normal text-primary-foreground"
       >
         {compact[next]}
       </Link>
