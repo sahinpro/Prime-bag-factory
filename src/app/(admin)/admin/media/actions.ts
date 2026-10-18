@@ -12,7 +12,9 @@ const CATALOG_ROLES = ["owner", "manager"] as const;
 const folderSchema = z.enum([
   "catalog",
   "categories",
+  "clients",
   "collections",
+  "gallery",
   "products",
   "swatches",
 ]);

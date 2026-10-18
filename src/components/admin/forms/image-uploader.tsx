@@ -20,7 +20,9 @@ const MAX_BYTES = 5 * 1024 * 1024; // mirrors the server action limit
 export type MediaFolder =
   | "catalog"
   | "categories"
+  | "clients"
   | "collections"
+  | "gallery"
   | "products"
   | "swatches";
 
