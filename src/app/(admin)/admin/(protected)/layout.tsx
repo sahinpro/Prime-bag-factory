@@ -1,8 +1,8 @@
-import { connection } from "next/server";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 
-import { getCurrentProfile } from "@/lib/auth";
-import AdminShell from "@/components/admin/AdminShell";
+import { AdminShell } from "@/components/admin/shell/admin-shell";
+import { getAdminUser } from "@/lib/auth";
 
 export const instant = false;
 
@@ -10,11 +10,11 @@ export default async function ProtectedAdminLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   await connection();
-  const profile = await getCurrentProfile();
+  const user = await getAdminUser();
 
-  if (!profile || profile.role === "customer") {
+  if (!user) {
     redirect("/admin/login");
   }
 
-  return <AdminShell>{children}</AdminShell>;
+  return <AdminShell user={user}>{children}</AdminShell>;
 }

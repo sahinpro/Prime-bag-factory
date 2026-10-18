@@ -1,0 +1,169 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+
+import { requireRole } from "@/lib/auth";
+import { slugify } from "@/lib/slug";
+import { createClient } from "@/lib/supabase/server";
+import {
+  categoryInputSchema,
+  categoryReorderSchema,
+  categoryUpdateSchema,
+  type CategoryInput,
+} from "@/lib/validators/category";
+
+const CATALOG_ROLES = ["owner", "manager"] as const;
+
+export type ActionResult =
+  | { ok: true; id?: string }
+  | { ok: false; error: string };
+
+function firstError(error: { issues: { message: string }[] }): string {
+  return error.issues[0]?.message ?? "The form has errors.";
+}
+
+/** Lowercased, hyphenated slug from the English name, with a uniqueness suffix. */
+async function ensureUniqueSlug(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  base: string,
+  excludeId?: string,
+): Promise<string> {
+  const root = slugify(base) || "category";
+  let candidate = root;
+  for (let i = 2; i <= 50; i += 1) {
+    const { data } = await supabase
+      .from("categories")
+      .select("id")
+      .eq("slug", candidate)
+      .maybeSingle();
+    if (!data || data.id === excludeId) return candidate;
+    candidate = `${root}-${i}`;
+  }
+  return candidate;
+}
+
+function toRow(input: CategoryInput, slug: string) {
+  return {
+    slug,
+    name_en: input.name_en,
+    name_bn: input.name_bn ?? null,
+    description_en: input.description_en ?? null,
+    description_bn: input.description_bn ?? null,
+    seo_title_en: input.seo_title_en ?? null,
+    seo_title_bn: input.seo_title_bn ?? null,
+    seo_description_en: input.seo_description_en ?? null,
+    seo_description_bn: input.seo_description_bn ?? null,
+    image_path: input.image_path ?? null,
+    parent_id: input.parent_id ? input.parent_id : null,
+    sort_order: input.sort_order,
+    is_active: input.is_active,
+  };
+}
+
+export async function saveCategory(
+  payload: CategoryInput & { id?: string },
+): Promise<ActionResult> {
+  try {
+    await requireRole(CATALOG_ROLES);
+  } catch {
+    return { ok: false, error: "You are not authorized to manage categories." };
+  }
+
+  const supabase = await createClient();
+
+  if (payload.id) {
+    const parsed = categoryUpdateSchema.safeParse(payload);
+    if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
+    const input = parsed.data;
+    const slug = await ensureUniqueSlug(
+      supabase,
+      input.slug || input.name_en,
+      input.id,
+    );
+    const { data, error } = await supabase
+      .from("categories")
+      .update(toRow(input, slug))
+      .eq("id", input.id)
+      .select("id")
+      .maybeSingle();
+    if (error) return { ok: false, error: "Could not save the category." };
+    revalidatePath("/admin/categories");
+    return { ok: true, id: data?.id };
+  }
+
+  const parsed = categoryInputSchema.safeParse(payload);
+  if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
+  const input = parsed.data;
+  const slug = await ensureUniqueSlug(supabase, input.slug || input.name_en);
+  const { data, error } = await supabase
+    .from("categories")
+    .insert(toRow(input, slug))
+    .select("id")
+    .single();
+  if (error) return { ok: false, error: "Could not create the category." };
+  revalidatePath("/admin/categories");
+  return { ok: true, id: data.id };
+}
+
+export async function deleteCategory(id: string): Promise<ActionResult> {
+  if (!categoryUpdateSchema.shape.id.safeParse(id).success) {
+    return { ok: false, error: "Invalid category." };
+  }
+  try {
+    await requireRole(CATALOG_ROLES);
+  } catch {
+    return { ok: false, error: "You are not authorized to manage categories." };
+  }
+
+  const supabase = await createClient();
+
+  // Reparent direct children to this node's parent so the FK is not blocked.
+  const { data: self } = await supabase
+    .from("categories")
+    .select("parent_id")
+    .eq("id", id)
+    .maybeSingle();
+  if (!self) return { ok: false, error: "Category not found." };
+
+  await supabase
+    .from("categories")
+    .update({ parent_id: self.parent_id })
+    .eq("parent_id", id);
+
+  const { error } = await supabase.from("categories").delete().eq("id", id);
+  if (error) {
+    // A FK violation here means products still reference this category.
+    return {
+      ok: false,
+      error:
+        "This category is still used by products. Remove those links first.",
+    };
+  }
+
+  revalidatePath("/admin/categories");
+  return { ok: true };
+}
+
+export async function reorderCategories(
+  orderedIds: string[],
+): Promise<ActionResult> {
+  const parsed = categoryReorderSchema.safeParse({ orderedIds });
+  if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
+  try {
+    await requireRole(CATALOG_ROLES);
+  } catch {
+    return { ok: false, error: "You are not authorized to manage categories." };
+  }
+
+  const supabase = await createClient();
+  for (const [index, id] of parsed.data.orderedIds.entries()) {
+    const { error } = await supabase
+      .from("categories")
+      .update({ sort_order: index })
+      .eq("id", id);
+    if (error) return { ok: false, error: "Could not save the new order." };
+  }
+
+  revalidatePath("/admin/categories");
+  return { ok: true };
+}

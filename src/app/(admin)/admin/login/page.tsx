@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
-import { LoginForm } from "./login-form";
+import { Logo } from "@/components/site/logo";
 import { getSafeAdminRedirectPath } from "@/lib/auth-redirect";
+import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = {
-  title: "Staff sign in | Prime Bag Factory",
+  title: { absolute: "Staff sign in · Prime Bag Factory Admin" },
 };
 
 export const instant = false;
@@ -17,8 +19,11 @@ export default async function AdminLoginPage({
   const { next } = await searchParams;
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4 py-12">
-      <section className="w-full max-w-md space-y-8 rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
+    <main className="flex min-h-screen flex-col items-center justify-center gap-6 px-4 py-12">
+      <Link href="/" aria-label="Prime Bag Factory" className="shrink-0">
+        <Logo variant="mark" className="size-12" />
+      </Link>
+      <section className="w-full max-w-md space-y-8 rounded-card border border-border bg-card p-6 shadow-sm sm:p-8">
         <header className="space-y-2">
           <p className="text-sm font-medium text-muted-foreground">
             Prime Bag Factory
@@ -32,6 +37,14 @@ export default async function AdminLoginPage({
         </header>
         <LoginForm nextPath={getSafeAdminRedirectPath(next)} />
       </section>
+      <p className="text-sm text-muted-foreground">
+        <Link
+          href="/"
+          className="underline underline-offset-4 hover:text-foreground"
+        >
+          Back to the store
+        </Link>
+      </p>
     </main>
   );
 }

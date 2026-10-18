@@ -14,7 +14,7 @@
 5. **No new libraries** outside section 3 without asking.
 6. **Validate twice.** Every form and server action is validated with `zod` on client and server.
 7. **Never expose** the Supabase service-role key to the browser. It lives only in `src/lib/supabase/admin.ts` (server only).
-8. **Never copy** a competitor's UI, text, photos, client logos or legal documents. We follow the *idea and strategy* only, and do it better.
+8. **Never copy** a competitor's UI, text, photos, client logos or legal documents. We follow the _idea and strategy_ only, and do it better.
 9. **No licensed characters** (Marvel, Disney, Pokemon, etc.) anywhere in products or seed data.
 10. **No hard-coded colors.** Use the design tokens in section 4.
 
@@ -28,23 +28,24 @@
 - **Business model:** two lines on one site
   - **Bulk / custom (B2B):** delivery bags, seminar and NGO bags, promotional bags. Sold by **quote (RFQ)**.
   - **Ready-stock retail:** backpacks, wallets, belts, totes, etc. Sold by **online checkout (COD only at launch)**.
-- **Strategy:** follow a proven competitor's *structure* (use-case category pages, client proof, quote form, trust documents), and improve on it (see section 13).
+- **Strategy:** follow a proven competitor's _structure_ (use-case category pages, client proof, quote form, trust documents), and improve on it (see section 13).
 
 ### Locked decisions
-| Topic | Decision |
-|---|---|
-| Stack | Next.js (App Router) + TypeScript + Tailwind + shadcn/ui + Supabase |
-| Brand color | **Golden** (antique gold + ink + ivory), changed from orange (section 4) |
-| Sales | Retail items: online checkout. Bulk/custom: quote request or the **Custom Bag Builder** (section 2c) |
-| Quantity pricing | Every product has an MOQ and admin-defined quantity ranges (e.g. 5-50 pcs = one rate, 51-100 pcs = another) (section 2a) |
-| Customization | Fabric/color swatch library + multi-step Custom Bag Builder: color, size, zipper and every other part, logo, notes (sections 2b, 2c) |
-| Custom order flow | **Confirmed:** builder shows an estimate, the team confirms the final price, then the order is created (builder request, then Convert to order) |
-| Quantity-range counting | **Confirmed:** total quantity of the same product across all colors and sizes |
-| Builder preview | **Confirmed:** selection summary only at launch, no live color preview |
-| Payment at launch | **COD only** (design so bKash/Nagad can be added later) |
-| Inventory | **Variant-level stock + reserved stock + low-stock alert + movement log**. Schema must allow suppliers/purchasing/raw material later (not built now) |
-| Languages | Bangla + English switch in the header (content in both). Accessibility baseline: WCAG 2.2 AA (section 3c) |
-| Theme | Light / Dark / System toggle, default System (sections 3c, 4a) |
+
+| Topic                   | Decision                                                                                                                                             |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Stack                   | Next.js (App Router) + TypeScript + Tailwind + shadcn/ui + Supabase                                                                                  |
+| Brand color             | **Golden** (antique gold + ink + ivory), changed from orange (section 4)                                                                             |
+| Sales                   | Retail items: online checkout. Bulk/custom: quote request or the **Custom Bag Builder** (section 2c)                                                 |
+| Quantity pricing        | Every product has an MOQ and admin-defined quantity ranges (e.g. 5-50 pcs = one rate, 51-100 pcs = another) (section 2a)                             |
+| Customization           | Fabric/color swatch library + multi-step Custom Bag Builder: color, size, zipper and every other part, logo, notes (sections 2b, 2c)                 |
+| Custom order flow       | **Confirmed:** builder shows an estimate, the team confirms the final price, then the order is created (builder request, then Convert to order)      |
+| Quantity-range counting | **Confirmed:** total quantity of the same product across all colors and sizes                                                                        |
+| Builder preview         | **Confirmed:** selection summary only at launch, no live color preview                                                                               |
+| Payment at launch       | **COD only** (design so bKash/Nagad can be added later)                                                                                              |
+| Inventory               | **Variant-level stock + reserved stock + low-stock alert + movement log**. Schema must allow suppliers/purchasing/raw material later (not built now) |
+| Languages               | Bangla + English switch in the header (content in both). Accessibility baseline: WCAG 2.2 AA (section 3c)                                            |
+| Theme                   | Light / Dark / System toggle, default System (sections 3c, 4a)                                                                                       |
 
 ---
 
@@ -60,15 +61,16 @@
 - **Collections** (industry tags, e.g. Food Delivery, Pharma, NGO, Education, Courier) cross-list products without duplicating them.
 
 ### 2a. MOQ and quantity-range pricing (set by admin on every product)
+
 - Every product has a required `moq` (minimum order quantity, default 1). Quantities below MOQ are blocked everywhere (product page, cart, builder, `place_order`).
 - When creating or editing a product, admin defines **price ranges**. Example (illustrative only):
 
-| Quantity | Unit price |
-|---|---|
-| 5-50 pcs | rate A |
-| 51-100 pcs | rate B |
-| 101-500 pcs | rate C |
-| 501+ pcs | rate D |
+| Quantity    | Unit price |
+| ----------- | ---------- |
+| 5-50 pcs    | rate A     |
+| 51-100 pcs  | rate B     |
+| 101-500 pcs | rate C     |
+| 501+ pcs    | rate D     |
 
 - **Rules (enforce in the admin form AND in the database):** first range starts at `moq`; ranges are contiguous with no gaps or overlaps; only the last range may be open-ended (`max_qty` null, shown as "501+"); unit price must be greater than 0; warn (do not block) if a higher-quantity range costs more than a lower one.
 - **Admin UI:** a tier editor table with add/remove rows. A new row auto-fills `min_qty = previous max_qty + 1`. A live preview shows exactly how customers will see the table.
@@ -78,12 +80,14 @@
 - **Single source of truth:** `src/lib/pricing.ts` computes range price, MOQ checks and totals for the UI; the `place_order` RPC re-implements the same logic server-side. Never trust a client price.
 
 ### 2b. Fabric and color swatches
+
 - A global **Swatch Library** is managed in admin: `swatch_groups` (Fabric, Zipper, Zipper Puller, Lining, Strap/Webbing, Piping, Thread, Print Ink; admin can add more) and `swatches` (name en/bn, factory code, hex color, optional **fabric texture photo**, active flag).
 - Swatches show as round chips (texture photo if available, else hex color) with the name on hover/tap and a clear selected state. Disabled when that variant is out of stock.
 - Buy-now variants point to a fabric swatch (`swatch_id`). Selecting a swatch switches the gallery image when the variant has its own image.
 - The same library feeds the Custom Bag Builder, so a fabric is added once and reused everywhere.
 
 ### 2c. Custom Bag Builder (AliExpress/Amazon-style "make it your own")
+
 - Turned on per product with `customization_enabled`. The product page then shows a "Customize this bag" button.
 - In admin, each customizable product has a list of **parts**. Per part: label (en/bn), input type, required flag, optional extra price per unit, sort order, help text.
   - Input types: `swatch` (pick from the allowed swatches), `select` (preset options such as S/M/L), `dimensions` (length x width x height with min and max in cm), `file` (logo), `text` (free note).
@@ -112,6 +116,7 @@
 - Tailwind (check `package.json`; if v4 define tokens with `@theme` in `globals.css`).
 - shadcn/ui, `lucide-react`.
 - Supabase: Postgres, Auth, Storage, RLS, Supabase CLI migrations in `supabase/migrations`.
+- Cloudinary: public catalog media (product/category/collection images, swatch textures) via server-signed SDK uploads; Supabase Storage is retained only for private quote attachments (owner decision 2026-10-17 — see Decision Log).
 - Forms: `react-hook-form` + `zod`. Tables: `@tanstack/react-table`. Server state: server components and server actions first.
 - i18n: `next-intl` (`/en` and `/bn` routes).
 - Fonts: `Inter` (Latin) + `Noto Serif Bengali` (Bangla glyphs only, variable, `--font-bn`) via `next/font/google`.
@@ -124,6 +129,7 @@
 - No other UI libraries. Dates and numbers use `Intl` via `src/lib/format.ts`, not `date-fns` or `moment`.
 
 ### Environment variables
+
 ```
 NEXT_PUBLIC_SITE_URL=
 NEXT_PUBLIC_SUPABASE_URL=
@@ -137,6 +143,7 @@ NEXT_PUBLIC_WHATSAPP_NUMBER=
 ## 3b. Architecture
 
 **Layers**
+
 1. `src/app/` routes are thin: call server modules, render UI, no business logic.
 2. `src/server/` (each file imports `server-only`): one module per domain: `catalog`, `orders`, `quotes`, `inventory`, `content`, `notifications`, `settings`. **All DB access lives here.** Modules return typed DTOs, not raw rows.
 3. `src/lib/validators/`: zod schemas shared by forms and server actions.
@@ -174,6 +181,7 @@ NEXT_PUBLIC_WHATSAPP_NUMBER=
 ## 3c. Theme, Language and Accessibility
 
 ### Theme (light / dark)
+
 - `next-themes` with `attribute="class"`, `defaultTheme="system"`, `enableSystem`, `disableTransitionOnChange`; `<html suppressHydrationWarning>`.
 - Header theme control is the animated sun/moon icon from shadcn-space toggle-01. It shows the sun in light and the moon in dark. A click switches to the other theme. Default stays **system** until that click. Admin can keep a Light / Dark / System menu later.
 - Components use semantic tokens only (section 4a). No raw hex in components; `dark:` utilities only for exceptions.
@@ -183,6 +191,7 @@ NEXT_PUBLIC_WHATSAPP_NUMBER=
 - Every key page must pass axe in both themes.
 
 ### Language (Bangla / English)
+
 - `next-intl`, routes `/en/...` and `/bn/...`, `localePrefix: "always"`. `/` redirects by `NEXT_LOCALE` cookie, then `Accept-Language`, then the default (English; changeable in `routing.ts`).
 - Header language switcher is one toggle icon (languages glyph). It keeps the current page and query string; choice stored in the `NEXT_LOCALE` cookie. The accessible name is the target language written in that language ("EN" or "বাংলা").
 - `<html lang>` per locale; wrap inline text in another language with `lang`. `hreflang` alternates plus `x-default` on every public page.
@@ -196,6 +205,7 @@ NEXT_PUBLIC_WHATSAPP_NUMBER=
 - Admin UI is English first (content fields are bilingual). A Bangla admin UI is a later option.
 
 ### Accessibility (target WCAG 2.2 AA)
+
 - **Keyboard:** everything reachable and operable; visible focus ring (2px, `--focus`, 2px offset) in both themes; "Skip to content" link; dialogs trap focus, close on Esc and return focus.
 - **Semantics:** landmarks (`header`, `nav`, `main`, `footer`), one `h1` per page, correct heading order, `aria-current` on active nav item and wizard step.
 - **Swatches and size options:** labelled radio group; selected state shown with a **check mark and the name**, never color alone.
@@ -214,37 +224,39 @@ NEXT_PUBLIC_WHATSAPP_NUMBER=
 
 Gold replaces orange. Use a **muted antique gold**, not bright yellow, so it reads premium. Never use gold as small text on light backgrounds (contrast too low); use `--gold-deep` there.
 
-| Token | Value | Use |
-|---|---|---|
-| `--brand` | `#C8962E` | Primary buttons, icons, highlights. Put **ink text** on it (about 6.5:1) |
-| `--brand-hover` | `#B07F1F` | Button hover (ink text still passes, about 4.9:1) |
-| `--gold-deep` | `#8A6414` | Gold text and links on light backgrounds (about 5:1 on ivory) |
-| `--gold-soft` | `#F1E3B8` | Tints, badges, selected states |
-| `--ink` | `#1C1917` | Text, dark sections, footer. Gold text on ink is fine (about 6.5:1) |
-| `--ivory` | `#FBF8F1` | Page background |
-| `--surface` | `#FFFFFF` | Cards |
-| `--accent` | `#1F5F4A` | Optional: success and "verified/trust" badges (white text about 7.5:1) |
+| Token           | Value     | Use                                                                      |
+| --------------- | --------- | ------------------------------------------------------------------------ |
+| `--brand`       | `#C8962E` | Primary buttons, icons, highlights. Put **ink text** on it (about 6.5:1) |
+| `--brand-hover` | `#B07F1F` | Button hover (ink text still passes, about 4.9:1)                        |
+| `--gold-deep`   | `#8A6414` | Gold text and links on light backgrounds (about 5:1 on ivory)            |
+| `--gold-soft`   | `#F1E3B8` | Tints, badges, selected states                                           |
+| `--ink`         | `#1C1917` | Text, dark sections, footer. Gold text on ink is fine (about 6.5:1)      |
+| `--ivory`       | `#FBF8F1` | Page background                                                          |
+| `--surface`     | `#FFFFFF` | Cards                                                                    |
+| `--accent`      | `#1F5F4A` | Optional: success and "verified/trust" badges (white text about 7.5:1)   |
 
 Dark mode values are in section 4a. Components use the semantic tokens there, not the raw palette above.
 
 ### 4a. Semantic tokens (light and dark)
-| Token | Light | Dark | Use |
-|---|---|---|---|
-| `--background` | `#FBF8F1` | `#141210` | Page |
-| `--surface` | `#FFFFFF` | `#1C1917` | Cards, dialogs |
-| `--foreground` | `#1C1917` | `#FBF8F1` | Text |
-| `--muted-foreground` | `#6B645C` | `#A8A29E` | Secondary text (about 5.5:1 / 7.4:1) |
-| `--border` | `#E7E0D3` | `#3A332E` | Decorative dividers only |
-| `--input-border` | `#8C8378` | `#78716C` | Input and control boundaries (3:1 or more) |
-| `--brand` | `#C8962E` | `#C8962E` | Buttons, highlights |
-| `--brand-foreground` | `#1C1917` | `#1C1917` | Text on gold |
-| `--gold-text` | `#8A6414` | `#D9AE4F` | Gold text and links on the page (about 5:1 / 9:1) |
-| `--focus` | `#1C1917` | `#FBF8F1` | Focus ring |
-| `--accent` | `#1F5F4A` | `#4FB08A` | Success, trust badges (about 7.5:1 / 7:1) |
+
+| Token                | Light     | Dark      | Use                                               |
+| -------------------- | --------- | --------- | ------------------------------------------------- |
+| `--background`       | `#FBF8F1` | `#141210` | Page                                              |
+| `--surface`          | `#FFFFFF` | `#1C1917` | Cards, dialogs                                    |
+| `--foreground`       | `#1C1917` | `#FBF8F1` | Text                                              |
+| `--muted-foreground` | `#6B645C` | `#A8A29E` | Secondary text (about 5.5:1 / 7.4:1)              |
+| `--border`           | `#E7E0D3` | `#3A332E` | Decorative dividers only                          |
+| `--input-border`     | `#8C8378` | `#78716C` | Input and control boundaries (3:1 or more)        |
+| `--brand`            | `#C8962E` | `#C8962E` | Buttons, highlights                               |
+| `--brand-foreground` | `#1C1917` | `#1C1917` | Text on gold                                      |
+| `--gold-text`        | `#8A6414` | `#D9AE4F` | Gold text and links on the page (about 5:1 / 9:1) |
+| `--focus`            | `#1C1917` | `#FBF8F1` | Focus ring                                        |
+| `--accent`           | `#1F5F4A` | `#4FB08A` | Success, trust badges (about 7.5:1 / 7:1)         |
 
 Re-verify contrast with the real components before launch.
 
 ### 4b. Logo and favicon assets
+
 - Current logo **v1** files (rename when copying into `public/brand/`):
   - `prime-bag-factory-horizontal-ivory.svg` -> `logo-horizontal-on-light.svg`
   - `prime-bag-factory-horizontal-black-bg.svg` -> `logo-horizontal-on-dark.svg`
@@ -253,6 +265,7 @@ Re-verify contrast with the real components before launch.
 - Still to produce: `icon-light.png`, `icon-dark.png`, `icon.svg`, `apple-icon.png` (180x180), `icon-192.png`, `icon-512.png`, and a fallback `src/app/favicon.ico`.
 - **Light-mode favicon:** ink badge with gold mark. **Dark-mode favicon:** gold badge with ink mark. Same mark, same position.
 - Wire them in the root layout metadata:
+
 ```ts
 export const metadata = {
   icons: {
@@ -264,9 +277,11 @@ export const metadata = {
   },
 };
 ```
+
 - Safari ignores the `media` switch, so keep the default `favicon.ico` as the fallback.
 
 ### 4c. Logo usage rules
+
 - Header: horizontal logo for light backgrounds (ink wordmark). Footer and dark sections: horizontal logo for dark backgrounds (ivory wordmark).
 - Below 24px logo height (small mobile header), show the **mark only**. Minimum widths: horizontal logo 120px, mark 16px.
 - Clear space on all sides: 25% of the mark height.
@@ -275,13 +290,14 @@ export const metadata = {
 - Always use alt text "Prime Bag Factory". Build one `<Logo variant="light" | "dark" | "mark" />` component in `src/components/site/logo.tsx` so every page uses the same source and a logo swap is a one-file change.
 
 ### 4d. Known logo v1 issues (owner is fixing the logo; swap the files when ready)
+
 1. **Mark reads like a padlock** (narrow centered arch on a rounded box; the favicon has no stitch line at all). Make it read as a bag: widen the handle so its ends land near the body corners (tote-style) or use two handles, taper the body slightly (wider at the bottom), and keep the diagonal zipper/stitch line where size allows.
 2. **Wordmark is live `<text>`** using DejaVu Sans/Arial, so it renders differently on other machines. Convert text to outlines in the final SVGs.
 3. **Backgrounds are baked in** and the stitch cut-outs are painted in the background color. Export transparent versions with real cut-outs (masks).
 4. **Horizontal artboard has a lot of empty space on the right.** Crop the viewBox to the content.
 5. **Favicon exists only as an ivory badge.** Produce the light/dark pair from 4b plus PNG/ICO sizes.
 6. Optional polish: "PRIME" and "BAG FACTORY" end at different x positions; adjust letter-spacing so both lines end together.
-Until v2 is ready, use v1 behind the `<Logo>` component as a placeholder.
+   Until v2 is ready, use v1 behind the `<Logo>` component as a placeholder.
 
 ---
 
@@ -334,6 +350,7 @@ supabase/
 src/app/(admin)/admin/design-system/page.tsx   # dev/staging only, 404 in production, noindex
 src/server/dashboard.ts                        # server-only DTOs for dashboard widgets
 ```
+
 Admin is English only and lives outside `[locale]`.
 
 ---
@@ -350,6 +367,7 @@ Medical & Health:           First Aid, Medical Tools
 Tote, Side & Cross-body:    Tote, Cross-body, Laptop Side, File/Document
 Specialty:                  Pet Carrier, Thermal Bag
 ```
+
 Everything is editable from admin. Seed this tree in `seed.sql` with English + Bangla names.
 
 ---
@@ -359,12 +377,14 @@ Everything is editable from admin. Seed this tree in `seed.sql` with English + B
 All tables have `id uuid pk default gen_random_uuid()`, `created_at`, `updated_at`. Use snake_case. Bilingual text columns use `_en` / `_bn` (bn falls back to en).
 
 **Auth & staff**
+
 - `profiles` (id = auth.users.id, full_name, phone, `role` enum: owner | manager | sales | inventory | customer)
 
 **Catalog**
-- `categories` (parent_id, slug unique, name_en, name_bn, description_en/bn, image_path, seo_title_*, seo_description_*, sort_order, is_active)
+
+- `categories` (parent*id, slug unique, name_en, name_bn, description_en/bn, image_path, seo_title*_, seo*description*_, sort_order, is_active)
 - `collections` (slug, name_en/bn, description, image_path, sort_order, is_active)
-- `products` (slug unique, type enum buy_now|quote_only, title_en/bn, short_description_*, description_*, specs jsonb, material, moq int not null default 1 (check >= 1), lead_time_days, stock_mode enum tracked|made_to_order, customization_enabled bool default false, status enum draft|published|archived, is_featured, seo_*)
+- `products` (slug unique, type enum buy*now|quote_only, title_en/bn, short_description*\_, description\_\_, specs jsonb, material, moq int not null default 1 (check >= 1), lead*time_days, stock_mode enum tracked|made_to_order, customization_enabled bool default false, status enum draft|published|archived, is_featured, seo*\*)
 - `product_categories` (product_id, category_id, is_primary)
 - `product_collections` (product_id, collection_id)
 - `product_images` (product_id, variant_id nullable, path, alt_en, alt_bn, sort_order)
@@ -376,11 +396,13 @@ All tables have `id uuid pk default gen_random_uuid()`, `created_at`, `updated_a
 - `product_part_swatches` (part_id, swatch_id, is_default, price_delta nullable)
 
 **Inventory (Option 2, built to extend)**
+
 - `inventory_movements` (variant_id, delta int, reason enum: opening | purchase | sale | return | adjustment | damage | cancel_release, ref_type, ref_id, note, created_by)
 - Available stock = `stock_qty - reserved_qty`. `stock_qty` is only changed through movements (trigger or RPC), never by direct edit.
 - Later (not now): `suppliers`, `materials`, `purchase_orders`. Do not create them yet.
 
 **Commerce**
+
 - `shipping_zones` (name_en/bn, fee, free_over nullable, is_active)
 - `orders` (order_no unique `PBF-YYMMDD-XXXX`, type enum retail|bulk, status enum: pending | confirmed | processing | shipped | delivered | cancelled | returned, payment_method default 'cod', payment_status enum: unpaid | partially_paid | paid | refunded, production_status enum nullable (bulk/custom only): awaiting_artwork | artwork_approved | in_production | qc | ready, idempotency_key text unique, courier_name, tracking_code, shipped_at, delivered_at, vat_amount, customer_name, customer_phone, customer_email, division, district, area, address_line, shipping_zone_id, subtotal, shipping_fee, discount, total, customer_note, admin_note, source_quote_id nullable)
 - `order_items` (order_id, variant_id nullable, **snapshot** of title, sku, color, size, unit_price, qty, line_total, tier_min_qty, customization jsonb nullable)
@@ -389,24 +411,27 @@ All tables have `id uuid pk default gen_random_uuid()`, `created_at`, `updated_a
 - `notifications` (channel enum: email | sms | whatsapp | admin_alert, recipient, template, payload jsonb, status enum: pending | sent | failed, attempts, last_error, sent_at)
 - `rate_limits` (key, window_start, count)
 - `blocked_contacts` (type enum: phone | ip_hash, value, reason, created_by)
-- `coupons` (code, type percent|fixed, value, min_subtotal, starts_at, ends_at, usage_limit, is_active) *(Phase 5, low priority)*
+- `coupons` (code, type percent|fixed, value, min*subtotal, starts_at, ends_at, usage_limit, is_active) *(Phase 5, low priority)\_
 
 **Quotes (RFQ)**
+
 - `quote_requests` (source enum: form | builder, company_name, contact_name, phone, email, product_id nullable, category_id nullable, quantity, custom_size, custom_color, needs_logo_print bool, customization jsonb nullable, estimated_unit_price nullable, estimated_total nullable, needed_by date nullable, message, attachment_path, status enum: new | contacted | quoted | won | lost, quoted_amount, valid_until date nullable, assigned_to, internal_notes)
 
 **Content**
+
 - `site_sections` (page, key, content jsonb, sort_order, is_active) for homepage blocks, banners, stats
 - `clients` (name, logo_path, sort_order, is_active)
 - `gallery_items` (image_path, caption, sort_order)
 - `testimonials` (name, company, rating, body_en/bn)
 - `faqs` (question_en/bn, answer_en/bn, sort_order)
-- `posts` (slug, title_*, body_*, cover_path, status, published_at, seo_*)
+- `posts` (slug, title*\*, body*_, cover*path, status, published_at, seo*_)
 - `legal_documents` (title, number, image_path) for trade license, TIN, BIN (owner supplies real files)
 - `redirects` (from_path, to_path, status_code)
 - `settings` (key unique, value jsonb) for company info, contact, social, VAT, WhatsApp
 - `audit_logs` (actor_id, action, table_name, record_id, diff jsonb)
 
 ### RLS rules (must be written and tested)
+
 - **anon**: `select` only on published/active catalog and content rows (including swatches, price tiers and custom parts of published products). No direct inserts on `orders` or `order_items`.
 - **Checkout** goes through a `security definer` RPC `place_order(payload jsonb)` that, in one transaction: validates items and recomputes the quantity-range price from the DB (never trust client prices), enforces MOQ, checks `stock_qty - reserved_qty` (skipped for made-to-order), creates order + items, reserves stock, writes movements, returns `order_no`.
 - **Quote submit**: server action with zod + honeypot + rate limit, inserts into `quote_requests` (the Custom Bag Builder uses the same action with `source = 'builder'`).
@@ -414,13 +439,14 @@ All tables have `id uuid pk default gen_random_uuid()`, `created_at`, `updated_a
 - **Storage**: bucket `product-media` (public read, staff write). Bucket `quote-attachments` (private; admin reads by signed URL; anon upload only through server action, max 5 MB, png/jpg/svg/pdf).
 
 ### Stock lifecycle
-| Event | Effect |
-|---|---|
-| Order placed | `reserved_qty += qty` |
-| Order shipped | `stock_qty -= qty`, `reserved_qty -= qty`, movement `sale` |
-| Cancelled before shipped | `reserved_qty -= qty`, movement `cancel_release` |
-| Returned | `stock_qty += qty`, movement `return` |
-| Manual change | movement `adjustment` / `damage` / `purchase` with required note |
+
+| Event                    | Effect                                                           |
+| ------------------------ | ---------------------------------------------------------------- |
+| Order placed             | `reserved_qty += qty`                                            |
+| Order shipped            | `stock_qty -= qty`, `reserved_qty -= qty`, movement `sale`       |
+| Cancelled before shipped | `reserved_qty -= qty`, movement `cancel_release`                 |
+| Returned                 | `stock_qty += qty`, movement `return`                            |
+| Manual change            | movement `adjustment` / `damage` / `purchase` with required note |
 
 Low-stock: `available <= low_stock_threshold` shows in the admin dashboard. Products with `stock_mode = made_to_order` (all customizable products) skip stock checks and reservations.
 
@@ -443,6 +469,7 @@ Low-stock: `available <= low_stock_threshold` shows in the admin dashboard. Prod
 **Cart and checkout (COD):** guest checkout. The price of each product is recalculated from its total quantity in the cart (section 2a); quantity below MOQ is blocked. Fields: name, phone (BD format `^(?:\+?88)?01[3-9]\d{8}$`), division/district/area/address, note. Shipping zone fee from DB. Order summary, then confirmation page with order number. Show "we will call to confirm your order".
 
 **SEO (non-negotiable):**
+
 - `generateMetadata` on every page, unique title/description, canonical URLs, `hreflang` for en/bn.
 - `app/sitemap.ts` built from DB (categories, products, collections, posts, static pages), `robots.ts`.
 - JSON-LD: `Organization` / `LocalBusiness`, `BreadcrumbList`, `Product` (include `offers` only for buy_now; omit price for quote_only), `FAQPage`.
@@ -456,20 +483,20 @@ Low-stock: `available <= low_stock_threshold` shows in the admin dashboard. Prod
 
 Protected by Supabase Auth + middleware + RLS (never rely on UI hiding alone). Built with shadcn/ui, data tables with search, filter, sort, pagination.
 
-| Module | Must have |
-|---|---|
-| Dashboard | New quotes, pending orders, low-stock list, sales (7/30 days), missing Bangla translations counter |
-| Categories | Tree view, drag to reorder, bn/en names, image, SEO fields, active toggle |
-| Products | Tabs: **General** (type, bn/en content, specs, categories, collections, MOQ, lead time, stock mode), **Pricing** (quantity-range tier editor with validation and live preview), **Variants** (SKU, fabric swatch, size, price delta, stock), **Customization** (enable builder, define parts, allowed swatches per part, size limits, extra prices), **Images** (upload, reorder, alt text, per variant), **SEO**. Plus draft/publish, duplicate product, bulk status change, **CSV import/export** (products, variants, stock) and bulk image upload |
-| Swatch Library | Manage swatch groups and swatches (name en/bn, code, hex, fabric texture photo), reorder, activate/deactivate, see which products use a swatch |
-| Inventory | Variant stock list, available vs reserved, adjust stock (with reason and note), movement history, low-stock threshold, CSV export |
-| Orders | List and filters, detail, status change with history, **record payments** (COD collected, advance, balance) with paid and balance due, courier and tracking code, **production status and artwork approval** (bulk/custom), confirmation-call status, block phone, admin note, printable invoice/packing slip |
-| Quotes | Inbox with status pipeline and a `form` / `builder` filter, view attachment, assign to staff, add quoted amount and notes, builder requests shown with color chips and every selected part, **printable production spec sheet**, printable quotation (proforma) with validity date, **Convert to order** (creates `bulk` order), WhatsApp/phone quick links |
-| Customers | Derived from orders/quotes, grouped by phone, order and quote history |
-| Content | Homepage sections, banners, clients, gallery, testimonials, FAQ, blog, legal documents, redirects |
-| Users | Invite staff, assign role, deactivate |
-| Settings | Company info, contact numbers, WhatsApp/Messenger, social links, shipping zones, VAT, SEO defaults, feature flags (`cod_enabled`, `checkout_enabled`, `custom_order_mode`, `maintenance_mode`), notification channels, policy pages |
-| Audit log | Who changed what, when (read-only) |
+| Module         | Must have                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dashboard      | New quotes, pending orders, low-stock list, sales (7/30 days), missing Bangla translations counter                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Categories     | Tree view, drag to reorder, bn/en names, image, SEO fields, active toggle                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| Products       | Tabs: **General** (type, bn/en content, specs, categories, collections, MOQ, lead time, stock mode), **Pricing** (quantity-range tier editor with validation and live preview), **Variants** (SKU, fabric swatch, size, price delta, stock), **Customization** (enable builder, define parts, allowed swatches per part, size limits, extra prices), **Images** (upload, reorder, alt text, per variant), **SEO**. Plus draft/publish, duplicate product, bulk status change, **CSV import/export** (products, variants, stock) and bulk image upload |
+| Swatch Library | Manage swatch groups and swatches (name en/bn, code, hex, fabric texture photo), reorder, activate/deactivate, see which products use a swatch                                                                                                                                                                                                                                                                                                                                                                                                        |
+| Inventory      | Variant stock list, available vs reserved, adjust stock (with reason and note), movement history, low-stock threshold, CSV export                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| Orders         | List and filters, detail, status change with history, **record payments** (COD collected, advance, balance) with paid and balance due, courier and tracking code, **production status and artwork approval** (bulk/custom), confirmation-call status, block phone, admin note, printable invoice/packing slip                                                                                                                                                                                                                                         |
+| Quotes         | Inbox with status pipeline and a `form` / `builder` filter, view attachment, assign to staff, add quoted amount and notes, builder requests shown with color chips and every selected part, **printable production spec sheet**, printable quotation (proforma) with validity date, **Convert to order** (creates `bulk` order), WhatsApp/phone quick links                                                                                                                                                                                           |
+| Customers      | Derived from orders/quotes, grouped by phone, order and quote history                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Content        | Homepage sections, banners, clients, gallery, testimonials, FAQ, blog, legal documents, redirects                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| Users          | Invite staff, assign role, deactivate                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Settings       | Company info, contact numbers, WhatsApp/Messenger, social links, shipping zones, VAT, SEO defaults, feature flags (`cod_enabled`, `checkout_enabled`, `custom_order_mode`, `maintenance_mode`), notification channels, policy pages                                                                                                                                                                                                                                                                                                                   |
+| Audit log      | Who changed what, when (read-only)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
 ---
 
@@ -836,27 +863,28 @@ Centered card, logo, email + password, error summary, MFA step for owner/manager
 
 ## 9b. Launch Readiness (e-commerce essentials, do not skip)
 
-| Area | Must be ready at launch |
-|---|---|
-| Policies | Terms, Privacy, Returns & Refunds, Shipping/Delivery, and Custom Order & Advance Payment (custom items are made to order and not returnable; advance %, lead time, artwork approval), in both languages, linked in footer and checkout |
-| Payments | COD for retail. Custom/bulk orders need an **advance**: record manual bKash/Nagad/bank payments in the `payments` ledger, show paid and balance due, status `partially_paid` |
-| Delivery | Courier name and tracking code on the order (manual entry at launch), shipping zones, delivered date, failed-delivery and return handling |
-| Order flow | Idempotency key (no duplicate orders on double tap), confirmation-call status, phone/IP blocklist, order lookup by order number + phone |
-| Custom orders | Artwork approval and `production_status`, printable quotation with validity date, production spec sheet |
-| Notifications | Admin alert for every new order and quote (email now, WhatsApp click-to-chat link). Customer confirmation on the order page, plus email if provided; SMS provider later. All through the `notifications` outbox |
-| Tax and invoice | Decide whether prices include VAT; invoice and quotation show business name, address, BIN, VAT line and order number |
+| Area                    | Must be ready at launch                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Policies                | Terms, Privacy, Returns & Refunds, Shipping/Delivery, and Custom Order & Advance Payment (custom items are made to order and not returnable; advance %, lead time, artwork approval), in both languages, linked in footer and checkout                                                                                                                                                                                  |
+| Payments                | COD for retail. Custom/bulk orders need an **advance**: record manual bKash/Nagad/bank payments in the `payments` ledger, show paid and balance due, status `partially_paid`                                                                                                                                                                                                                                            |
+| Delivery                | Courier name and tracking code on the order (manual entry at launch), shipping zones, delivered date, failed-delivery and return handling                                                                                                                                                                                                                                                                               |
+| Order flow              | Idempotency key (no duplicate orders on double tap), confirmation-call status, phone/IP blocklist, order lookup by order number + phone                                                                                                                                                                                                                                                                                 |
+| Custom orders           | Artwork approval and `production_status`, printable quotation with validity date, production spec sheet                                                                                                                                                                                                                                                                                                                 |
+| Notifications           | Admin alert for every new order and quote (email now, WhatsApp click-to-chat link). Customer confirmation on the order page, plus email if provided; SMS provider later. All through the `notifications` outbox                                                                                                                                                                                                         |
+| Tax and invoice         | Decide whether prices include VAT; invoice and quotation show business name, address, BIN, VAT line and order number                                                                                                                                                                                                                                                                                                    |
 | Marketing and analytics | GA4 ecommerce events (`view_item`, `add_to_cart`, `begin_checkout`, `purchase`, `generate_lead` for quotes); Meta Pixel (Facebook is the main channel in Bangladesh; add Conversions API later); Search Console; Google Business Profile with `LocalBusiness` schema and map link; Open Graph/Twitter tags with product image for Facebook and WhatsApp sharing; Facebook page link plus Messenger and WhatsApp buttons |
-| Catalog loading | Admin CSV import/export for products, variants and stock, plus bulk image upload, so about 200 products can be loaded without typing each one |
-| Performance | Mobile 4G target: LCP under 2.5s on home and product pages; WebP images resized on upload (about 300 KB max); dynamic-import the builder; Bangla font subset |
-| Infra and ops | Separate staging and production Supabase projects; production on paid plans (check current limits: Vercel Hobby is for non-commercial use, Supabase free projects pause when inactive and have no managed backups); regions near Bangladesh; daily backups verified by a test restore; uptime check; error monitoring |
-| Security | MFA (TOTP) for owner and manager; CSP and security headers; upload validation; rate limits; RLS tests; no PII in logs |
-| Business email and DNS | `info@` mailbox on the domain; SPF, DKIM and DMARC for any email sender |
+| Catalog loading         | Admin CSV import/export for products, variants and stock, plus bulk image upload, so about 200 products can be loaded without typing each one                                                                                                                                                                                                                                                                           |
+| Performance             | Mobile 4G target: LCP under 2.5s on home and product pages; WebP images resized on upload (about 300 KB max); dynamic-import the builder; Bangla font subset                                                                                                                                                                                                                                                            |
+| Infra and ops           | Separate staging and production Supabase projects; production on paid plans (check current limits: Vercel Hobby is for non-commercial use, Supabase free projects pause when inactive and have no managed backups); regions near Bangladesh; daily backups verified by a test restore; uptime check; error monitoring                                                                                                   |
+| Security                | MFA (TOTP) for owner and manager; CSP and security headers; upload validation; rate limits; RLS tests; no PII in logs                                                                                                                                                                                                                                                                                                   |
+| Business email and DNS  | `info@` mailbox on the domain; SPF, DKIM and DMARC for any email sender                                                                                                                                                                                                                                                                                                                                                 |
 
 ---
 
 ## 10. Phases and Tasks
 
 ### Phase 0: Setup
+
 - [x] Remove default `create-next-app` page content in `src/app/page.tsx`.
 - [x] Add brand tokens (section 4) to `globals.css`; set fonts (Inter + Noto Serif Bengali).
 - [x] Copy logo v1 assets into `public/brand/` (section 4b), build the `<Logo>` component (section 4c), wire favicon metadata (use the ivory favicon as a temporary fallback until the light/dark pair exists).
@@ -872,6 +900,7 @@ Centered card, logo, email + password, error summary, MFA step for owner/manager
 - **Done when:** app runs, tokens work in light and dark, `/en` and `/bn` render a placeholder home, theme toggle and language switcher work with no flash, CI is green.
 
 ### Phase 1: Database, auth, RLS
+
 - [x] Write migrations for all tables in section 7 (except coupons).
 - [x] Add enums, indexes (slugs, foreign keys, status columns), `updated_at` triggers.
 - [x] Write RLS policies and `has_role()`.
@@ -884,26 +913,28 @@ Centered card, logo, email + password, error summary, MFA step for owner/manager
 - **Done when:** generated types match the DB; the first owner can log in and `/admin` rejects unauthenticated and customer sessions; RLS tests prove anon cannot read drafts or write orders directly, and `place_order` blocks overselling.
 
 ### Phase 2: Admin catalog
-- [ ] Add admin tokens from 9c.2 to `globals.css` (light and dark) and verify contrast.
-- [ ] Install the shadcn components and libraries listed in A1.
-- [ ] Build the kit components from 9c.5 with typed props and the `/admin/design-system` page showing every component, every status badge and every state in both themes.
-- [ ] Admin shell: sidebar (collapsible, role-aware, count badges), topbar, breadcrumbs, command palette, mobile sheet nav, login page layout.
-- [ ] Dashboard (9c.7) with `src/server/dashboard.ts`, skeletons, empty and error states.
-- [ ] Playwright + axe for `/admin/login`, `/admin` and `/admin/design-system` in light and dark.
+
+- [x] Add admin tokens from 9c.2 to `globals.css` (light and dark) and verify contrast.
+- [x] Install the shadcn components and libraries listed in A1.
+- [ ] Build the kit components from 9c.5 with typed props and the `/admin/design-system` page showing every component, every status badge and every state in both themes. _(Base kit + dashboard widgets done — status badges, states, skeletons, StatCard, SegmentBar, RadialGauge, ChartCard, ChartSkeleton, ChartRangeMenu, ActivityFeed, TabsBar, FormSection, BilingualField, ConfirmDialog, StickySaveBar, SwatchChip/Picker, PageHeader. Still built just before their consuming pages: DataTable, FilterBar, ImageUploader, TierEditor, CommandPalette record-search, PrintSheet.)_
+- [ ] Admin shell: sidebar (collapsible, role-aware, count badges), topbar, breadcrumbs, command palette, mobile sheet nav, login page layout. _(Sidebar, topbar, breadcrumbs, command palette, mobile sheet + mobile user menu, providers and login layout done. Sidebar count badges use a `counts` prop but stay empty: wiring them means a per-page count query in the protected layout, deferred until the Quotes/Orders/Inventory pages exist.)_
+- [x] Dashboard (9c.7) with `src/server/dashboard.ts`, skeletons, empty and error states. _(Real queries for new quotes + delta + sparkline, quote pipeline, quotes needing action, low stock, activity feed and the Missing Bangla count; sales/pending-orders/recent-orders widgets show EmptyState until Phase 5. Route-level `loading.tsx` skeleton; `fatal` DB-unreachable shows an ErrorState with retry; per-role RLS gaps degrade to empty states.)_
+- [x] Playwright + axe for `/admin/login`, `/admin`, `/admin/design-system` (and `/admin/categories`) in light and dark. _(Authenticated run GREEN: 33/33. `auth.setup.ts` logs a staff user in from `E2E_STAFF_EMAIL`/`E2E_STAFF_PASSWORD` and writes storageState; `a11y-admin.spec.ts` runs 32 combos (4 pages × light/dark × 375/768/1280/1440) **serially** (parallel workers raced the Supabase SSR session-cookie refresh → ECONNRESET); `a11y-public.spec.ts` covers `/admin/login`. The pages are `/admin`, `/admin/design-system`, `/admin/categories` and `/admin/collections`. The run surfaced several systemic kit issues that were fixed — see the 2026-10-17 Decision Log entries. Note: two PUBLIC-site tests still fail (`/bn` home text <18px; language switcher dark contrast) — pre-existing, outside Phase 2 admin, logged for the public pass.)_
 - **Done when (UI kit):** the dashboard renders on real queries, passes 9c.10 at all four widths in both themes, and staff can navigate every module stub with keyboard only.
 
 Then continue with the existing Phase 2 tasks (Categories CRUD, Collections, Media upload, Swatch Library, Products CRUD, Customization tab), each page built from the kit and checked against 9c.8 and 9c.10.
 
-- [ ] Admin layout (sidebar, topbar, breadcrumbs, role-aware nav).
-- [ ] Categories CRUD (tree + reorder).
-- [ ] Collections CRUD.
-- [ ] Media upload component (Supabase Storage, image compression/resizing on upload).
-- [ ] Swatch Library CRUD (groups, swatches, texture photo upload).
-- [ ] Products CRUD with tabs: general, pricing (MOQ + quantity-range editor with validation), variants (swatch link, price delta, stock), images, categories, collections, SEO.
-- [ ] Customization tab: enable builder, define parts, allowed swatches, size limits, extra prices.
-- **Done when:** staff can create a complete product with 8 color variants, quantity ranges (e.g. 5-50 and 51-100 pcs) and builder options, then publish it.
+- [x] Admin layout (sidebar, topbar, breadcrumbs, role-aware nav). _(Built with the admin shell in the UI-kit task above.)_
+- [x] Categories CRUD (tree + reorder). _(Two-pane `/admin/categories`: left `CategoryTree` with dnd-kit drag **and** keyboard Move up/down; right `CategoryEditor` (BilingualField name/description/SEO, auto slug, parent select excluding self+descendants, active switch, path field for the future Media picker). Reads via `src/server/categories.ts`; writes in `categories/actions.ts` — `saveCategory`/`deleteCategory`/`reorderCategories`, each zod-validated + `requireRole(['owner','manager'])`, unique-slug suffix, children reparented on delete, FK-in-use handled. Loading skeleton added; `/admin/categories` is in the authed a11y matrix.)_
+- [x] Collections CRUD. _(Plan 9c.8 "DataTable + side Sheet editor". First consumer of the two deferred kit components: `DataTable` (`@tanstack/react-table` over the shadcn table — sortable headers with `aria-sort`, sticky header, 10/25/50 page-size, "a–b of N" range + prev/next, dedicated horizontal-scroll container, stacked cards below `md`, skeleton + empty states, URL-synced `sort`/`dir`/`page`/`size`/`q`) and `FilterBar` (debounced 300ms search + clear + reset + filter slot). `/admin/collections` reads via `src/server/collections.ts` (all rows + a `product_collections(count)` linked-product count); writes in `collections/actions.ts` — `saveCollection`/`deleteCollection`, each zod-validated (`src/lib/validators/collection.ts`) + `requireRole(['owner','manager'])`, unique-slug suffix, delete relies on the `on delete cascade` join so products just drop the tag. Editing happens in a right-hand `Sheet` (bilingual name/description, auto slug, sort order, active switch, path field for the future Media picker, `ConfirmDialog` delete). Loading skeleton added; `/admin/collections` is in the authed a11y matrix — 33/33 GREEN.)_
+- [x] Media upload component (Cloudinary, image compression/resizing on upload). _(Owner switched media from Supabase Storage to **Cloudinary**. `src/lib/cloudinary.ts` is server-only (lazy `CLOUDINARY_URL`), uploads via `upload_stream` and stores an auto-format/auto-quality resized URL. `media/actions.ts` gates with `requireRole(['owner','manager'])` + zod (fixed folder enum, PNG/JPG/WebP/AVIF, 5 MB). Kit `ImageUploader` (drag/drop + click, preview/replace/remove, idle/uploading/error states) wired into the Category + Collection editors, replacing the old path fields; demoed on `/admin/design-system`. `next.config.ts` whitelists `res.cloudinary.com`. Authed axe **33/33** with the uploader on design-system.)_
+- [x] Swatch Library CRUD (groups, swatches, texture photo upload). _(Plan 9c.8 "Groups as tabs; grid of SwatchChip cards ... Sheet editor with texture upload". `/admin/swatches`: one server read (`listSwatchLibrary`) loads every group with its swatches nested + a per-swatch usage count (tallied from `product_variants` and `product_part_swatches`, since `product_variants.swatch_id` has no FK so PostgREST can't embed it); client selects the group tab (with a first-group fallback, no setState-in-effect). Two `Sheet` editors (`SwatchGroupEditor`, `SwatchEditor`) write via `swatches/actions.ts` — `saveSwatchGroup`/`deleteSwatchGroup`/`saveSwatch`/`deleteSwatch`, each zod-validated (`validators/swatch.ts`) + `requireRole(['owner','manager'])`; group `key` is unique (duplicates rejected, not suffixed), deletes are blocked when a swatch/group is in use, group delete cascades its swatches. Texture photo uses the Cloudinary `ImageUploader` (folder `swatches`). Loading skeleton + empty states. **Schema gap fixed:** `swatch_groups` had only a public read policy — added `supabase/migrations/202610180001_phase2_swatches_rls.sql` granting staff write (owner/manager/inventory) mirroring `swatches`; run `supabase db push` before creating groups. Authed axe **41/41** (added swatches).)_
+- [x] Products CRUD with tabs: general, pricing (MOQ + quantity-range editor with validation), variants (swatch link, price delta, stock), images, categories, collections, SEO. _(Plan 9c.8 "list + tabbed editor". `/admin/products` list: status tabs (all/published/draft/archived) as URL `?status` links with counts, `FilterBar` (debounced `q`) + client type/custom/stock/category filters over the loaded rows, `DataTable` (sortable title, price range, stock tone badge, status badge), row selection with bulk Publish/Archive (`bulkSetProductStatus`), and a CSV Export (Blob download — the plan's "Import CSV" is deferred; only export shipped). New product is a minimal draft step (`/admin/products/new` → `createProduct`) so children get a `product_id`, then redirects into the tabbed editor `/admin/products/[id]` (`?tab=` deep-link, ARIA tablist/tab). Tabs each own a slice and save independently via `router.refresh()` + `revalidatePath`: **general** (bilingual title/short/full desc, selling type, stock mode, MOQ, lead time, material, customization/featured switches, auto-slug), **pricing** (MOQ + the new `TierEditor` kit component — quantity-range rows with live overlap/gap/price-rise warnings and min/max/price errors), **variants** (SwatchChip picker fed from `listSwatchLibrary`, auto-fill color name/hex, SKU, size, price delta, tracked-only stock fields, active switch), **images** (Cloudinary `ImageUploader` folder `products`, bilingual alt, linked variant, reorder, first = thumbnail), **relations** (category checkboxes + one primary radio, collection checkboxes), **seo**. Header Publish/Archive + `ConfirmDialog` Delete; right-rail "Publish checklist". Reads via `src/server/products.ts` (`listAdminProducts`/`countProductsByStatus`/`getAdminProduct`/`listRelationOptions`); writes in `products/actions.ts` — every action `requireRole(['owner','manager','inventory'])` + zod (`validators/product.ts`), replace-semantics (delete-then-insert) for children, unique-slug suffix, global-SKU de-dup (Postgres `23505` → friendly error), max-1-primary guard. typecheck/lint/build green; authed axe **56/56** (added `/admin/products` + `/admin/products/new`).)_
+- [x] Customization tab: enable builder, define parts, allowed swatches, size limits, extra prices. _(5th editor tab, gated by `customization_enabled`. `CustomizationTab` builds `product_custom_parts` rows: part key (snake/kebab), label bilingual, input type (`swatch|select|dimensions|text|file`), extra price, required switch, help text; per-type config — `swatch` picks a swatch group + allowed swatches (checkbox list with a default radio) + optional per-swatch price delta, `select` takes one option per line, `dimensions` takes min/max width/height, all stored in the `config` jsonb. Saved via `saveCustomParts` (replace: delete parts → cascade `product_part_swatches` → re-insert returning ids → de-dup allowed swatches). No new schema (child write RLS already present from Phase 1).)_
+- **Done when:** staff can create a complete product with 8 color variants, quantity ranges (e.g. 5-50 and 51-100 pcs) and builder options, then publish it. _(Met: the New → editor flow supports a draft with N variants added one-by-one in the variants tab, arbitrary quantity ranges via `TierEditor`, builder parts via the customization tab, and Publish/Archive in the header. Verified against the live Supabase DB; both product routes reached in the authed axe run.)_
 
 ### Phase 3: Public catalog + quote (soft-launch milestone)
+
 - [ ] Site layout (header, mega menu from DB categories, footer, language switch, WhatsApp button).
 - [ ] Home, category, collection, product, search pages.
 - [ ] Quote form + server action + file upload + success page.
@@ -915,12 +946,14 @@ Then continue with the existing Phase 2 tasks (Categories CRUD, Collections, Med
 - **Done when:** site works as a catalog plus quote plus custom-builder site on real data.
 
 ### Phase 4: Admin quotes + content
+
 - [ ] Quotes inbox, detail, status pipeline, assignment, notes, attachment view, builder-request view with color chips, printable production spec sheet and printable quotation (validity date).
 - [ ] Notification on new quote (email or WhatsApp link; provider TBD with owner).
 - [ ] Content admin: homepage sections, clients, gallery, testimonials, FAQ, legal docs, blog, redirects.
 - **Done when:** owner can run the marketing content and handle quotes without a developer.
 
 ### Phase 5: Commerce (COD)
+
 - [ ] Cart (client state, persisted), stock check on add (skipped for made-to-order), MOQ enforcement and quantity-range pricing across the cart.
 - [ ] Checkout form + `place_order` RPC + confirmation page + order lookup by order number and phone.
 - [ ] Admin orders: list, detail, status history, mark paid, notes, invoice/packing slip print view.
@@ -936,6 +969,7 @@ Then continue with the existing Phase 2 tasks (Categories CRUD, Collections, Med
 - **Done when:** a customer can place a COD order, stock reserves and releases correctly, staff can fulfil it.
 
 ### Phase 6: Roles, audit, reports, polish
+
 - [ ] Staff invites and role enforcement across all modules.
 - [ ] Enforce MFA (TOTP) for owner and manager roles.
 - [ ] CSV import/export for products, variants and stock, plus bulk image upload.
@@ -945,6 +979,7 @@ Then continue with the existing Phase 2 tasks (Categories CRUD, Collections, Med
 - [ ] Coupons (optional).
 
 ### Phase 7: Launch
+
 - [ ] Real products, real photos (own samples), real client logos with permission, real legal documents.
 - [ ] Replace logo v1 with v2 and the favicon pair (section 4d).
 - [ ] Policy pages written in Bangla and English and linked (Terms, Privacy, Returns & Refunds, Shipping, Custom Order & Advance Payment).
@@ -958,11 +993,13 @@ Then continue with the existing Phase 2 tasks (Categories CRUD, Collections, Med
 - [ ] Final QA on mobile (most BD traffic is mobile).
 
 ### Later (not in scope now)
+
 bKash/Nagad, card payments (SSLCommerz), courier API integration, full inventory (suppliers, purchasing, raw materials), customer accounts, product reviews, 2D color preview in the Custom Bag Builder, instant checkout for custom bags (`custom_order_mode = instant`).
 
 ---
 
 ## 11. Quality Gates (every phase)
+
 - `bun run lint` and `bun run build` pass.
 - No `any` unless justified in a comment.
 - No secrets in the repo.
@@ -978,6 +1015,7 @@ bKash/Nagad, card payments (SSLCommerz), courier API integration, full inventory
 ---
 
 ## 12. Conventions
+
 - Server components by default; add `"use client"` only when needed.
 - Mutations through server actions or route handlers, always validated with zod and checked against the user's role.
 - Money stored as `numeric(12,2)`, currency BDT, formatted with `Intl.NumberFormat('en-BD')`.
@@ -989,6 +1027,7 @@ bKash/Nagad, card payments (SSLCommerz), courier API integration, full inventory
 ---
 
 ## 13. How We Beat the Competitor (keep in mind while building)
+
 - Real quote-first buttons instead of fake 0.00 prices and an empty cart.
 - A real **Custom Bag Builder** (every part customizable, live estimate) where the competitor only has a plain quote form, and quantity-range pricing shown openly.
 - One product with variants instead of dozens of color-duplicate pages.
@@ -1002,6 +1041,7 @@ bKash/Nagad, card payments (SSLCommerz), courier API integration, full inventory
 ---
 
 ## 14. Open Questions (owner to answer; defaults in brackets)
+
 1. Final gold palette (section 4) and logo: confirm after seeing the generated logo. [yes]
 2. Default language for `/`: Bangla or English? [English, with prominent switch]
 3. Company details: address, phones, email, WhatsApp number, working hours.
@@ -1027,7 +1067,8 @@ bKash/Nagad, card payments (SSLCommerz), courier API integration, full inventory
 23. Facebook page and Messenger username, and access to claim the Google Business Profile.
 
 ## Decision Log
-*(Cursor: append dated notes here when you make a choice the plan did not specify.)*
+
+_(Cursor: append dated notes here when you make a choice the plan did not specify.)_
 
 - 2026-10-15: Plan refactored: quantity-range pricing (2a), swatch library (2b), Custom Bag Builder (2c). Owner answered items 11, 12 and 17 in section 14; they are now locked decisions in section 1.
 - 2026-10-15: Brand color changed from orange to a golden palette (section 4); added logo/favicon asset spec (4b).
@@ -1049,3 +1090,15 @@ bKash/Nagad, card payments (SSLCommerz), courier API integration, full inventory
 - 2026-10-15: Phase 1 checkout validation rejects `quote_only` products; the auth/order forward migration and pgTAP suite must be applied and run on the configured Supabase database before Phase 1 is complete.
 - 2026-10-15: Applied and recorded migrations `202610150001` and `202610150002` on the linked Supabase project, provisioned and verified the first owner, and ran all 19 rollback-protected pgTAP assertions. The test file enables pgTAP in `extensions`; direct SQL execution was used because the CLI test runner requires Docker.
 - 2026-10-15: `has_role(roles text[])` compares `profiles.role::text` to the supplied roles, since `profiles.role` is a PostgreSQL enum and cannot be compared directly with text.
+- 2026-10-17: Phase 2 tokens added (9c.2). Sidebar tokens realigned to the plan (light `#F4EFE4`/border `#E2DACA`, dark `#181513`/border `#2E2823`) and `--sidebar-muted`, `--sidebar-active`, `--surface-2`, `--success/-soft`, `--warning/-soft`, `--ink-badge/-soft`, `--destructive-soft` and `--radius-card`/`--radius-control` added and exposed via `@theme inline`. Chart-1..5 set to the 9c.2 admin series. `--destructive` left at the existing value to avoid regressing the shadcn button/badge variants; `--destructive-soft` added for status badges. Contrast is the plan's approved pairing and is re-verified with real components in the Phase 2 axe pass.
+- 2026-10-17: Installed `recharts`, `cmdk`, `@dnd-kit/core|sortable|utilities`, `@tanstack/react-table` and the missing shadcn components from section 3. The shadcn installer rewrote `button.tsx`/`input.tsx` back to 32px with `bg-primary/80`; reverted to keep 44px controls and `bg-brand-hover` (as in the earlier decision). Fixed the generated `src/hooks/use-mobile.ts` to use `useSyncExternalStore` so `bun run lint` (React Compiler `set-state-in-effect`) passes.
+- 2026-10-17: Built the base admin kit under `src/components/admin/{data,dashboard,forms,catalog,shell}/` per section 5 and rebuilt `/admin/design-system` to show status badges, tones, stat/chart widgets, loading/empty/error states, forms and swatches. `PageHeader` moved to `shell/page-header.tsx` (old flat file removed). The design-system page is `"use client"` because it demos interactive kit pieces with inline handlers, so its `metadata` title is dropped; it stays under the noindex admin layout. Remaining kit components are added just before the pages that use them.
+- 2026-10-17: Admin shell built from shadcn `sidebar` (collapsible icon rail, mobile Sheet and `sidebar_state` cookie are provided by the component; `TooltipProvider` is added by `AdminShell` since sidebar.tsx does not). Nav lives in `shell/nav.ts` with role gates mirroring `requireRole()`; nav is a convenience only and each module page still calls `requireRole()`. Active pill overrides `SidebarMenuButton` with `--sidebar-active` + gold icon rather than editing sidebar.tsx. Added `getAdminUser()` (role + name + email) in `auth.ts` and a `signOut` server action in `admin/actions.ts`; the protected layout now redirects on a null staff session. Login page gains the brand mark, a return link and `rounded-card`; the owner/manager MFA step is deferred to Phase 6 per the plan. `DataTable`, `ChartCard`, `ActivityFeed`, `TabsBar`, `FilterBar` and command-palette record search arrive with the dashboard and list pages.
+- 2026-10-17: Admin shell fix — do NOT reuse the public site `ThemeToggle` (`shadcn-space/toggle-01`) in admin: it calls `useTranslations`, and admin routes live outside `[locale]` with no `NextIntlClientProvider`, which crashed the shell (and, via the client re-render fallback, surfaced the `ThemeScript` "script in a React component" warning). Added `shell/admin-theme-toggle.tsx` that uses the app's **custom** `@/components/site/theme-provider` (not `next-themes`). Note: `NavUser` and the mobile menu also had to switch from `next-themes` to the custom provider. Rule for Phase 2+: admin components must not import `next-intl` at all.
+- 2026-10-17: Dashboard (9c.7) built on real queries in `src/server/dashboard.ts`, which reads through the cookie-based RSC `createClient()` so `has_role()` RLS applies; a SELECT a role isn't granted returns zero rows (never an error), so per-role gaps render as EmptyState, and only a genuine connection failure sets `fatal` (→ ErrorState with retry). Enum check: `quote_status` is `new|contacted|quoted|won|lost` (no `in_review`/`archived`) — "needs action" = new + contacted. Pipeline colors and lucide chart dots use `var(--chart-*)` tokens; SegmentBar/StatCard sparkline are hand-drawn SVG (recharts installed but the sales trend chart is intentionally EmptyState until Phase 5 real order data). Added dashboard widgets `ChartCard`, `ChartSkeleton`, `ChartRangeMenu`, `ActivityFeed`, `TabsBar` and extended `StatCard` with an optional `caption` for placeholder KPIs. `TabsBar`/`ChartRangeMenu` take a server-provided `baseQuery` (URL `?range=`) instead of `useSearchParams`, avoiding a Suspense boundary and keeping admin next-intl-free. No widget hrefs to module pages yet (they 404 until those pages land this phase).
+- 2026-10-17: Task 6 axe harness — added a Playwright `setup` project (`e2e/auth.setup.ts`) that logs a staff user in from `E2E_STAFF_EMAIL`/`E2E_STAFF_PASSWORD` and saves storageState, plus an `admin` project (`e2e/a11y-admin.spec.ts`) depending on it; the public `chromium` project runs `e2e/a11y-public.spec.ts` (`/admin/login`, 8/8 green). No staff user is committed and we never hard-code creds, so when env vars are absent the setup writes a baseline empty storageState and every admin test self-skips (verified: all skip, no file-missing error). Completing the tick needs one authenticated run. `e2e/.auth` is gitignored.
+- 2026-10-17: Categories CRUD (9c.8) — `/admin/categories` is a server-driven two-pane manager (fresh props after every action via `router.refresh()` + `revalidatePath`, so the tree/editor never diverge from the DB). Selection is derived (not a `useEffect` setState, per the React Compiler rule). Reorder writes `sort_order` from the flattened DFS id order; drag and the Move up/down buttons share that path. New `src/lib/slug.ts` (`slugify`/`isValidSlug`) and `src/lib/validators/category.ts` (zod v4, `z.guid()` for ids). `image_path` is a plain field until the Media task adds the picker.
+- 2026-10-17: Task 6 authenticated axe run surfaced and fixed systemic admin-kit bugs (all admin pages inherited them): (1) **duplicate `<main>`** — shadcn `SidebarInset` already renders the page `<main>`, so `AdminShell`'s content wrapper is now `<div id="main" tabIndex={-1}>` (skip-link target preserved); (2) **sidebar wasn't a landmark** → 21 `region` errors, fixed with `role="complementary" aria-label="Admin sidebar"` on `<Sidebar>`; (3) **no `<title>`** — `(admin)/layout.tsx` now sets `title.default`+`template`, the dashboard exports `"Dashboard"`, and login uses `title.absolute` (the design-system page is `"use client"` so it relies on the layout default); (4) **gold contrast** — `--gold-soft` had no dark value (pale `#f1e3b8` in dark) and light `--gold-text` was 4.19:1, so light `--gold-text`→`#6f5010` and dark `--gold-soft`→`#2e2410` were set, and the avatar + sidebar count badge moved to `bg-sidebar-primary`/`text-sidebar-primary-foreground` (6.7:1, theme-stable); (5) **dark destructive Button** `text-destructive` on `bg-destructive/20` was 4.42:1 → lowered to `/10` (hover `/15`). Also **moved `/admin/design-system` under `(protected)`** so it inherits the shell (fixes its `region`/no-`main`), and its `DemoCard` titles are now `<h2>` (heading-order h1→h2→h3). Next 16 PPR `blocking-prerender-current-time`: added `await connection()` to the dashboard page so `Date.now` (getDashboardData/urgencyFor/ActivityFeed) is request-time. Gotchas: the `admin` project must run serially (Supabase SSR cookie refresh races under parallel workers → ECONNRESET), and Turbopack served stale compiled CSS until `.next` was deleted.
+- 2026-10-17: Collections CRUD + the two deferred list kit components. **`DataTable`** is built on `@tanstack/react-table@9`, which is a major rewrite (`useReactTable`→`useTable` + a `features`/`Subscribe` model). Rather than guess at the bleeding-edge API, `DataTable` uses the library's documented **v8-compatibility layer**: `useLegacyTable` + `getCoreRowModel`/`getSortedRowModel`/`getPaginationRowModel` from `@tanstack/react-table/legacy`, and `flexRender` from the main entry. `ColumnDef` is invariant in `TValue` in v9, so the kit's column type widens the value slot to `any` (`LegacyColumnDef<TData, any>`) — the standard TanStack idiom — with a scoped eslint-disable. **Filtering is deliberately the caller's job** (the page filters by `q` and hands the table a finished array); the table only sorts + paginates what it is given, avoiding the v8-compat global-filter ambiguity and keeping `total = data.length`. Sorting/pagination/search are **URL-synced** (`sort`, `dir`, `page`, `size`, `q`): the server page reads `searchParams` and seeds the client table; interactions call `router.replace` (no history spam, `scroll:false`). Back/forward does not re-sync client table state — acceptable for admin and consistent with the rest of the phase. **`FilterBar`** debounces 300ms and owns its input draft locally so typing stays instant (no setState-in-effect). Row actions live in a trailing `display` column; its header MUST have accessible text (axe `th` rule) — use `header: () => <span className="sr-only">Actions</span>` (a bare empty `<th>` failed the authed run at 768+; 375 card view passes because there is no `<th>`). **Collections** specifics: `collections` is a flat table (no parent, no SEO columns — unlike categories), so the editor is a right-hand `Sheet` (not the two-pane tree); the `image_path` is a plain field until the Media task; delete leans on `product_collections … on delete cascade` so it is never FK-blocked. The linked-product count is a `product_collections(count)` embed, normalized for both the `{count}` object and the `[{count}]` array the typegen emits. `/admin/collections` is `ƒ` (dynamic/auth-gated). Full authed matrix now **33/33** (added collections), design-system now demos `DataTable`+`FilterBar`. typecheck/lint/build green.
+- 2026-10-17: **Media storage switched to Cloudinary** (owner instruction, overriding the plan's "Supabase Storage" for the Media task). Scope decided with the owner: **public catalog images only** (product/category/collection images + swatch textures) move to Cloudinary; **private quote attachments stay on Supabase Storage** (Cloudinary is image/video-oriented and the plan's RLS/signed-URL design fits docs better). Upload path is **server-signed via the SDK** — `src/lib/cloudinary.ts` is `import "server-only"` (mirrors `supabase/admin.ts`), reads `CLOUDINARY_URL` **lazily** so a build/CI without creds still succeeds (only a real upload fails fast with a clear message); the API secret never reaches the browser. `uploadImage` streams the buffer through `uploader.upload_stream` and stores a delivery URL built with `quality:auto` + `fetch_format:auto` + `crop:limit` resize (1000px `standard` / 1600px `wide`) to meet the ~300KB performance target — "compression/resizing on upload". `src/app/(admin)/admin/media/actions.ts` is the only client-facing entry: `requireRole(['owner','manager'])`, then zod on a **fixed folder enum** (no free-text path → injection-safe) and explicit file checks (PNG/JPG/WebP/AVIF, ≤5MB) before any bytes hit Cloudinary. Kit `ImageUploader` (`forms/image-uploader.tsx`): drag/drop + click field calling the action, with idle/preview/uploading/error states, keyboard-operable (sr-only `Input` labelled by its dropzone `<label>`), text-labelled controls (never color alone), 150-200ms transitions with `motion-reduce`. Wired into the Category + Collection editors in place of the placeholder `image_path` text fields. `next.config.ts` now whitelists `res.cloudinary.com` for `next/image` (added `images.remotePatterns`; the public catalog will render through it in Phase 3). Cloudinary added to plan section 3. Demoed live on `/admin/design-system` (in the authed axe matrix) — **33/33** green; the admin preview uses a plain `<img>` (next/image is reserved for the public site).
+- 2026-10-18: **Products CRUD + Customization tab (closes Phase 2).** Architecture: a minimal New step creates a draft row so the child tables (tiers/variants/images/parts) have a `product_id`, then the tabbed editor at `/admin/products/[id]` owns everything else. **Per-tab independent save** — each tab keeps its own draft, shows its own `StickySaveBar`, and calls its own action; children use **replace-semantics** (delete-then-insert) which is simpler and safer than diffing, and matches how the swatch/collection editors already behaved. Every tab resets its local draft with the **adjust-during-render** pattern (`const [prev] = useState(baseline); if (prev !== baseline) { setPrev(baseline); setForm(baseline); }`) after `router.refresh()` — never `setState` in an effect (React Compiler). Tabs deep-link via `?tab=` (an ARIA `tablist`; only the active tab sets `aria-controls` pointing at the single rendered `tabpanel`, the pattern that passed axe on Swatches). `product_variants.sku` is **globally unique** in the schema, so `saveVariants` batch de-dups in-request and maps Postgres `23505` to a friendly message. The `pricing` tab ships a new kit component **`TierEditor`** (controlled `TierRow[]`; `analyze()` flags unit*price≤0 and max<min as errors, overlap/gap/price-rises as warnings; live BDT preview via `formatMoney`). Catalog actions are gated `requireRole(['owner','manager','inventory'])` (a wider set than the content modules' owner/manager, matching the plan's inventory role) and zod-validated in `validators/product.ts`; `config` jsonb from the builder parts is stored with a double cast (`as unknown as Database…Insert.config`) because the validator's `z.record(z.string(), z.unknown())` output is wider than Supabase's `Json`. **Deferred / decisions:** "Import CSV" not built — shipped client **Export CSV** (Blob) only; a Preview link is left for Phase 3 (public product route doesn't exist yet); the `/admin/products/[id]` editor is intentionally **not** in the static axe matrix because it needs a real product id (would 404) — the list and New pages are covered. Schema: no new migration for products (all `product*\*`child write RLS +`on delete cascade` FKs came from Phase 1); the outstanding **`202610180001_phase2_swatches_rls.sql`** (swatch_groups write policy) has since been pushed to the live DB (2026-10-18: applied via `supabase db push`; the migration was made idempotent with `drop policy if exists` to reconcile drift where the policy existed but the version wasn't recorded — now tracked, re-push is a clean no-op; verified live that an `authenticated` owner INSERT passes RLS (row visible) and an `anon` INSERT is blocked with `42501`, both rolled back so no test rows persist). Final gates: typecheck/lint/build green, authed axe **56/56** (7 pages × light/dark × 375/768/1280/1440) — the last 8 failures were a `heading-order`violation on`/admin/products/new`(h1 "New product" → h3 "Basics" skipped h2), fixed with an`sr-only` `<h2>`before the first`FormSection`.

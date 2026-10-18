@@ -14,6 +14,10 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  title: {
+    default: "Prime Bag Factory Admin",
+    template: "%s · Prime Bag Factory Admin",
+  },
   robots: {
     index: false,
     follow: false,

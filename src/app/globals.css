@@ -16,6 +16,20 @@
   --ink: #1c1917;
   --ivory: #fbf8f1;
 
+  /* Admin UI tokens (plan 9c.2) - light */
+  --surface-2: #f6f2e9;
+  --success: #1f5f4a;
+  --success-soft: #e3f1ea;
+  --warning: #8a5a00;
+  --warning-soft: #fbebc8;
+  --ink-badge: #1c1917;
+  --ink-badge-soft: #ece6d8;
+  --destructive-soft: #fde7e4;
+  --sidebar-muted: #6b645c;
+  --sidebar-active: #ffffff;
+  --radius-card: 16px;
+  --radius-control: 10px;
+
   --background: #fff9ea;
   --foreground: #1c1917;
   --surface: #ffffff;
@@ -38,23 +52,24 @@
   --input-border: #8c8378;
   --ring: #1c1917;
   --brand-foreground: #1c1917;
-  --gold-text: #8a6414;
+  --gold-text: #6f5010;
   --focus: #1c1917;
 
+  /* Admin chart series per plan 9c.2 (gold, ink, forest, gold-deep, neutral) */
   --chart-1: #c8962e;
-  --chart-2: #1f5f4a;
-  --chart-3: #8a6414;
-  --chart-4: #6b645c;
-  --chart-5: #1c1917;
+  --chart-2: #3f3a36;
+  --chart-3: #1f5f4a;
+  --chart-4: #8a6414;
+  --chart-5: #a8a29e;
   --radius: 0.625rem;
 
-  --sidebar: #ffffff;
+  --sidebar: #f4efe4;
   --sidebar-foreground: #1c1917;
   --sidebar-primary: #c8962e;
   --sidebar-primary-foreground: #1c1917;
   --sidebar-accent: #f1e3b8;
   --sidebar-accent-foreground: #1c1917;
-  --sidebar-border: #e7e0d3;
+  --sidebar-border: #e2daca;
   --sidebar-ring: #1c1917;
 }
 
@@ -82,21 +97,35 @@
   --ring: #fbf8f1;
   --brand-foreground: #1c1917;
   --gold-text: #d9ae4f;
+  --gold-soft: #2e2410;
   --focus: #fbf8f1;
 
-  --chart-1: #c8962e;
-  --chart-2: #4fb08a;
-  --chart-3: #d9ae4f;
-  --chart-4: #a8a29e;
-  --chart-5: #fbf8f1;
+  /* Admin UI tokens (plan 9c.2) - dark */
+  --surface-2: #211d1a;
+  --success: #4fb08a;
+  --success-soft: #16302a;
+  --warning: #e5a93c;
+  --warning-soft: #3a2c10;
+  --ink-badge: #fbf8f1;
+  --ink-badge-soft: #2a2521;
+  --destructive-soft: #3a1816;
+  --sidebar-muted: #a8a29e;
+  --sidebar-active: #26211d;
 
-  --sidebar: #1c1917;
+  /* Admin chart series per plan 9c.2 - dark */
+  --chart-1: #d9ae4f;
+  --chart-2: #d6d3d1;
+  --chart-3: #4fb08a;
+  --chart-4: #f1e3b8;
+  --chart-5: #78716c;
+
+  --sidebar: #181513;
   --sidebar-foreground: #fbf8f1;
   --sidebar-primary: #c8962e;
   --sidebar-primary-foreground: #1c1917;
   --sidebar-accent: #2a2522;
   --sidebar-accent-foreground: #fbf8f1;
-  --sidebar-border: #3a332e;
+  --sidebar-border: #2e2823;
   --sidebar-ring: #fbf8f1;
 }
 
@@ -144,6 +173,16 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-surface-2: var(--surface-2);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-ink-badge: var(--ink-badge);
+  --color-ink-badge-soft: var(--ink-badge-soft);
+  --color-destructive-soft: var(--destructive-soft);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-heading: var(--font-sans);
   --radius-sm: calc(var(--radius) * 0.6);
@@ -153,6 +192,8 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-card: var(--radius-card);
+  --radius-control: var(--radius-control);
 }
 
 html {
