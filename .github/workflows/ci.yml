@@ -129,5 +129,13 @@ jobs:
         run: |
           bun run start &
           for i in $(seq 1 60); do curl -sf http://localhost:3000/en > /dev/null && break; sleep 1; done
+          # Warm every audited route before scoring: the first request to each
+          # route pays PPR resume + module-init costs, and Lighthouse must
+          # measure the steady state, not a cold runner (PR #2 CI showed /en
+          # at 69 where a warmed local run scores ~91).
+          IFS=',' read -ra WARM_PATHS <<< "$LIGHTHOUSE_PATHS"
+          for p in "${WARM_PATHS[@]}"; do
+            curl -sf "http://localhost:3000$p" -o /dev/null || true
+          done
       - name: Lighthouse mobile audit
         run: bun run perf:lighthouse
