@@ -92,7 +92,7 @@ export default function ProductPage({
   return (
     <Suspense
       fallback={
-        <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-10 px-4 py-10">
+        <div className="mx-auto flex w-full container flex-1 flex-col gap-10 px-4 py-10">
           <div className="h-9 w-2/3 animate-pulse rounded-control bg-surface-2" />
           <div className="aspect-4/3 w-full animate-pulse rounded-card bg-surface-2 sm:aspect-auto sm:h-96" />
         </div>
@@ -173,7 +173,7 @@ async function ProductContent({ params }: { params: Promise<RouteParams> }) {
   return (
     <main
       id="main"
-      className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-10 px-4 py-10"
+      className="mx-auto flex w-full container flex-1 flex-col gap-10 px-4 py-10"
     >
       {jsonLd(productJsonLd)}
       {jsonLd(breadcrumbJsonLd)}

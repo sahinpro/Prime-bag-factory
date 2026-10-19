@@ -33,14 +33,14 @@ export function Media({
   }
 
   return (
-    <div className={cn("relative overflow-hidden bg-surface-2", className)}>
+    <div className={cn("relative overflow-hidden bg-surface-1", className)}>
       <Image
         src={src}
         alt={alt}
         fill
         sizes={sizes ?? "100vw"}
         priority={priority}
-        className={cn("h-full w-full object-contain", imgClassName)}
+        className={cn("h-full w-full object-cover", imgClassName)}
       />
     </div>
   );

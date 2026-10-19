@@ -1,7 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 
-import { Media } from "@/components/site/media";
 import { ProductGrid } from "@/components/site/product-grid";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
@@ -36,7 +36,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
     <main id="main" className="flex flex-1 flex-col">
       {/* Hero */}
       <section className="border-b bg-surface">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-14 sm:py-20">
+        <div className="mx-auto flex w-full container flex-col gap-6 px-4 py-14 sm:py-20">
           <p className="text-sm font-medium uppercase tracking-wide text-gold-text">
             {t("eyebrow")}
           </p>
@@ -68,7 +68,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
 
       {/* Featured products */}
       {products.length > 0 ? (
-        <section className="mx-auto w-full max-w-6xl px-4 py-12">
+        <section className="mx-auto w-full container px-4 py-12">
           <div className="mb-6 flex items-center justify-between gap-4">
             <h2 className="text-2xl font-semibold tracking-tight">
               {t("featured")}
@@ -87,8 +87,8 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
 
       {/* Shop by category */}
       {categories.length > 0 ? (
-        <section className="bg-surface-2">
-          <div className="mx-auto w-full max-w-6xl px-4 py-12">
+        <section>
+          <div className="mx-auto w-full container px-4 py-12">
             <h2 className="mb-6 text-2xl font-semibold tracking-tight">
               {t("categoriesTitle")}
             </h2>
@@ -103,7 +103,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
 
       {/* Shop by industry */}
       {collections.length > 0 ? (
-        <section className="mx-auto w-full max-w-6xl px-4 py-12">
+        <section className="mx-auto w-full container px-4 py-12">
           <h2 className="mb-6 text-2xl font-semibold tracking-tight">
             {t("collectionsTitle")}
           </h2>
@@ -122,7 +122,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
 
       {/* Why */}
       <section className="bg-surface">
-        <div className="mx-auto w-full max-w-6xl px-4 py-12">
+        <div className="mx-auto w-full container px-4 py-12">
           <h2 className="mb-6 text-2xl font-semibold tracking-tight">
             {t("whyTitle")}
           </h2>
@@ -156,16 +156,33 @@ async function CategoryTile({
     <Link
       href={`/${collection ? "collection" : "category"}/${card.slug}`}
       locale={locale}
-      className="group flex flex-col overflow-hidden rounded-card border bg-surface transition-shadow hover:shadow-md"
+      className="group relative flex min-h-45 flex-col justify-end overflow-hidden rounded-card border bg-surface transition-shadow hover:shadow-md"
     >
-      <Media
-        src={card.image_path}
-        alt={name}
-        sizes="(min-width: 1024px) 25vw, 50vw"
-        className="aspect-4/3 w-full"
-      />
-      <div className="p-3">
-        <h3 className="line-clamp-2 font-medium">{name}</h3>
+      {card.image_path ? (
+        <>
+          <div aria-hidden className="absolute inset-0">
+            <Image
+              src={card.image_path}
+              alt=""
+              fill
+              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+              className="object-cover transition-duration-300 transition-transform group-hover:scale-105"
+            />
+          </div>
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-linear-to-t from-ink/70 via-ink/25 to-transparent"
+          />
+        </>
+      ) : null}
+      <div className="relative p-3">
+        <h3
+          className={`line-clamp-2 font-bold text-lg ${
+            card.image_path ? "text-ivory" : ""
+          }`}
+        >
+          {name}
+        </h3>
       </div>
     </Link>
   );

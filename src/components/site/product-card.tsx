@@ -40,8 +40,8 @@ export async function ProductCard({
         alt={title}
         priority={priority}
         sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-        className="aspect-4/3 w-full"
-        imgClassName="transition-transform duration-200 group-hover:scale-[1.02] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+        className="aspect-4/3 w-full "
+        imgClassName="transition-transform object-contain duration-200 group-hover:scale-[1.02] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
       />
       <div className="flex flex-1 flex-col gap-1.5 p-4">
         <h3 className="line-clamp-2 font-medium text-foreground">{title}</h3>

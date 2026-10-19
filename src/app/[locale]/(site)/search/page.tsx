@@ -34,7 +34,7 @@ export default function SearchPage({
   return (
     <Suspense
       fallback={
-        <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-10">
+        <div className="mx-auto flex w-full container flex-1 flex-col gap-8 px-4 py-10">
           <div className="h-9 w-48 animate-pulse rounded-control bg-surface-2" />
           <div className="h-11 w-full max-w-xl animate-pulse rounded-control bg-surface-2" />
         </div>
@@ -71,7 +71,7 @@ async function SearchResults({
   return (
     <main
       id="main"
-      className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-10"
+      className="mx-auto flex w-full container flex-1 flex-col gap-8 px-4 py-10"
     >
       <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
 

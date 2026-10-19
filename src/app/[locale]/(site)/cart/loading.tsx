@@ -3,7 +3,7 @@ export default function CartLoading() {
   // prerenders this without the personal cart content.
   return (
     <main
-      className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-10"
+      className="mx-auto flex w-full container flex-1 flex-col gap-8 px-4 py-10"
       aria-busy="true"
     >
       <div className="h-9 w-40 animate-pulse rounded-control bg-surface-2" />

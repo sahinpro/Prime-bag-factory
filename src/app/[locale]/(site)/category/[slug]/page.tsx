@@ -42,7 +42,7 @@ export default function CategoryPage({
   return (
     <Suspense
       fallback={
-        <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-10">
+        <div className="mx-auto flex w-full container flex-1 flex-col gap-8 px-4 py-10">
           <div className="h-9 w-56 animate-pulse rounded-control bg-surface-2" />
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -84,7 +84,7 @@ async function CategoryContent({ params }: { params: Promise<RouteParams> }) {
   return (
     <main
       id="main"
-      className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-10"
+      className="mx-auto flex w-full container flex-1 flex-col gap-8 px-4 py-10"
     >
       {jsonLd(
         buildBreadcrumb(l, [

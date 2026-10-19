@@ -21,7 +21,7 @@ export async function SiteFooter({ locale }: { locale: string }) {
 
   return (
     <footer className="mt-auto border-t border-border bg-surface">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto grid container gap-8 px-4 py-10 sm:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-2">
           <p className="text-base font-semibold text-foreground">{siteName}</p>
           <p className="max-w-sm text-sm text-muted-foreground">
