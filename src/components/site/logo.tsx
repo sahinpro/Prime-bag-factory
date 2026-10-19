@@ -56,13 +56,14 @@ export function Logo({
 /**
  * Theme-aware horizontal logo. CSS switches variants so there is no flash.
  *
- * Not `priority`: the logo is a small decorative (`alt=""`) header asset and is
- * never the intended LCP on the public marketing pages (home = hero copy,
- * product = `<h1>` title), both server-rendered text. Eagerly preloading two
- * large raster variants (light + dark) just competed with the real LCP and the
- * critical JS in Lighthouse's throttled window. As a top-of-viewport image the
- * browser still fetches it on the first frame via lazy-loading's immediate
- * intersection. See plan Phase 3 T8 / Decision Log 2026-10-18.
+ * The light variant is `priority`: the PR #2 CI Lighthouse diagnostics showed
+ * this lazy image is the LCP on `/en/quote` (painted at 3.8 s against a 1.2 s
+ * FCP). With `sizes="140px"` the preloaded payload is a single small raster,
+ * so it cannot swamp the real LCP the way the old un-sized 1470px srcSet did
+ * (see Decision Log 2026-10-18, superseded by the 2026-10-19 CI data entry).
+ * The dark variant stays lazy: `display:none` in light mode means it is never
+ * fetched for the light-theme audit, and in dark mode a top-of-viewport lazy
+ * image is fetched immediately by the browser anyway.
  */
 export function ThemeLogo({ className }: { className?: string }) {
   return (
@@ -71,6 +72,7 @@ export function ThemeLogo({ className }: { className?: string }) {
         <Logo
           variant="light"
           alt=""
+          priority
           className="h-auto max-w-40 dark:hidden"
         />
         <Logo

@@ -205,6 +205,11 @@ export function CartView() {
                 <Link
                   href={`/product/${line.slug}`}
                   className="relative h-20 w-20 shrink-0 overflow-hidden rounded-control border bg-surface-2"
+                  // The thumbnail is decorative chrome (Media renders an
+                  // aria-hidden block when a product has no image yet — local
+                  // seed data), so the link needs its own accessible name or
+                  // axe flags `link-name`. Found by the local-stack e2e run.
+                  aria-label={title}
                 >
                   <Media
                     src={line.image}

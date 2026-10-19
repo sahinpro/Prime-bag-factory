@@ -5,14 +5,43 @@ on:
   push:
     branches: [main]
 
+# Plan 15.2 A3: CI runs against the throwaway Supabase local stack, never a
+# hosted project. The values below are the CLI's deterministic local-dev
+# defaults (identical on every machine since the CLI stopped generating
+# per-project keys) — they are NOT secrets, which is exactly why no repository
+# secrets are used anywhere in this workflow. Pinned CLI version keeps these
+# keys stable (bump both together if the local CLI is upgraded).
+#
+# e2e/pgTAP read `.env.test` (gitignored); CI builds it from `.env.test.example`
+# via the shared env below. `e2e/test-env.ts` aborts the suites unless the
+# effective Supabase URL is the local stack, so a wrong secret here fails the
+# tests instead of reaching production data.
 env:
   NEXT_PUBLIC_SITE_URL: http://localhost:3000
-  NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: public-anon-placeholder
-  SUPABASE_SERVICE_ROLE_KEY: service-role-placeholder
+  NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH
+  SUPABASE_SERVICE_ROLE_KEY: sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz
   NEXT_PUBLIC_WHATSAPP_NUMBER: "8801700000000"
 
 jobs:
+  # pgTAP suite (plan 15.2 A4 adds more): runs the same migrations + seed the
+  # developers run locally and proves RLS and the RPC contracts.
+  database:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.121.0
+      - name: Start local stack
+        run: supabase start
+      - name: Apply migrations and seed
+        run: supabase db reset
+      - name: pgTAP
+        run: supabase test db
+
+  # Shared bootstrap for jobs that need the stack up while building/serving the
+  # app: start, reset, and materialize `.env.test` from the workflow env.
   check:
     runs-on: ubuntu-latest
     steps:
@@ -20,6 +49,22 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.2
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.121.0
+      - name: Start local stack
+        run: supabase start
+      - name: Apply migrations and seed
+        run: supabase db reset
+      - name: Write .env.test for the guards
+        run: cp .env.test.example .env.test
+      - name: Verify seeded staff login (proves keys + seed)
+        run: |
+          curl -fsS -X POST "$NEXT_PUBLIC_SUPABASE_URL/auth/v1/token?grant_type=password" \
+            -H "apikey: $NEXT_PUBLIC_SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{\"email\":\"e2e-staff@primebagfactory.test\",\"password\":\"E2e-Local-Stack-Only!\"}" \
+            -o /dev/null
       - run: bun install --frozen-lockfile
       - run: bun run lint
       - run: bun run typecheck
@@ -37,8 +82,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.121.0
+      - name: Start local stack
+        run: supabase start
+      - name: Apply migrations and seed
+        run: supabase db reset
+      - name: Write .env.test for the guards
+        run: cp .env.test.example .env.test
       - run: bun install --frozen-lockfile
       - run: npx playwright install --with-deps chromium
+      # The seeded staff account is public knowledge (local/CI-only), so the
+      # admin project's auth setup signs in for real and the admin a11y and
+      # orders suites actually execute here.
       - run: npx playwright test
 
   lighthouse:
@@ -47,7 +104,9 @@ jobs:
     needs: check
     env:
       LIGHTHOUSE_BASE_URL: http://localhost:3000
-      LIGHTHOUSE_PATHS: /en,/en/quote
+      # Plan 15.2 A6: the product page is scored too — the slug is the one in
+      # supabase/seed.sql, which this job's local stack applies above.
+      LIGHTHOUSE_PATHS: /en,/en/quote,/en/product/premium-delivery-bag
       LIGHTHOUSE_MIN_PERF: "90"
       CHROME_PATH: /usr/bin/google-chrome
     steps:
@@ -55,11 +114,28 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.2
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.121.0
+      # The build and the prod server now talk to the local stack (seeded
+      # catalog), so this job needs it running too.
+      - name: Start local stack
+        run: supabase start
+      - name: Apply migrations and seed
+        run: supabase db reset
       - run: bun install --frozen-lockfile
       - run: bun run build
       - name: Start production server
         run: |
           bun run start &
           for i in $(seq 1 60); do curl -sf http://localhost:3000/en > /dev/null && break; sleep 1; done
+          # Warm every audited route before scoring: the first request to each
+          # route pays PPR resume + module-init costs, and Lighthouse must
+          # measure the steady state, not a cold runner (PR #2 CI showed /en
+          # at 69 where a warmed local run scores ~91).
+          IFS=',' read -ra WARM_PATHS <<< "$LIGHTHOUSE_PATHS"
+          for p in "${WARM_PATHS[@]}"; do
+            curl -sf "http://localhost:3000$p" -o /dev/null || true
+          done
       - name: Lighthouse mobile audit
         run: bun run perf:lighthouse
