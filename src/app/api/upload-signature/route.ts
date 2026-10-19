@@ -14,7 +14,7 @@ import { buildSignedUploadParams, type SignableFolder } from "@/lib/cloudinary";
 export function GET(request: Request) {
   const url = new URL(request.url);
   const requested = url.searchParams.get("folder") ?? "artwork";
-  const allowed: readonly string[] = ["artwork", "products"];
+  const allowed: readonly string[] = ["artwork"];
   if (!allowed.includes(requested)) {
     return NextResponse.json({ error: "unsupported_folder" }, { status: 400 });
   }

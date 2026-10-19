@@ -123,7 +123,9 @@ export async function uploadImage(
 }
 
 /** Public image folders the browser may upload into (fixed, never free text). */
-const SIGNABLE_FOLDERS = ["artwork", "products"] as const;
+// Public (unauthenticated) signing is for customer artwork ONLY. Catalog media
+// goes through the role-gated `uploadMedia` server action, never this list.
+const SIGNABLE_FOLDERS = ["artwork"] as const;
 export type SignableFolder = (typeof SIGNABLE_FOLDERS)[number];
 
 export type SignedUploadParams = {
