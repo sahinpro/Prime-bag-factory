@@ -220,9 +220,12 @@ web3 = 30
 # secret = ""
 
 [auth.email]
-# Allow/disallow new user signups via email to your project. (Disabled per plan A1 —
-# invites still work; only self-signup is blocked.)
-enable_signup = false
+# Allow/disallow new user signups via email to your project.
+# NOTE (plan A1, verified 2026-10-19): setting this false disables ALL email
+# logins in this gotrue ("email_provider_disabled" on token grant), not just
+# self-signup — seeded staff could not sign in. Self-signup stays blocked by
+# the global [auth] enable_signup = false above.
+enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true

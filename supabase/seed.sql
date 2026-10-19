@@ -128,3 +128,73 @@ values
     'contacted', current_date + 20
   )
 on conflict do nothing;
+
+-- ============================================================================
+-- Test staff user for the LOCAL/CI stack only (plan 15.2 A3).
+-- Seeds never reach hosted projects (`supabase db push` does not run seed.sql),
+-- so this account exists only in throwaway databases. Credentials are public
+-- knowledge and mirrored in `.env.test.example`; that is the point — there are
+-- no secrets in the repo, and the e2e admin suite can log in anywhere the local
+-- stack runs (dev machines, CI). Password: E2e-Local-Stack-Only!
+-- Role owner so every admin screen and action is reachable from e2e.
+--
+-- GoTrue (v2.197) reads auth.users rows with strict scans, so a hand-seeded
+-- user needs more than email + hash:
+--   * instance_id must be the zero UUID — gotrue filters users by instance and
+--     silently answers `invalid_credentials` when it is NULL;
+--   * every nullable text token column must be '' — scanning NULL into a Go
+--     string aborts the login with a 500;
+--   * an auth.identities row and raw_app_meta_data provider info mirror what
+--     `POST /admin/users` creates, so the seeded account is indistinguishable
+--     from a normally-provisioned one.
+-- Verified by `bunx supabase db reset` + a real password-grant login in the
+-- e2e auth setup.
+insert into auth.users (
+  id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data,
+  confirmation_token, recovery_token, email_change, email_change_token_new,
+  email_change_token_current, phone_change, phone_change_token,
+  reauthentication_token,
+  created_at, updated_at
+) values (
+  '7e2f1a44-9c3b-4f0d-8a51-1e6b2c9d4f70',
+  '00000000-0000-0000-0000-000000000000',
+  'authenticated', 'authenticated',
+  'e2e-staff@primebagfactory.test',
+  crypt('E2e-Local-Stack-Only!', gen_salt('bf', 10)),
+  now(),
+  '{"provider": "email", "providers": ["email"]}',
+  '{"email_verified": true}',
+  '', '', '', '', '', '', '', '',
+  now(), now()
+)
+on conflict (id) do update set
+  encrypted_password = excluded.encrypted_password,
+  email_confirmed_at = now(),
+  instance_id = excluded.instance_id,
+  raw_app_meta_data = excluded.raw_app_meta_data,
+  raw_user_meta_data = excluded.raw_user_meta_data;
+
+insert into auth.identities (
+  user_id, provider_id, provider, identity_data,
+  last_sign_in_at, created_at, updated_at
+)
+select
+  '7e2f1a44-9c3b-4f0d-8a51-1e6b2c9d4f70',
+  'email', 'email',
+  jsonb_build_object(
+    'sub', '7e2f1a44-9c3b-4f0d-8a51-1e6b2c9d4f70',
+    'email', 'e2e-staff@primebagfactory.test',
+    'email_verified', true
+  ),
+  now(), now(), now()
+where exists (
+  select 1 from auth.users where id = '7e2f1a44-9c3b-4f0d-8a51-1e6b2c9d4f70'
+)
+on conflict (provider_id, provider) do update set
+  identity_data = excluded.identity_data,
+  updated_at = now();
+
+insert into public.profiles (id, full_name, role)
+values ('7e2f1a44-9c3b-4f0d-8a51-1e6b2c9d4f70', 'E2E Staff (local only)', 'owner')
+on conflict (id) do update set role = 'owner';
