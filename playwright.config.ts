@@ -1,5 +1,20 @@
 import { defineConfig, devices } from "@playwright/test";
 
+import { assertLocalSupabase, TEST_ENV_KEYS } from "./e2e/test-env";
+
+// Plan 15.2 A2: load `.env.test` and abort before anything starts unless the
+// effective Supabase URL is the local stack. The dev server below inherits
+// process.env, and real env vars beat `.env.local` in Next.js — so the whole
+// suite can never reach the live project.
+assertLocalSupabase("playwright");
+
+const testEnv = Object.fromEntries(
+  TEST_ENV_KEYS.filter((key) => process.env[key]).map((key) => [
+    key,
+    process.env[key] as string,
+  ]),
+);
+
 export default defineConfig({
   testDir: "e2e",
   fullyParallel: true,
@@ -11,7 +26,11 @@ export default defineConfig({
     // Playwright runs under Node. Do not start Next with `bun --bun`.
     command: "npx next dev --hostname 127.0.0.1 --port 3000",
     url: "http://127.0.0.1:3000/en",
-    reuseExistingServer: !process.env.CI,
+    // Never reuse a server we did not start: a bun-run dev server (see the
+    // 2026-10-18 Decision Log trap) serves HTML that never hydrates, and every
+    // interaction test would silently no-op. If :3000 is taken, fail loudly.
+    reuseExistingServer: false,
+    env: testEnv,
   },
   projects: [
     {

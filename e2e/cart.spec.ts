@@ -18,13 +18,29 @@ test("add to cart from product detail shows the line in /cart", async ({
 
   await page.goto(href!);
   const add = page.getByRole("button", { name: "Add to cart" });
-  test.skip((await add.count()) === 0, "first product is not buy_now");
-  await expect(add).toBeEnabled({ timeout: 10_000 });
-  await add.click();
-
-  await expect(
-    page.getByRole("link", { name: "Added — view cart" }),
-  ).toBeVisible();
+  // Wait for the streamed configurator before judging the product type — an
+  // immediate count() races the PPR fallback under parallel load.
+  const hasAdd = await add
+    .waitFor({ state: "visible", timeout: 15_000 })
+    .then(() => true)
+    .catch(() => false);
+  test.skip(!hasAdd, "first product is not buy_now");
+  // A cold Turbopack dev server serves the page long before React hydrates,
+  // and `toBeEnabled` cannot prove hydration (the button is enabled in static
+  // HTML too) — a single early click is then a silent no-op. Re-click until
+  // the confirmation appears; clicks before hydration do nothing, so the cart
+  // gains at most one extra bump of the same variant (one line either way).
+  const added = page.getByRole("link", { name: "Added — view cart" });
+  await expect
+    .poll(
+      async () => {
+        if (await added.isVisible()) return true;
+        await add.click();
+        return false;
+      },
+      { timeout: 30_000, intervals: [500] },
+    )
+    .toBe(true);
   await page.getByRole("link", { name: "Cart," }).click();
 
   await expect(page).toHaveURL(/\/en\/cart/);

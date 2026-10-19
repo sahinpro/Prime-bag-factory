@@ -19,12 +19,28 @@ async function addFirstBuyNow(page: Page): Promise<boolean> {
 
   await page.goto(href);
   const add = page.getByRole("button", { name: "Add to cart" });
-  if ((await add.count()) === 0) return false;
-  await expect(add).toBeEnabled({ timeout: 10_000 });
-  await add.click();
-  await expect(
-    page.getByRole("link", { name: "Added — view cart" }),
-  ).toBeVisible();
+  // PPR streams the fallback first; an immediate count() raced it and faked a
+  // "not a buy_now product" skip. Wait for the streamed configurator instead.
+  const hasAdd = await add
+    .waitFor({ state: "visible", timeout: 15_000 })
+    .then(() => true)
+    .catch(() => false);
+  if (!hasAdd) return false;
+  // A cold Turbopack dev server serves the page long before React hydrates;
+  // a click on a not-yet-hydrated button is a silent no-op. Re-click until the
+  // confirmation shows — pre-hydration clicks do nothing, so at worst the cart
+  // gains one extra bump of the same variant (still a single line).
+  const added = page.getByRole("link", { name: "Added — view cart" });
+  await expect
+    .poll(
+      async () => {
+        if (await added.isVisible()) return true;
+        await add.click();
+        return false;
+      },
+      { timeout: 30_000, intervals: [500] },
+    )
+    .toBe(true);
   return true;
 }
 
@@ -66,10 +82,20 @@ test("checkout blocks a submit with empty customer fields", async ({
     "MOQ or stock already blocks this cart",
   );
 
-  await place.click();
   // Next's route announcer also carries role="alert", so look inside the form.
   const alerts = page.locator("form p[role='alert']");
-  await expect(alerts.first()).toBeVisible();
+  // Same cold-hydration caveat as addFirstBuyNow: the server action only
+  // intercepts submit once React is live, so retry until the alerts show.
+  // Empty fields fail client-side zod, so no click can ever write an order.
+  await expect
+    .poll(
+      async () => {
+        await place.click();
+        return (await alerts.count()) > 0 && (await alerts.first().isVisible());
+      },
+      { timeout: 30_000, intervals: [500] },
+    )
+    .toBe(true);
   // Nothing was written: the page stays on checkout with its fields untouched.
   await expect(page).toHaveURL(/\/en\/checkout$/);
 });
@@ -84,9 +110,17 @@ test("an unknown phone never reveals whether the order exists", async ({
 
   await page.getByLabel("Order number").fill("PBF-251018-0001");
   await page.getByLabel("Phone").fill("01700000000");
-  await page.getByRole("button", { name: "Find order" }).click();
-
+  const find = page.getByRole("button", { name: "Find order" });
   const alert = page.locator("form p[role='alert']");
-  await expect(alert).toBeVisible();
+  // Retry the read-only lookup until hydration makes it fire.
+  await expect
+    .poll(
+      async () => {
+        await find.click();
+        return (await alert.count()) > 0 && (await alert.isVisible());
+      },
+      { timeout: 30_000, intervals: [500] },
+    )
+    .toBe(true);
   await expect(alert).toContainText(/No order matches/i);
 });
