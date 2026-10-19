@@ -104,7 +104,9 @@ jobs:
     needs: check
     env:
       LIGHTHOUSE_BASE_URL: http://localhost:3000
-      LIGHTHOUSE_PATHS: /en,/en/quote
+      # Plan 15.2 A6: the product page is scored too — the slug is the one in
+      # supabase/seed.sql, which this job's local stack applies above.
+      LIGHTHOUSE_PATHS: /en,/en/quote,/en/product/premium-delivery-bag
       LIGHTHOUSE_MIN_PERF: "90"
       CHROME_PATH: /usr/bin/google-chrome
     steps:

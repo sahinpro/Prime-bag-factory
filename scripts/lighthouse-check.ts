@@ -5,7 +5,10 @@
 //
 // Env:
 //   LIGHTHOUSE_BASE_URL  default http://localhost:3000
-//   LIGHTHOUSE_PATHS     comma-separated locale-relative paths (default "/en,/en/quote")
+//   LIGHTHOUSE_PATHS     comma-separated locale-relative paths
+//                        (default "/en,/en/quote,/en/product/premium-delivery-bag";
+//                        the product slug comes from supabase/seed.sql — the same
+//                        database CI lighthouse runs against, plan 15.2 A6)
 //   LIGHTHOUSE_MIN_PERF  minimum performance score 0-100 (default 90)
 //
 // Chrome is auto-discovered; set CHROME_PATH to pin a binary on a runner.
@@ -15,7 +18,10 @@ import lighthouse from "lighthouse";
 const base = (
   process.env.LIGHTHOUSE_BASE_URL ?? "http://localhost:3000"
 ).replace(/\/+$/, "");
-const paths = (process.env.LIGHTHOUSE_PATHS ?? "/en,/en/quote")
+const paths = (
+  process.env.LIGHTHOUSE_PATHS ??
+  "/en,/en/quote,/en/product/premium-delivery-bag"
+)
   .split(",")
   .map((p) => p.trim())
   .filter(Boolean);
