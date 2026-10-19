@@ -1,6 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 import { ProductGrid } from "@/components/site/product-grid";
 import { Button } from "@/components/ui/button";
@@ -20,17 +21,11 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
   if (!isLocale(locale)) notFound();
   setRequestLocale(locale);
 
-  const [featuredRaw, recent, categories, collections, t, c] =
-    await Promise.all([
-      listFeaturedProducts(8),
-      listRecentProducts(8),
-      listTopLevelCategoryCards(),
-      listPublicCollections(),
-      getTranslations({ locale, namespace: "home" }),
-      getTranslations({ locale, namespace: "common" }),
-    ]);
-
-  const products = featuredRaw.length > 0 ? featuredRaw : recent;
+  // Translations only — no database awaits above this point, so the hero and
+  // the "Why" section live in the prerendered PPR shell. Before this split
+  // the whole page streamed as one dynamic chunk and the hero paragraph was
+  // the LCP at ~3.3 s on CI (FCP 1.1 s); it now paints with the first frame.
+  const t = await getTranslations({ locale, namespace: "home" });
 
   return (
     <main id="main" className="flex flex-1 flex-col">
@@ -66,6 +61,49 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
         </div>
       </section>
 
+      {/* DB-driven sections stream behind this boundary (PPR); the hero above
+          and the "Why" section below are static and ship in the first flush. */}
+      <Suspense fallback={<HomeSectionsSkeleton />}>
+        <HomeSections locale={locale} />
+      </Suspense>
+
+      {/* Why */}
+      <section className="bg-surface">
+        <div className="mx-auto w-full container px-4 py-12">
+          <h2 className="mb-6 text-2xl font-semibold tracking-tight">
+            {t("whyTitle")}
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {(["1", "2", "3"] as const).map((n) => (
+              <div key={n} className="rounded-card border bg-surface-2 p-5">
+                <h3 className="mb-1 font-semibold">{t(`why${n}Title`)}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {t(`why${n}Body`)}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+async function HomeSections({ locale }: { locale: Locale }) {
+  const [featuredRaw, recent, categories, collections, t, c] =
+    await Promise.all([
+      listFeaturedProducts(8),
+      listRecentProducts(8),
+      listTopLevelCategoryCards(),
+      listPublicCollections(),
+      getTranslations({ locale, namespace: "home" }),
+      getTranslations({ locale, namespace: "common" }),
+    ]);
+
+  const products = featuredRaw.length > 0 ? featuredRaw : recent;
+
+  return (
+    <>
       {/* Featured products */}
       {products.length > 0 ? (
         <section className="mx-auto w-full container px-4 py-12">
@@ -119,26 +157,54 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
           </div>
         </section>
       ) : null}
+    </>
+  );
+}
 
-      {/* Why */}
-      <section className="bg-surface">
-        <div className="mx-auto w-full container px-4 py-12">
-          <h2 className="mb-6 text-2xl font-semibold tracking-tight">
-            {t("whyTitle")}
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {(["1", "2", "3"] as const).map((n) => (
-              <div key={n} className="rounded-card border bg-surface-2 p-5">
-                <h3 className="mb-1 font-semibold">{t(`why${n}Title`)}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {t(`why${n}Body`)}
-                </p>
+// Same containers and grid tracks as the sections above so the swap does not
+// shift layout (skeletons match final dimensions per the admin-kit rules).
+function HomeSectionsSkeleton() {
+  return (
+    <>
+      <section className="mx-auto w-full container px-4 py-12" aria-hidden>
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <div className="h-8 w-40 rounded-control bg-surface-2" />
+          <div className="h-4 w-16 rounded-control bg-surface-2" />
+        </div>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="overflow-hidden rounded-card border">
+              <div className="aspect-4/3 w-full bg-surface-2" />
+              <div className="flex flex-col gap-2 p-4">
+                <div className="h-4 w-3/4 rounded-control bg-surface-2" />
+                <div className="h-3 w-1/2 rounded-control bg-surface-2" />
               </div>
+            </div>
+          ))}
+        </div>
+      </section>
+      <section aria-hidden>
+        <div className="mx-auto w-full container px-4 py-12">
+          <div className="mb-6 h-8 w-48 rounded-control bg-surface-2" />
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="min-h-45 rounded-card border bg-surface-2"
+              />
             ))}
           </div>
         </div>
       </section>
-    </main>
+      <section className="mx-auto w-full container px-4 py-12" aria-hidden>
+        <div className="mb-6 h-8 w-48 rounded-control bg-surface-2" />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="min-h-45 rounded-card border bg-surface-2" />
+          ))}
+        </div>
+      </section>
+    </>
   );
 }
 
