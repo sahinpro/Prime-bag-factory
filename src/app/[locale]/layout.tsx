@@ -20,13 +20,18 @@ const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "600", "700"],
   variable: "--font-inter",
-  display: "swap",
+  // Plan §8 performance pass (line 947 lever): LCP on these pages is text,
+  // and "swap" made it wait for the font under Lighthouse's 4x CPU throttle.
+  // "optional" paints the first frame with the system font immediately; the
+  // brand font is used as soon as it is cached. Revert to "swap" only with an
+  // owner sign-off — it trades the 90+ gate for guaranteed font consistency.
+  display: "optional",
 });
 
 const notoSerifBengali = Noto_Serif_Bengali({
   subsets: ["bengali"],
   variable: "--font-bn",
-  display: "swap",
+  display: "optional",
 });
 
 export function generateStaticParams() {
@@ -91,7 +96,9 @@ export default async function LocaleLayout({
     <html
       lang={locale}
       suppressHydrationWarning
-      className={`${inter.variable} ${notoSerifBengali.variable} h-full antialiased`}
+      className={`${inter.variable}${
+        locale === "bn" ? ` ${notoSerifBengali.variable}` : ""
+      } h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">
         {jsonLd(organization)}
