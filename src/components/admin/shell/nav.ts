@@ -1,5 +1,6 @@
 import type { Role } from "@/lib/auth";
 import {
+  Ban,
   Boxes,
   FileText,
   FolderTree,
@@ -131,6 +132,12 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Audit log",
         href: "/admin/audit",
         icon: ScrollText,
+        roles: OWNER_MANAGER,
+      },
+      {
+        label: "Blocked contacts",
+        href: "/admin/blocked-contacts",
+        icon: Ban,
         roles: OWNER_MANAGER,
       },
     ],

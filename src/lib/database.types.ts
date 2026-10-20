@@ -1528,6 +1528,10 @@ export type Database = {
         Args: { p_key: string; p_limit: number; p_window_seconds: number };
         Returns: boolean;
       };
+      admin_unblock_contact: {
+        Args: { p_id: string };
+        Returns: void;
+      };
     };
     Enums: {
       blocked_contact_type: "phone" | "ip_hash";
