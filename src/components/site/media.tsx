@@ -27,7 +27,7 @@ export function Media({
       <div
         role="presentation"
         aria-hidden
-        className={cn("bg-surface-2", className)}
+        className={cn("bg-white", className)}
       />
     );
   }
