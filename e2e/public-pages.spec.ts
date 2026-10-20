@@ -33,6 +33,13 @@ async function gotoWithTheme(
   await page.emulateMedia({ colorScheme: theme });
   await page.goto(path);
   await expect(page.locator("html")).toHaveClass(new RegExp(`\\b${theme}\\b`));
+  // Wait for the streamed (Partial Prerender) subtree to swap in. During the
+  // client-side resume the layout's fallback <main> and the resolved one briefly
+  // coexist, so a snapshot or interaction taken too early sees two landmarks.
+  // `toHaveCount(1)` is the deterministic settle signal. Do NOT use `networkidle`:
+  // under `next start` the App Router keeps a `?_rsc=` prefetch request in flight
+  // for the life of the page, so idle never fires and the audit would time out.
+  await expect(page.locator("main")).toHaveCount(1);
 }
 
 for (const locale of locales) {
@@ -42,11 +49,8 @@ for (const locale of locales) {
         page,
       }) => {
         await gotoWithTheme(page, `/${locale}${path}`, theme);
-        // Wait for the streamed (Partial Prerender) content to land before
-        // analyzing, so we audit the real page and not the shell fallback.
-        await expect(page.locator("main")).toBeVisible();
-        await page.waitForLoadState("networkidle");
-
+        // gotoWithTheme has already waited for the streamed content to settle,
+        // so this audits the real page — not the Suspense fallback shell.
         const results = await new AxeBuilder({ page }).analyze();
         expect(results.violations).toEqual([]);
       });
@@ -62,19 +66,15 @@ async function auditFirstProduct(
   theme: (typeof themes)[number],
 ) {
   await gotoWithTheme(page, `/${locale}/search`, theme);
-  await expect(page.locator("main")).toBeVisible();
   const href = await page
     .locator('main a[href*="/product/"]')
     .first()
     .getAttribute("href")
     .catch(() => null);
   test.skip(!href, "no product in the catalog to audit");
+  // gotoWithTheme waits for the streamed product segment to finish swapping in
+  // (a single <main>) before axe runs, so the audit sees the resolved page.
   await gotoWithTheme(page, href!, theme);
-  // The product segment is streamed (Partial Rendering): while the client swaps
-  // the resumed subtree in, dev keeps a second copy of the layout's <main> in the
-  // DOM, so let the stream settle and match the landmark leniently before auditing.
-  await page.waitForLoadState("networkidle");
-  await expect(page.locator("main").first()).toBeVisible();
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations).toEqual([]);
 }

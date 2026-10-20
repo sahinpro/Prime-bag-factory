@@ -237,6 +237,9 @@ test("order lookup answers identically for a wrong number or a wrong phone", asy
 
   // (a) real number + wrong phone.
   await page.goto(`/en/order/${orderNo}`);
+  // The lookup page is streamed (PPR): wait for the fallback <main> and form to
+  // be replaced by the resolved one so the strict fill below sees a single field.
+  await expect(page.locator("main")).toHaveCount(1);
   await page.locator('input[name="customer_phone"]').fill("01700000000");
   await page.getByRole("button", { name: "Find order" }).click();
   await expect(alert).toBeVisible({ timeout: 30_000 });
@@ -244,6 +247,7 @@ test("order lookup answers identically for a wrong number or a wrong phone", asy
 
   // (b) well-formed but nonexistent number + the real phone.
   await page.goto("/en/order/PBF-260101-0001");
+  await expect(page.locator("main")).toHaveCount(1);
   await page.locator('input[name="customer_phone"]').fill(phone);
   await page.getByRole("button", { name: "Find order" }).click();
   await expect(alert).toBeVisible({ timeout: 30_000 });

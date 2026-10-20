@@ -8,7 +8,10 @@ test("add to cart from product detail shows the line in /cart", async ({
   page,
 }) => {
   await page.goto("/en/search");
-  await expect(page.locator("main")).toBeVisible();
+  // The search grid is streamed (Partial Prerender): the layout's fallback
+  // <main> and the resolved one briefly coexist, so wait for the swap to finish
+  // (a single <main>) instead of the flaky `networkidle`/strict-visible pair.
+  await expect(page.locator("main")).toHaveCount(1);
   const href = await page
     .locator('main a[href*="/product/"]')
     .first()
@@ -42,11 +45,16 @@ test("add to cart from product detail shows the line in /cart", async ({
     )
     .toBe(true);
   await page.getByRole("link", { name: "Cart," }).click();
-
   await expect(page).toHaveURL(/\/en\/cart/);
+  // The click proved the "Added — view cart" link reaches /cart. That hop is
+  // client-side, and a production build keeps the previous route's <main> in the
+  // DOM next to the new one; reload for a clean, server-rendered /cart (the line
+  // persists in the database) so the count and the axe run stay deterministic.
+  await page.reload();
   await expect(
     page.getByRole("heading", { name: "Order summary" }),
   ).toBeVisible();
+  await expect(page.locator("main")).toHaveCount(1);
   await expect(page.locator("main li")).toHaveCount(1);
   // The hydrated cart rows, steppers and summary only exist here — the empty
   // state is audited in public-pages.spec.ts.
