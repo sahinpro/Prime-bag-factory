@@ -170,7 +170,12 @@ test("the blocklist page lists a blocked phone and unblocks it with an audit not
       ).toBeVisible();
 
       // Search narrows the list to the seeded row and proves the filter works.
-      await page.getByLabel("Search blocked contacts").fill(phone);
+      // Under CI CPU contention App Router can briefly keep two copies of the
+      // client tree mounted during hydration, so the search input transiently
+      // matches twice; wait for it to settle to one before acting.
+      const search = page.getByLabel("Search blocked contacts");
+      await expect(search).toHaveCount(1, { timeout: 10_000 });
+      await search.fill(phone);
       await expect(
         page.getByRole("button", { name: new RegExp(`Unblock.*${phone}`) }),
       ).toBeVisible({ timeout: 15_000 });
