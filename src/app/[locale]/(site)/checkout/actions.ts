@@ -2,6 +2,7 @@
 
 import { createPublicClient } from "@/lib/supabase/server";
 import { checkoutSchema, orderLookupSchema } from "@/lib/validators/checkout";
+import { getClientKey, isAllowed, normalizePhone } from "@/server/abuse";
 import { loadCartLines } from "@/server/cart";
 import { getCheckoutFlags } from "@/server/checkout";
 import { findOrderForLookup, type PublicOrder } from "@/server/orders";
@@ -53,6 +54,16 @@ function codeForRpcError(message: string): string {
 export async function placeCheckoutOrder(
   payload: unknown,
 ): Promise<CheckoutResult> {
+  // Honeypot first, before validation and before the rate counters (plan
+  // 15.2 B3): a baited submission gets the identical success response a real
+  // one would, so a bot learns nothing and burns nothing. Read loosely — a
+  // filled `website` is a bot regardless of the rest of the payload.
+  const honeypot =
+    payload !== null && typeof payload === "object" && "website" in payload
+      ? String((payload as { website?: unknown }).website ?? "")
+      : "";
+  if (honeypot !== "") return { ok: true, orderNo: "" };
+
   const parsed = checkoutSchema.safeParse(payload);
   if (!parsed.success) {
     const fieldErrors: Record<string, string> = {};
@@ -67,8 +78,16 @@ export async function placeCheckoutOrder(
   }
   const data = parsed.data;
 
-  // Honeypot: pretend success so a bot learns nothing.
-  if (data.website !== "") return { ok: true, orderNo: "" };
+  // Plan 15.2 B3: fixed-window limits (B1 RPC) per phone and per salted IP.
+  // The honeypot above returns before this, so a baited bot never burns its
+  // own window. Rejected submissions are indistinguishable to the caller.
+  if (!(await isAllowed("checkout_phone", normalizePhone(data.customer_phone)))) {
+    return { ok: false, formError: "errRateLimited" };
+  }
+  const clientIp = await getClientKey();
+  if (clientIp && !(await isAllowed("checkout_ip", clientIp))) {
+    return { ok: false, formError: "errRateLimited" };
+  }
 
   const flags = await getCheckoutFlags();
   if (flags.maintenance_mode || !flags.checkout_enabled) {
@@ -126,6 +145,15 @@ export async function lookupOrder(
 ): Promise<OrderLookupResult> {
   const parsed = orderLookupSchema.safeParse(payload);
   if (!parsed.success) {
+    return { ok: false, formError: "errNotFound" };
+  }
+  // Plan 15.2 B3/B5: over-limit lookups answer exactly like not-found ones —
+  // a flood must not learn that the pair exists, nor that it hit a wall.
+  const clientIp = await getClientKey();
+  if (clientIp && !(await isAllowed("lookup_ip", clientIp))) {
+    return { ok: false, formError: "errNotFound" };
+  }
+  if (!(await isAllowed("lookup_order", parsed.data.order_no))) {
     return { ok: false, formError: "errNotFound" };
   }
   const order = await findOrderForLookup(

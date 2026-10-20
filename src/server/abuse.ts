@@ -15,6 +15,10 @@ import { toAsciiDigits } from "@/lib/format";
  *
  * - `getClientKey()` turns the client IP into a salted SHA-256 hash: logs and
  *   `rate_limits.key` never contain the raw IP (plan 9b "no PII in logs").
+ *   On Vercel the platform-set headers are authoritative
+ *   (`x-vercel-forwarded-for`, else `x-real-ip`); the leftmost
+ *   `x-forwarded-for` hop is client-controlled and is only trusted off-Vercel
+ *   (local dev, e2e behind Kong).
  * - Rules are named and have defaults in code, but `settings.rate_limits`
  *   (jsonb) can override any rule without a deploy — owner-tunable numbers
  *   were approved on 2026-10-19 (see Decision Log).
@@ -69,14 +73,35 @@ export function hashClientIp(ip: string, salt = rateLimitSalt()): string {
 }
 
 /**
+ * Pick the client IP from request headers. `onVercel` (from the build-time
+ * `VERCEL` env var) uses only the platform-set, un-spoofable headers;
+ * everywhere else (local stack, e2e) falls back to the XFF first hop.
+ * Exported pure so the precedence is unit-testable.
+ */
+export function pickClientIp(
+  getHeader: (name: string) => string | null,
+  onVercel: boolean,
+): string | null {
+  if (onVercel) {
+    return (
+      firstForwardedHop(getHeader("x-vercel-forwarded-for")) ??
+      firstForwardedHop(getHeader("x-real-ip"))
+    );
+  }
+  return firstForwardedHop(getHeader("x-forwarded-for"));
+}
+
+/**
  * Salted hash of the caller's IP, for `*_ip` limit keys and the B4 ip_hash
- * blocklist. Behind any proxy (Vercel, Supabase local Kong) XFF is present;
- * with no proxy header at all we return null and callers skip IP-based rules
- * rather than sharing one "unknown" bucket.
+ * blocklist. With no trustworthy header at all we return null and callers
+ * skip IP-based rules rather than sharing one "unknown" bucket.
  */
 export async function getClientKey(): Promise<string | null> {
   const h = await headers();
-  const ip = firstForwardedHop(h.get("x-forwarded-for"));
+  const ip = pickClientIp(
+    (name) => h.get(name),
+    Boolean(process.env.VERCEL),
+  );
   return ip ? hashClientIp(ip) : null;
 }
 
@@ -127,9 +152,32 @@ export async function getRateLimitRules(): Promise<
 }
 
 /**
+ * One-line structured record for a broken limiter. Deliberately PII-free:
+ * the rule kind and its numbers, never the key (it carries a phone or an
+ * IP hash) and never the client address.
+ */
+function limiterFailureLine(
+  key: string,
+  rule: RateLimitRule,
+  detail: string,
+): string {
+  const kind = key.split(":")[0] ?? "unknown";
+  return JSON.stringify({
+    scope: "abuse.limiter",
+    event: "check_rate_limit_failed",
+    kind,
+    limit: rule.limit,
+    windowSeconds: rule.windowSeconds,
+    detail,
+  });
+}
+
+/**
  * Consume one unit of `key`'s current window and report whether the caller is
  * still allowed (B1 RPC). Keys are `${kind}:${identity}` so every rule owns
- * its own counter space. Fail-open on any infrastructure error.
+ * its own counter space. Fail-open on any infrastructure error — but visible:
+ * a limiter outage logs a structured error so it cannot rot silently (review
+ * of B3, 2026-10-20).
  */
 export async function limit(
   key: string,
@@ -143,12 +191,14 @@ export async function limit(
       p_window_seconds: rule.windowSeconds,
     });
     if (error || data === null || data === undefined) {
-      console.error("[abuse] check_rate_limit failed, failing open:", error?.message);
+      console.error(limiterFailureLine(key, rule, error?.message ?? "empty result"));
       return true;
     }
     return data;
   } catch (error) {
-    console.error("[abuse] check_rate_limit threw, failing open:", error);
+    console.error(
+      limiterFailureLine(key, rule, error instanceof Error ? error.message : String(error)),
+    );
     return true;
   }
 }

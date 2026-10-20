@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { quoteSchema } from "@/lib/validators/quote";
+import { getClientKey, isAllowed } from "@/server/abuse";
 import { notifyNewQuote } from "@/server/notifications";
 
 /**
@@ -74,7 +75,15 @@ export async function submitQuote(
 
   const data = parsed.data;
 
-  // 3. Rate limit: count this phone's requests in the rolling window.
+  // 3. Rate limits. (a) IP rule from the B1 RPC (plan 15.2 B3): stops phone-
+  //    number rotation, which used to make this endpoint unlimited-request
+  //    territory (finding R3). (b) the existing rolling per-phone count over
+  //    quote_requests is kept — it survives even if abuse.ts fails open.
+  const clientIp = await getClientKey();
+  if (clientIp && !(await isAllowed("quote_ip", clientIp))) {
+    return { ok: false, formError: "errRateLimited" };
+  }
+
   const admin = createAdminClient();
   const since = new Date(Date.now() - RATE_WINDOW_MS).toISOString();
   const { count } = await admin

@@ -11,6 +11,7 @@ import {
   firstForwardedHop,
   hashClientIp,
   normalizePhone,
+  pickClientIp,
 } from "@/server/abuse";
 
 describe("firstForwardedHop", () => {
@@ -31,6 +32,47 @@ describe("firstForwardedHop", () => {
     // A malformed leading-comma header yields null — callers skip the IP rule
     // rather than trusting a later hop they did not parse.
     expect(firstForwardedHop(" ,,1.2.3.4")).toBeNull();
+  });
+});
+
+describe("pickClientIp", () => {
+  const headers = (values: Record<string, string>) => (name: string) =>
+    values[name] ?? null;
+
+  it("off Vercel reads the x-forwarded-for first hop (local dev, e2e)", () => {
+    expect(
+      pickClientIp(
+        headers({ "x-forwarded-for": "203.0.113.7, 10.0.0.1" }),
+        false,
+      ),
+    ).toBe("203.0.113.7");
+  });
+
+  it("on Vercel ignores the spoofable x-forwarded-for entirely", () => {
+    expect(
+      pickClientIp(
+        headers({
+          "x-forwarded-for": "1.2.3.4",
+          "x-vercel-forwarded-for": "203.0.113.9, 10.0.0.1",
+        }),
+        true,
+      ),
+    ).toBe("203.0.113.9");
+  });
+
+  it("on Vercel falls back to x-real-ip, never to x-forwarded-for", () => {
+    expect(
+      pickClientIp(
+        headers({
+          "x-forwarded-for": "1.2.3.4",
+          "x-real-ip": "203.0.113.9",
+        }),
+        true,
+      ),
+    ).toBe("203.0.113.9");
+    expect(pickClientIp(headers({ "x-forwarded-for": "1.2.3.4" }), true)).toBe(
+      null,
+    );
   });
 });
 
