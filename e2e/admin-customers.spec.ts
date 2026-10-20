@@ -118,7 +118,8 @@ test("nav hides links to pages that are not built yet (C4)", async ({
   await expect(
     sidebar.getByRole("link", { name: "Customers" }),
   ).toBeVisible();
-  for (const unbuilt of ["Inventory", "Users", "Settings", "Audit log"]) {
+  // Inventory shipped with E1 (see admin-inventory.spec.ts) and is linked.
+  for (const unbuilt of ["Users", "Settings", "Audit log"]) {
     await expect(
       sidebar.getByRole("link", { name: unbuilt }),
     ).toHaveCount(0);

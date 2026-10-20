@@ -21,6 +21,7 @@ const pages = [
   { path: "/admin/quotes", heading: "Quotes" },
   { path: "/admin/orders", heading: "Orders" },
   { path: "/admin/customers", heading: "Customers" },
+  { path: "/admin/inventory", heading: "Inventory" },
   { path: "/admin/blocked-contacts", heading: "Blocked contacts" },
 ] as const;
 

@@ -51,6 +51,7 @@ export default defineConfig({
         /a11y-admin\.spec\.ts/,
         /admin-orders\.spec\.ts/,
         /admin-customers\.spec\.ts/,
+        /admin-inventory\.spec\.ts/,
         /quote-attachment\.spec\.ts/,
       ],
     },
@@ -61,13 +62,14 @@ export default defineConfig({
         storageState: "e2e/.auth/admin.json",
       },
       dependencies: ["setup"],
-      // Authenticated admin screens: the axe matrix, the orders and customers
-      // feature specs and the private-artwork round trip (public upload + staff
-      // signed-URL read).
+      // Authenticated admin screens: the axe matrix, the orders, customers and
+      // inventory feature specs and the private-artwork round trip (public
+      // upload + staff signed-URL read).
       testMatch: [
         /a11y-admin\.spec\.ts/,
         /admin-orders\.spec\.ts/,
         /admin-customers\.spec\.ts/,
+        /admin-inventory\.spec\.ts/,
         /quote-attachment\.spec\.ts/,
       ],
       // Supabase SSR refreshes the session cookie on each authed request; many
