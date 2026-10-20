@@ -297,7 +297,8 @@
     "errPhone": "Enter a valid phone number.",
     "errEmail": "Enter a valid email address.",
     "errRateLimited": "Too many requests — please try again later.",
-    "errGeneric": "Something went wrong. Please try again."
+    "errGeneric": "Something went wrong. Please try again.",
+    "errCustomization": "We couldn't read your bag configuration. Please run through the builder steps again and submit."
   },
   "builder": {
     "title": "Custom Bag Builder",

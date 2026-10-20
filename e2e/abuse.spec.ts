@@ -117,6 +117,14 @@ test("the 4th checkout from one phone in an hour is rejected", async ({
       expect(limited, `attempt ${attempt} must be rate-limited`).toBe(true);
     }
   }
+
+  // Item-0 live proof: this phone burned a full window, yet no rate_limits
+  // key carries the phone number — the identity half is salted-hashed.
+  const { data: leaking } = await adminDb()
+    .from("rate_limits")
+    .select("key")
+    .like("key", `%${phone}%`);
+  expect(leaking).toEqual([]);
 });
 
 test("a honeypot submit still pretends success", async ({ page }) => {

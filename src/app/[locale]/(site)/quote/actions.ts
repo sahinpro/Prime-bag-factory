@@ -1,6 +1,10 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  builderCustomizationSchema,
+  type BuilderCustomization,
+} from "@/lib/validators/customization";
 import { quoteSchema } from "@/lib/validators/quote";
 import {
   getClientKey,
@@ -75,6 +79,10 @@ export async function submitQuote(
       if (!fieldErrors[field])
         fieldErrors[field] = fieldCodeForIssue(issue.code);
     }
+    // `customization` is a hidden input in builder mode — a field error
+    // there would be invisible, so surface it as a form-level rejection.
+    if (fieldErrors.customization)
+      return { ok: false, formError: "errCustomization" };
     return { ok: false, fieldErrors };
   }
 
@@ -110,14 +118,24 @@ export async function submitQuote(
     return { ok: false, formError: "errRateLimited" };
   }
 
-  // 4. Structural parse of the builder snapshot (kept as text in the form).
-  let customization: unknown = null;
+  // 4. Builder snapshot (plan 15.2 B9, finding R10): the old code only did
+  //    JSON.parse and silently stored null on any failure — tampered or
+  //    mangled blobs lost the customer's configuration without a trace.
+  //    Parse AND structurally validate with zod now; anything that is not the
+  //    bounded shape the wizard emits is rejected with a visible error.
+  let customization: BuilderCustomization | null = null;
   if (data.customization) {
+    let json: unknown;
     try {
-      customization = JSON.parse(data.customization);
+      json = JSON.parse(data.customization);
     } catch {
-      customization = null;
+      return { ok: false, formError: "errCustomization" };
     }
+    const snapshot = builderCustomizationSchema.safeParse(json);
+    if (!snapshot.success) {
+      return { ok: false, formError: "errCustomization" };
+    }
+    customization = snapshot.data;
   }
 
   // 5. Insert as a fresh, unassigned request.
@@ -138,7 +156,7 @@ export async function submitQuote(
       needed_by: data.needed_by ?? null,
       message: data.message ?? null,
       attachment_path: data.attachment_path ?? null,
-      customization: customization as never,
+      customization,
       status: "new",
     })
     .select("id")
