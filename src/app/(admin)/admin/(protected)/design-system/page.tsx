@@ -21,6 +21,7 @@ import {
   type DataTableColumn,
   type DataTableQuery,
 } from "@/components/admin/data/data-table";
+import { DetailDrawer } from "@/components/admin/data/detail-drawer";
 import { EmptyState } from "@/components/admin/data/empty-state";
 import { ErrorState } from "@/components/admin/data/error-state";
 import { FilterBar } from "@/components/admin/data/filter-bar";
@@ -275,6 +276,44 @@ function ImageUploaderDemo() {
   );
 }
 
+// DetailDrawer demo (Customers task): the controlled sheet a list page uses
+// to open a row's full context without leaving the table.
+function DetailDrawerDemo() {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-muted-foreground">
+        Right-side sheet, body scrolls independently, footer pins actions.
+      </p>
+      <Button variant="outline" onClick={() => setOpen(true)}>
+        Open demo drawer
+      </Button>
+      <DetailDrawer
+        open={open}
+        onOpenChange={setOpen}
+        title="Demo customer"
+        description="01700000000 · 2 orders · 1 quote"
+        footer={
+          <Button className="w-full" onClick={() => setOpen(false)}>
+            Close
+          </Button>
+        }
+      >
+        <div className="space-y-2">
+          <p className="text-sm text-foreground">
+            Drawer body — history lists, contact cards and quick links live
+            here.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Escape, the overlay and the close button all dismiss it; focus
+            returns to the trigger.
+          </p>
+        </div>
+      </DetailDrawer>
+    </div>
+  );
+}
+
 export default function DesignSystemPage() {
   return (
     <div className="space-y-6">
@@ -359,6 +398,10 @@ export default function DesignSystemPage() {
 
         <DemoCard title="Data table and filters (9c.5)">
           <DataTableDemo />
+        </DemoCard>
+
+        <DemoCard title="Detail drawer">
+          <DetailDrawerDemo />
         </DemoCard>
 
         <DemoCard title="Loading states">
