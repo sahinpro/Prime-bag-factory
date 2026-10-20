@@ -9,7 +9,10 @@ import { expect, test, type Page } from "@playwright/test";
 
 async function addFirstBuyNow(page: Page): Promise<boolean> {
   await page.goto("/en/search");
-  await expect(page.locator("main")).toBeVisible();
+  // /search is streamed (PPR): wait for the fallback <main> to be replaced by
+  // the resolved one instead of a strict `toBeVisible` that throws when the two
+  // copies briefly coexist.
+  await expect(page.locator("main")).toHaveCount(1);
   const href = await page
     .locator('main a[href*="/product/"]')
     .first()
@@ -55,6 +58,12 @@ test("the cart carries into checkout with the advance summary", async ({
   await toCheckout.click();
 
   await expect(page).toHaveURL(/\/en\/checkout$/);
+  // The click above proved the "Proceed to checkout" link reaches /checkout.
+  // A client-side hop leaves the previous route's <main> in the DOM alongside
+  // the new one in a production build; reload for a clean, server-rendered
+  // checkout (the cart re-hydrates from the database) so the line count and the
+  // axe run stay deterministic rather than racing two landmarks.
+  await page.reload();
   await expect(page.getByRole("heading", { name: "Your items" })).toBeVisible();
   // One line, re-hydrated from the database rather than from localStorage.
   await expect(page.locator("form li")).toHaveCount(1);

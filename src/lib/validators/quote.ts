@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { toAsciiDigits } from "@/lib/format";
-import { isOwnArtworkUrl } from "@/lib/validators/artwork-url";
+import { isQuoteAttachmentPath } from "@/lib/validators/quote-attachment";
 
 /**
  * Public quote-request validation (AGENTS: validate with zod on the client AND
@@ -61,9 +61,11 @@ export const quoteSchema = z.object({
   ),
   needed_by: optionalText(10),
   message: optionalText(4000),
-  // Must be one of our own Cloudinary artwork URLs (see artwork-url.ts).
+  // A server-minted `<yyyy>/<uuid>.<ext>` path into the private
+  // quote-attachments bucket (plan 15.2 B6). Anything else is rejected here;
+  // the action additionally verifies the object actually exists.
   attachment_path: optionalText(400).refine(
-    (v) => v === undefined || isOwnArtworkUrl(v),
+    (v) => v === undefined || isQuoteAttachmentPath(v),
     { message: "invalid_attachment" },
   ),
   // JSON snapshot of a builder configuration. Size guard here; the action

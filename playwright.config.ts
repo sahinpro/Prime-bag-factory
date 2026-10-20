@@ -23,12 +23,15 @@ export default defineConfig({
     baseURL: "http://127.0.0.1:3000",
   },
   webServer: {
-    // Playwright runs under Node. Do not start Next with `bun --bun`.
-    command: "npx next dev --hostname 127.0.0.1 --port 3000",
+    // Plan 15.2 task 6: run against the production build, not `next dev`.
+    // Dev-mode hydration/streaming was the source of the e2e flake; `next start`
+    // serves the same artifact CI and production ship, so a green run here is a
+    // green run for real. Playwright runs under Node — never start with `bun --bun`.
+    command: "npx next build && npx next start --hostname 127.0.0.1 --port 3000",
     url: "http://127.0.0.1:3000/en",
-    // Never reuse a server we did not start: a bun-run dev server (see the
-    // 2026-10-18 Decision Log trap) serves HTML that never hydrates, and every
-    // interaction test would silently no-op. If :3000 is taken, fail loudly.
+    // The build is part of the command, so allow it to finish before timing out.
+    timeout: 180_000,
+    // Never reuse a server we did not start. If :3000 is taken, fail loudly.
     reuseExistingServer: false,
     env: testEnv,
   },
@@ -47,6 +50,7 @@ export default defineConfig({
         /.*\.setup\.ts/,
         /a11y-admin\.spec\.ts/,
         /admin-orders\.spec\.ts/,
+        /quote-attachment\.spec\.ts/,
       ],
     },
     {
@@ -56,8 +60,13 @@ export default defineConfig({
         storageState: "e2e/.auth/admin.json",
       },
       dependencies: ["setup"],
-      // Authenticated admin screens: the axe matrix and the orders feature spec.
-      testMatch: [/a11y-admin\.spec\.ts/, /admin-orders\.spec\.ts/],
+      // Authenticated admin screens: the axe matrix, the orders feature spec and
+      // the private-artwork round trip (public upload + staff signed-URL read).
+      testMatch: [
+        /a11y-admin\.spec\.ts/,
+        /admin-orders\.spec\.ts/,
+        /quote-attachment\.spec\.ts/,
+      ],
       // Supabase SSR refreshes the session cookie on each authed request; many
       // parallel workers sharing one storageState race that refresh and abort
       // connections (ECONNRESET). Run these serially.
