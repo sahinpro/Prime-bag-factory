@@ -424,6 +424,7 @@ as $$
 declare
   v_order_id      uuid;
   v_order_no      text;
+  v_key           text;
   v_total         numeric(12, 2);
   v_status        public.order_status;
   v_discount      numeric(12, 2);
@@ -441,6 +442,24 @@ begin
 
   if payload is null or jsonb_typeof(payload) <> 'object' then
     raise exception 'Invalid order payload';
+  end if;
+
+  -- Idempotency: a double click must make ONE order with ONE advance and ONE
+  -- audit row. Take the same advisory lock the core uses, then bail out on a
+  -- replay before any side effect runs.
+  v_key := nullif(btrim(payload->>'idempotency_key'), '');
+  if v_key is null or length(v_key) > 128 then
+    raise exception 'A valid idempotency key is required';
+  end if;
+
+  perform pg_catalog.pg_advisory_xact_lock(
+    pg_catalog.hashtextextended('order:' || v_key, 0)
+  );
+
+  if exists (select 1 from public.orders where idempotency_key = v_key) then
+    select o.order_no into v_order_no
+      from public.orders as o where o.idempotency_key = v_key;
+    return v_order_no;
   end if;
 
   -- Channel is required for an admin order and must be a known value.
