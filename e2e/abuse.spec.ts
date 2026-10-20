@@ -18,11 +18,12 @@ function randomIp(): string {
 
 async function addFirstBuyNow(page: Page): Promise<boolean> {
   await page.goto("/en/search");
-  await expect(page.locator("main")).toBeVisible();
-  const href = await page
-    .locator('main a[href*="/product/"]')
-    .first()
-    .getAttribute("href")
+  // While the page streams, the Suspense fallback `main` and the real one
+  // coexist — wait on the product link itself, never on `main` visibility.
+  const firstProduct = page.locator('main a[href*="/product/"]').first();
+  const href = await firstProduct
+    .waitFor({ state: "visible", timeout: 15_000 })
+    .then(() => firstProduct.getAttribute("href"))
     .catch(() => null);
   if (!href) return false;
 
@@ -98,7 +99,7 @@ test("the 4th checkout from one phone in an hour is rejected", async ({
               .waitFor({ state: "visible", timeout: 30_000 })
               .then(() => true),
             page
-              .getByText(/order placed/i)
+              .getByText(/your order is placed/i)
               .waitFor({ state: "visible", timeout: 30_000 })
               .then(() => false),
             page
@@ -154,7 +155,7 @@ test("a honeypot submit still pretends success", async ({ page }) => {
       .click();
     await actionRoundTrip;
 
-    await expect(page.getByText(/order placed/i)).toHaveCount(0);
+    await expect(page.getByText(/your order is placed/i)).toHaveCount(0);
     await expect(page.getByText(RATE_LIMIT_TEXT)).toHaveCount(0);
   }
 });
@@ -194,7 +195,7 @@ test("a blocked phone gets the generic checkout error", async ({ page }) => {
       page.getByText(/something went wrong/i),
     ).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText(RATE_LIMIT_TEXT)).toHaveCount(0);
-    await expect(page.getByText(/order placed/i)).toHaveCount(0);
+    await expect(page.getByText(/your order is placed/i)).toHaveCount(0);
   } finally {
     await db
       .from("blocked_contacts")
@@ -202,6 +203,51 @@ test("a blocked phone gets the generic checkout error", async ({ page }) => {
       .eq("type", "phone")
       .eq("value", phone);
   }
+});
+
+test("order lookup answers identically for a wrong number or a wrong phone", async ({
+  page,
+}) => {
+  test.setTimeout(180_000);
+  await page.setExtraHTTPHeaders({ "x-forwarded-for": randomIp() });
+  test.skip(!(await addFirstBuyNow(page)), "no buy-now product in the catalog");
+
+  // One real order gives a valid (number, phone) pair to half-break.
+  const phone = `017${Math.floor(10_000_000 + Math.random() * 89_999_999)}`;
+  await page.goto("/en/checkout");
+  await expect(page.getByRole("heading", { name: "Summary" })).toBeVisible();
+  await fillCustomer(page, phone);
+  const place = page.getByRole("button", { name: "Place order", exact: true });
+  test.skip(!(await place.isEnabled()), "MOQ or stock blocks this cart");
+  await place.click();
+  // The success panel heading is "Thank you — your order is placed".
+  await expect(page.getByText(/your order is placed/i)).toBeVisible({
+    timeout: 30_000,
+  });
+  const orderNo = (await page.locator("#order-head").textContent())!.trim();
+
+  const alert = page.locator("main p[role='alert']");
+
+  // (a) real number + wrong phone.
+  await page.goto(`/en/order/${orderNo}`);
+  await page.locator('input[name="customer_phone"]').fill("01700000000");
+  await page.getByRole("button", { name: "Find order" }).click();
+  await expect(alert).toBeVisible({ timeout: 30_000 });
+  const wrongPhoneText = (await alert.textContent())!.trim();
+
+  // (b) well-formed but nonexistent number + the real phone.
+  await page.goto("/en/order/PBF-260101-0001");
+  await page.locator('input[name="customer_phone"]').fill(phone);
+  await page.getByRole("button", { name: "Find order" }).click();
+  await expect(alert).toBeVisible({ timeout: 30_000 });
+  const wrongNumberText = (await alert.textContent())!.trim();
+
+  // B5 contract (plan 15.2): one identical not-found answer — the flood
+  // learns nothing about which half was wrong, nor that a half exists at all.
+  expect(wrongPhoneText).toMatch(/no order matches/i);
+  expect(wrongNumberText).toBe(wrongPhoneText);
+  expect(wrongPhoneText).not.toContain(phone);
+  expect(wrongPhoneText).not.toContain(orderNo);
 });
 
 test("upload-signature answers 429 past its per-IP budget", async ({
