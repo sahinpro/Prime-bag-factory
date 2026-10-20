@@ -66,8 +66,9 @@ export const quoteSchema = z.object({
     (v) => v === undefined || isOwnArtworkUrl(v),
     { message: "invalid_attachment" },
   ),
-  // JSON snapshot of a builder configuration (validated structurally in the
-  // action so a malformed blob can't blow up the insert).
+  // JSON snapshot of a builder configuration. Size guard here; the action
+  // parses it with `builderCustomizationSchema` and rejects anything
+  // malformed (plan 15.2 B9 — never silently store null).
   customization: z.preprocess(
     (v) =>
       v == null ? undefined : typeof v === "string" ? v : JSON.stringify(v),
