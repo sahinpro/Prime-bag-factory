@@ -3,9 +3,8 @@ import { expect, test, type Page } from "@playwright/test";
 
 // Plan 15.2 B3 — abuse-protection e2e against the local stack. Proves the
 // track's named Done-when items that live in the browser: the 4th checkout
-// from one phone inside an hour is rejected, and the (previously unthrottled,
-// finding R1) upload-signature endpoint answers 429 past its per-IP budget.
-// A honeypot submit must still look like success.
+// from one phone inside an hour is rejected, and a honeypot submit must still
+// look like success.
 //
 // These tests DO place real orders on the local database (that is what the
 // local stack and `db reset` are for). Phones and IPs are randomized per run
@@ -256,22 +255,4 @@ test("order lookup answers identically for a wrong number or a wrong phone", asy
   expect(wrongNumberText).toBe(wrongPhoneText);
   expect(wrongPhoneText).not.toContain(phone);
   expect(wrongPhoneText).not.toContain(orderNo);
-});
-
-test("upload-signature answers 429 past its per-IP budget", async ({
-  request,
-}) => {
-  const ip = randomIp();
-  const statuses: number[] = [];
-  for (let i = 0; i < 22; i++) {
-    const res = await request.get("/api/upload-signature?folder=artwork", {
-      headers: { "x-forwarded-for": ip },
-    });
-    statuses.push(res.status());
-  }
-  // upload_ip = 20/hour: the first 20 pass (200, or 503 when Cloudinary is
-  // unconfigured locally — that is not a limiter answer), and past the budget
-  // the endpoint must answer exactly 429.
-  expect(statuses.slice(0, 20).every((s) => s !== 429)).toBe(true);
-  expect(statuses.slice(20)).toEqual([429, 429]);
 });

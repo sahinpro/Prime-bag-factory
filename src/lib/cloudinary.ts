@@ -11,9 +11,11 @@ import { Readable } from "node:stream";
  * build, exactly like `supabase/admin.ts`.
  *
  * Media storage moved from the plan's Supabase Storage to Cloudinary by owner
- * decision (see plan Decision Log 2026-10-17). Scope: public catalog images
- * (products, categories, collections, swatch textures). Private quote
- * attachments stay on Supabase Storage.
+ * decision (see plan Decision Log 2026-10-17). Scope is narrow after plan
+ * 15.2 B6: this helper serves ADMIN product media only (products, categories,
+ * collections, swatch textures), reached through the role-gated `uploadMedia`
+ * server action. Customer quote attachments are private and live in the
+ * `quote-attachments` Supabase Storage bucket, never here.
  *
  * Config is read lazily so a build without `CLOUDINARY_URL` (CI, fresh clone)
  * still succeeds; only an actual upload fails fast with a clear message.
@@ -119,55 +121,5 @@ export async function uploadImage(
     height: result.height,
     format: result.format,
     bytes: result.bytes,
-  };
-}
-
-/** Public image folders the browser may upload into (fixed, never free text). */
-// Public (unauthenticated) signing is for customer artwork ONLY. Catalog media
-// goes through the role-gated `uploadMedia` server action, never this list.
-const SIGNABLE_FOLDERS = ["artwork"] as const;
-export type SignableFolder = (typeof SIGNABLE_FOLDERS)[number];
-
-export type SignedUploadParams = {
-  cloudName: string;
-  apiKey: string;
-  timestamp: number;
-  signature: string;
-  folder: string;
-  endpoint: string;
-};
-
-/**
- * Signature for a browser → Cloudinary direct upload (plan 8 "uploads … signed").
- * The api_secret stays on the server; the client only ever receives a signature
- * locked to one `timestamp`, one folder and one preset, so it cannot upload
- * elsewhere or without expiring. Returns null when Cloudinary is not configured
- * so the caller can degrade instead of throwing.
- */
-export function buildSignedUploadParams(
-  folder: string,
-): SignedUploadParams | null {
-  if (!process.env.CLOUDINARY_URL) return null;
-  if (!(SIGNABLE_FOLDERS as readonly string[]).includes(folder)) {
-    throw new Error("Unsupported upload folder.");
-  }
-  ensureConfigured();
-  const cfg = cloudinary.config();
-  if (!cfg.cloud_name || !cfg.api_key || !cfg.api_secret) return null;
-
-  const timestamp = Math.round(Date.now() / 1000);
-  const targetFolder = `${ROOT_FOLDER}/${folder}`;
-  const signature = cloudinary.utils.api_sign_request(
-    { timestamp, folder: targetFolder },
-    cfg.api_secret,
-  );
-
-  return {
-    cloudName: cfg.cloud_name,
-    apiKey: cfg.api_key,
-    timestamp,
-    signature,
-    folder: targetFolder,
-    endpoint: `https://api.cloudinary.com/v1_1/${cfg.cloud_name}/image/upload`,
   };
 }
