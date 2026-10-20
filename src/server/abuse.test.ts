@@ -1,7 +1,7 @@
 // Plan 15.2 B2 — unit tests for the pure parts of src/server/abuse.ts:
-// XFF parsing, salted IP hashing and phone canonicalization. The DB-facing
-// helpers (getRateLimitRules / limit / isAllowed) are thin wrappers over the
-// settings row and the B1 RPC; the RPC itself is proven in
+// XFF parsing, salted IP/phone hashing and phone canonicalization. The
+// DB-facing helpers (getRateLimitRules / limit / isAllowed) are thin wrappers
+// over the settings row and the B1 RPC; the RPC itself is proven in
 // supabase/tests/track_b_rate_limits.test.sql.
 
 import { describe, expect, it } from "vitest";
@@ -10,6 +10,7 @@ import {
   RATE_LIMIT_DEFAULTS,
   firstForwardedHop,
   hashClientIp,
+  hashPhone,
   normalizePhone,
   pickClientIp,
 } from "@/server/abuse";
@@ -114,6 +115,41 @@ describe("normalizePhone", () => {
 
   it("converts Bangla digits", () => {
     expect(normalizePhone("০১৭১১২২৩৩৪৪")).toBe("01711223344");
+  });
+});
+
+describe("hashPhone", () => {
+  it("produces a 64-char hex digest that is never the phone", () => {
+    const h = hashPhone("01711223344", "salt-a");
+    expect(h).toMatch(/^[0-9a-f]{64}$/);
+    expect(h).not.toContain("01711223344");
+  });
+
+  it("collapses every written format onto one bucket (normalize first)", () => {
+    expect(hashPhone("+8801711223344", "salt-a")).toBe(
+      hashPhone("01711223344", "salt-a"),
+    );
+    expect(hashPhone("01711-22 33 (44)", "salt-a")).toBe(
+      hashPhone("01711223344", "salt-a"),
+    );
+    expect(hashPhone("০১৭১১২২৩৩৪৪", "salt-a")).toBe(
+      hashPhone("01711223344", "salt-a"),
+    );
+  });
+
+  it("uses the same salted recipe as the IP hash", () => {
+    expect(hashPhone("+8801711223344", "salt-a")).toBe(
+      hashClientIp(normalizePhone("+8801711223344"), "salt-a"),
+    );
+  });
+
+  it("changes with the salt and with the phone", () => {
+    expect(hashPhone("01711223344", "salt-a")).not.toBe(
+      hashPhone("01711223344", "salt-b"),
+    );
+    expect(hashPhone("01711223344", "salt-a")).not.toBe(
+      hashPhone("01822334455", "salt-a"),
+    );
   });
 });
 

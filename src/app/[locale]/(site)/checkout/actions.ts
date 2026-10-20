@@ -2,7 +2,7 @@
 
 import { createPublicClient } from "@/lib/supabase/server";
 import { checkoutSchema, orderLookupSchema } from "@/lib/validators/checkout";
-import { getClientKey, isAllowed, isBlocked, normalizePhone } from "@/server/abuse";
+import { getClientKey, hashPhone, isAllowed, isBlocked, normalizePhone } from "@/server/abuse";
 import { loadCartLines } from "@/server/cart";
 import { getCheckoutFlags } from "@/server/checkout";
 import { findOrderForLookup, type PublicOrder } from "@/server/orders";
@@ -93,7 +93,9 @@ export async function placeCheckoutOrder(
   // Plan 15.2 B3: fixed-window limits (B1 RPC) per phone and per salted IP.
   // The honeypot above returns before this, so a baited bot never burns its
   // own window. Rejected submissions are indistinguishable to the caller.
-  if (!(await isAllowed("checkout_phone", normalizePhone(data.customer_phone)))) {
+  // The phone half of the key is salted-hashed (item 0) — `rate_limits`
+  // never stores a phone number.
+  if (!(await isAllowed("checkout_phone", hashPhone(data.customer_phone)))) {
     return { ok: false, formError: "errRateLimited" };
   }
   if (clientIp && !(await isAllowed("checkout_ip", clientIp))) {

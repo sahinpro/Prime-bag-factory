@@ -13,8 +13,10 @@ import { toAsciiDigits } from "@/lib/format";
  * handlers. One dependency on B1: every counter is the `check_rate_limit` RPC,
  * executed with the service-role client (only that role may call it).
  *
- * - `getClientKey()` turns the client IP into a salted SHA-256 hash: logs and
- *   `rate_limits.key` never contain the raw IP (plan 9b "no PII in logs").
+ * - `getClientKey()` turns the client IP into a salted SHA-256 hash and
+ *   `hashPhone()` does the same for the phone half of `*_phone` keys: logs
+ *   and `rate_limits.key` never contain a raw IP or a raw phone number
+ *   (plan 9b "no PII in logs").
  *   On Vercel the platform-set headers are authoritative
  *   (`x-vercel-forwarded-for`, else `x-real-ip`); the leftmost
  *   `x-forwarded-for` hop is client-controlled and is only trusted off-Vercel
@@ -67,9 +69,14 @@ export function firstForwardedHop(
   return first && first.length > 0 ? first : null;
 }
 
+/** Salted SHA-256 — the one hashing recipe for every identity in a key. */
+function saltedHash(value: string, salt: string): string {
+  return createHash("sha256").update(`${salt}:${value}`).digest("hex");
+}
+
 /** Salted SHA-256 of the client IP — stable, non-reversible, log-safe. */
 export function hashClientIp(ip: string, salt = rateLimitSalt()): string {
-  return createHash("sha256").update(`${salt}:${ip}`).digest("hex");
+  return saltedHash(ip, salt);
 }
 
 /**
@@ -114,6 +121,17 @@ export function normalizePhone(raw: string): string {
 }
 
 /**
+ * Salted SHA-256 of the *normalized* phone, for `*_phone` limit keys — same
+ * recipe and salt as the IP hash, so `rate_limits` never stores a phone
+ * number. Format variants (+880, spaces, Bangla digits) collapse onto one
+ * bucket because `normalizePhone()` runs first. NOT for `blocked_contacts`,
+ * which intentionally shows staff the readable phone (B4).
+ */
+export function hashPhone(raw: string, salt = rateLimitSalt()): string {
+  return saltedHash(normalizePhone(raw), salt);
+}
+
+/**
  * Merged rules: code defaults overridden per rule by `settings.rate_limits`
  * jsonb, e.g. `{"checkout_phone": {"limit": 4, "windowSeconds": 3600}}`.
  * A missing, unreadable or malformed settings row means "use the defaults" —
@@ -153,8 +171,8 @@ export async function getRateLimitRules(): Promise<
 
 /**
  * One-line structured record for a broken limiter. Deliberately PII-free:
- * the rule kind and its numbers, never the key (it carries a phone or an
- * IP hash) and never the client address.
+ * the rule kind and its numbers, never the full key — since the item-0 fix
+ * the identity half is already a hash, but the policy stays log-kind-only.
  */
 function limiterFailureLine(
   key: string,
