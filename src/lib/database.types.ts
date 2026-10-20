@@ -1532,6 +1532,15 @@ export type Database = {
         Args: { p_id: string };
         Returns: void;
       };
+      admin_adjust_stock: {
+        Args: {
+          p_variant_id: string;
+          p_delta: number;
+          p_reason: Database["public"]["Enums"]["movement_reason"];
+          p_note: string;
+        };
+        Returns: number;
+      };
     };
     Enums: {
       blocked_contact_type: "phone" | "ip_hash";
