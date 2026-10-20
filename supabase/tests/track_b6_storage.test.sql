@@ -151,10 +151,13 @@ select is(
 reset role;
 set local role service_role;
 
+-- service_role reaches its OWN seeded object (scoped by name so objects a
+-- Playwright run left in the bucket can never skew the expected count).
 select is(
-  (select count(*) from storage.objects where bucket_id = 'quote-attachments'),
+  (select count(*) from storage.objects
+     where bucket_id = 'quote-attachments' and name = '2026/b6-seeded.png'),
   1::bigint,
-  'service_role still reaches the bucket (the server-side signed-URL flows)'
+  'service_role still reaches its own object (the server-side signed-URL flows)'
 );
 
 reset role;
