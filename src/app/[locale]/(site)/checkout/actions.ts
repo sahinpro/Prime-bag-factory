@@ -2,7 +2,7 @@
 
 import { createPublicClient } from "@/lib/supabase/server";
 import { checkoutSchema, orderLookupSchema } from "@/lib/validators/checkout";
-import { getClientKey, isAllowed, normalizePhone } from "@/server/abuse";
+import { getClientKey, isAllowed, isBlocked, normalizePhone } from "@/server/abuse";
 import { loadCartLines } from "@/server/cart";
 import { getCheckoutFlags } from "@/server/checkout";
 import { findOrderForLookup, type PublicOrder } from "@/server/orders";
@@ -78,13 +78,24 @@ export async function placeCheckoutOrder(
   }
   const data = parsed.data;
 
+  // Plan 15.2 B4: a blocked phone or IP gets the generic failure — identical
+  // to any other server-side error, so the answer leaks nothing about the
+  // blocklist. Block is checked before the window: it is permanent and
+  // cheaper than consuming counter rows.
+  if (await isBlocked("phone", normalizePhone(data.customer_phone))) {
+    return { ok: false, formError: "errGeneric" };
+  }
+  const clientIp = await getClientKey();
+  if (clientIp && (await isBlocked("ip_hash", clientIp))) {
+    return { ok: false, formError: "errGeneric" };
+  }
+
   // Plan 15.2 B3: fixed-window limits (B1 RPC) per phone and per salted IP.
   // The honeypot above returns before this, so a baited bot never burns its
   // own window. Rejected submissions are indistinguishable to the caller.
   if (!(await isAllowed("checkout_phone", normalizePhone(data.customer_phone)))) {
     return { ok: false, formError: "errRateLimited" };
   }
-  const clientIp = await getClientKey();
   if (clientIp && !(await isAllowed("checkout_ip", clientIp))) {
     return { ok: false, formError: "errRateLimited" };
   }

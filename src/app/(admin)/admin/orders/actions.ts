@@ -5,7 +5,9 @@ import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth";
 import type { Database } from "@/lib/database.types";
 import { createClient } from "@/lib/supabase/server";
+import { normalizePhone } from "@/server/abuse";
 import {
+  orderBlockSchema,
   orderNoteSchema,
   orderShippingSchema,
   recordPaymentSchema,
@@ -197,6 +199,51 @@ export async function saveOrderNote(
     .maybeSingle();
   if (error) return { ok: false, error: "Could not save the note." };
   if (!data) return { ok: false, error: "Order not found." };
+  revalidate(parsed.data.id);
+  return { ok: true };
+}
+
+/**
+ * Plan 15.2 B4 — block the order's phone from future checkout and quotes.
+ * The phone is read from the order row (never trusted from the client),
+ * canonicalized with the same `normalizePhone()` the public checks use, and
+ * written under the existing `blocked_contacts` staff RLS. Re-blocking the
+ * same number is a friendly no-op: `unique (type, value)` swallows the
+ * duplicate.
+ */
+export async function blockOrderPhone(
+  payload: unknown,
+): Promise<OrderActionResult> {
+  let staff;
+  try {
+    staff = await requireRole(ORDER_ROLES);
+  } catch {
+    return denied();
+  }
+  const parsed = orderBlockSchema.safeParse(payload);
+  if (!parsed.success) return { ok: false, error: "Invalid order id." };
+
+  const supabase = await createClient();
+  const { data: order } = await supabase
+    .from("orders")
+    .select("order_no, customer_phone")
+    .eq("id", parsed.data.id)
+    .maybeSingle();
+  if (!order) return { ok: false, error: "Order not found." };
+
+  const value = normalizePhone(order.customer_phone);
+  if (value === "") return { ok: false, error: "The order has no usable phone." };
+
+  const { error } = await supabase.from("blocked_contacts").insert({
+    type: "phone",
+    value,
+    reason:
+      parsed.data.reason ?? `Blocked from order ${order.order_no}`,
+    created_by: staff.id,
+  });
+  if (error && error.code !== "23505") {
+    return { ok: false, error: "Could not block this phone." };
+  }
   revalidate(parsed.data.id);
   return { ok: true };
 }

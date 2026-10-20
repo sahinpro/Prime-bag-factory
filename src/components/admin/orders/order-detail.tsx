@@ -14,6 +14,7 @@ import Link from "next/link";
 import * as React from "react";
 
 import {
+  blockOrderPhone,
   recordPayment,
   saveOrderNote,
   saveShippingDetails,
@@ -639,6 +640,33 @@ export function OrderDetail({ order }: Readonly<{ order: AdminOrder }>) {
                 </DetailRow>
               ) : null}
             </dl>
+            {/* Plan 15.2 B4 — abuse protection escape hatch. Blocked phones
+                get the generic error at checkout and quote; the entry is a
+                normalized phone in blocked_contacts. */}
+            <div className="border-t border-border pt-3">
+              <ConfirmDialog
+                destructive
+                title="Block this phone?"
+                description={`${order.customer_phone} will no longer be able to place orders or submit quotes. Remove the entry from blocked_contacts to unblock.`}
+                confirmLabel="Block phone"
+                trigger={
+                  <Button variant="outline" size="sm" className="w-full">
+                    <Ban
+                      aria-hidden="true"
+                      strokeWidth={1.75}
+                      className="size-4"
+                    />
+                    Block this phone
+                  </Button>
+                }
+                onConfirm={() => {
+                  void run(
+                    () => blockOrderPhone({ id: order.id }),
+                    "Phone blocked.",
+                  );
+                }}
+              />
+            </div>
           </SectionCard>
 
           <SectionCard title="Courier and tracking">

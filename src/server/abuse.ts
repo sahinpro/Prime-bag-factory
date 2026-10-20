@@ -211,3 +211,50 @@ export async function isAllowed(
   const rules = await getRateLimitRules();
   return limit(`${kind}:${identity}`, rules[kind]);
 }
+
+/**
+ * Plan 15.2 B4 — is this identity on the staff blocklist? `phone` values are
+ * `normalizePhone()` output, `ip_hash` values are `getClientKey()` output, so
+ * the table never holds a raw IP and phone comparisons are format-proof.
+ * There is no anon read policy on `blocked_contacts`, so this goes through
+ * the service-role client like the limiter does. A read failure logs a
+ * structured line and returns false — same fail-open rule as `limit()`: a
+ * broken lookup must not turn away real customers.
+ */
+export async function isBlocked(
+  type: "phone" | "ip_hash",
+  value: string,
+): Promise<boolean> {
+  if (value === "") return false;
+  try {
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("blocked_contacts")
+      .select("id")
+      .eq("type", type)
+      .eq("value", value)
+      .maybeSingle();
+    if (error) {
+      console.error(
+        JSON.stringify({
+          scope: "abuse.blocklist",
+          event: "blocked_contacts_read_failed",
+          type,
+          detail: error.message,
+        }),
+      );
+      return false;
+    }
+    return data !== null;
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        scope: "abuse.blocklist",
+        event: "blocked_contacts_read_failed",
+        type,
+        detail: error instanceof Error ? error.message : String(error),
+      }),
+    );
+    return false;
+  }
+}

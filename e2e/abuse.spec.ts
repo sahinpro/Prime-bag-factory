@@ -1,3 +1,4 @@
+import { createClient } from "@supabase/supabase-js";
 import { expect, test, type Page } from "@playwright/test";
 
 // Plan 15.2 B3 — abuse-protection e2e against the local stack. Proves the
@@ -155,6 +156,51 @@ test("a honeypot submit still pretends success", async ({ page }) => {
 
     await expect(page.getByText(/order placed/i)).toHaveCount(0);
     await expect(page.getByText(RATE_LIMIT_TEXT)).toHaveCount(0);
+  }
+});
+
+/** Local-stack service client (A2 fence guarantees these are test values). */
+function adminDb() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } },
+  );
+}
+
+test("a blocked phone gets the generic checkout error", async ({ page }) => {
+  test.setTimeout(120_000);
+  const phone = `017${Math.floor(10_000_000 + Math.random() * 89_999_999)}`;
+  const db = adminDb();
+  const { error: inserted } = await db
+    .from("blocked_contacts")
+    .insert({ type: "phone", value: phone, reason: "e2e abuse spec" });
+  expect(inserted).toBeNull();
+
+  try {
+    test.skip(!(await addFirstBuyNow(page)), "no buy-now product in the catalog");
+    await page.setExtraHTTPHeaders({ "x-forwarded-for": randomIp() });
+    await page.goto("/en/checkout");
+    await expect(page.getByRole("heading", { name: "Summary" })).toBeVisible();
+    await fillCustomer(page, phone);
+    await page
+      .getByRole("button", { name: "Place order", exact: true })
+      .click();
+
+    // B4 contract: the block answers with the generic failure — identical to
+    // any other server error, never naming the blocklist, never the rate
+    // text, and no order is created.
+    await expect(
+      page.getByText(/something went wrong/i),
+    ).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText(RATE_LIMIT_TEXT)).toHaveCount(0);
+    await expect(page.getByText(/order placed/i)).toHaveCount(0);
+  } finally {
+    await db
+      .from("blocked_contacts")
+      .delete()
+      .eq("type", "phone")
+      .eq("value", phone);
   }
 });
 
