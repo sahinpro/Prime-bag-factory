@@ -50,6 +50,7 @@ export default defineConfig({
         /.*\.setup\.ts/,
         /a11y-admin\.spec\.ts/,
         /admin-orders\.spec\.ts/,
+        /admin-create-order\.spec\.ts/,
         /admin-customers\.spec\.ts/,
         /admin-inventory\.spec\.ts/,
         /quote-attachment\.spec\.ts/,
@@ -68,6 +69,7 @@ export default defineConfig({
       testMatch: [
         /a11y-admin\.spec\.ts/,
         /admin-orders\.spec\.ts/,
+        /admin-create-order\.spec\.ts/,
         /admin-customers\.spec\.ts/,
         /admin-inventory\.spec\.ts/,
         /quote-attachment\.spec\.ts/,
