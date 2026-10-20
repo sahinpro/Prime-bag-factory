@@ -536,6 +536,8 @@ export type Database = {
           customer_note: string | null;
           admin_note: string | null;
           source_quote_id: string | null;
+          source: Database["public"]["Enums"]["order_source"];
+          channel: Database["public"]["Enums"]["order_channel"] | null;
           created_at: string;
           updated_at: string;
         };
@@ -568,6 +570,8 @@ export type Database = {
           customer_note?: string | null;
           admin_note?: string | null;
           source_quote_id?: string | null;
+          source?: Database["public"]["Enums"]["order_source"];
+          channel?: Database["public"]["Enums"]["order_channel"] | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -600,6 +604,8 @@ export type Database = {
           customer_note?: string | null;
           admin_note?: string | null;
           source_quote_id?: string | null;
+          source?: Database["public"]["Enums"]["order_source"];
+          channel?: Database["public"]["Enums"]["order_channel"] | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -1506,6 +1512,7 @@ export type Database = {
     Functions: {
       has_role: { Args: { roles: string[] }; Returns: boolean };
       place_order: { Args: { payload: Json }; Returns: string };
+      admin_create_order: { Args: { payload: Json }; Returns: string };
       admin_set_order_status: {
         Args: {
           p_order_id: string;
@@ -1544,6 +1551,8 @@ export type Database = {
     };
     Enums: {
       blocked_contact_type: "phone" | "ip_hash";
+      order_channel: "phone" | "whatsapp" | "facebook" | "walk_in" | "other";
+      order_source: "web" | "admin";
       movement_reason:
         | "opening"
         | "purchase"

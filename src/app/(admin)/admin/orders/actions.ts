@@ -6,6 +6,8 @@ import { requireRole } from "@/lib/auth";
 import type { Database } from "@/lib/database.types";
 import { createClient } from "@/lib/supabase/server";
 import { normalizePhone } from "@/server/abuse";
+import { phoneIsBlocked } from "@/server/admin-orders";
+import { adminCreateOrderSchema } from "@/lib/validators/admin-order";
 import {
   orderBlockSchema,
   orderNoteSchema,
@@ -246,4 +248,144 @@ export async function blockOrderPhone(
   }
   revalidate(parsed.data.id);
   return { ok: true };
+}
+
+/* ------------------------------------------------------------------ * *
+ * Plan 15.2 E3 — admin-created orders (phone, WhatsApp, walk-in).     *
+ * ------------------------------------------------------------------ * */
+
+export type CreateAdminOrderResult =
+  | { ok: true; id: string; orderNo: string; warning?: string }
+  | { ok: false; error: string };
+
+/**
+ * `admin_create_order` raises short, stable codes and a few full sentences
+ * (the ones `create_order_core` shares with `place_order`). Translate every
+ * shape for staff; never show raw Postgres text, and never let an
+ * unrecognised failure look like a success.
+ */
+function adminOrderError(message: string): string {
+  const code = message.trim().split(/\s+/)[0] ?? "";
+  switch (code) {
+    case "not_allowed":
+      return NOT_ALLOWED;
+    case "channel_required":
+    case "channel_invalid":
+      return "Choose how the order came in.";
+    case "override_not_allowed":
+      return "Discounts and price overrides are for owners and managers only.";
+    case "reason_required":
+      return "A reason is required for a discount or a price override.";
+    case "advance_exceeds_total":
+      return "The advance is more than the order total.";
+    case "invalid_amount":
+      return "Enter an advance amount of zero or more.";
+    default:
+      break;
+  }
+  const lower = message.toLowerCase();
+  if (lower.includes("quantity below moq"))
+    return "One product is below its minimum order quantity.";
+  if (lower.includes("insufficient stock"))
+    return "There is not enough stock for one of the items.";
+  if (lower.includes("no valid price tier"))
+    return "No price tier covers one of the quantities.";
+  if (lower.includes("shipping zone not found"))
+    return "The chosen shipping zone is missing or inactive.";
+  if (lower.includes("variant not found"))
+    return "One of the selected variants no longer exists.";
+  if (lower.includes("not published"))
+    return "One of the selected products is no longer published.";
+  if (lower.includes("only buy-now products"))
+    return "Only regular (buy-now) products can be added here. Use a quote for custom orders.";
+  if (lower.includes("discount exceeds subtotal"))
+    return "The discount is larger than the order subtotal.";
+  if (
+    lower.includes("admin_create_order") ||
+    lower.includes("create_order_core")
+  ) {
+    return "The admin order database functions are missing. Apply supabase/migrations/202610200005_e3_admin_create_order.sql first.";
+  }
+  return "Could not create the order. Please check the details and try again.";
+}
+
+/**
+ * Create an order on behalf of a customer (plan 15.2 E3). The staff identity
+ * is re-checked twice: by `requireRole` here (so a non-staff caller never even
+ * reaches the RPC) and by `admin_create_order` inside the database. Money,
+ * MOQ, tiers and stock are recomputed in Postgres — this action only forwards
+ * variant ids, quantities and the optional staff overrides. The blocked-phone
+ * check is a warning, never a block: a walk-in must stay creatable.
+ */
+export async function createAdminOrder(
+  payload: unknown,
+): Promise<CreateAdminOrderResult> {
+  try {
+    await requireRole(ORDER_ROLES);
+  } catch {
+    return { ok: false, error: NOT_ALLOWED };
+  }
+
+  const parsed = adminCreateOrderSchema.safeParse(payload);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error:
+        parsed.error.issues[0]?.message ??
+        "Some of the details are not valid.",
+    };
+  }
+  const d = parsed.data;
+
+  const supabase = await createClient();
+  const { data: orderNo, error } = await supabase.rpc("admin_create_order", {
+    payload: {
+      items: d.items.map((item) => ({
+        variant_id: item.variant_id,
+        qty: item.qty,
+        unit_price_override: item.unit_price_override ?? null,
+      })),
+      customer_name: d.customer_name,
+      customer_phone: d.customer_phone,
+      customer_email: d.customer_email ?? null,
+      division: d.division ?? null,
+      district: d.district ?? null,
+      area: d.area ?? null,
+      address_line: d.address_line ?? null,
+      shipping_zone_id: d.shipping_zone_id,
+      channel: d.channel,
+      status: d.status,
+      discount: d.discount,
+      reason: d.reason ?? null,
+      override_reason: d.override_reason ?? null,
+      advance_amount: d.advance_amount,
+      advance_method: d.advance_method,
+      advance_reference: d.advance_reference ?? null,
+      admin_note: d.admin_note ?? null,
+      customer_note: d.customer_note ?? null,
+      type: "retail",
+      payment_method: "cod",
+      idempotency_key: d.idempotency_key,
+    },
+  });
+
+  if (error || !orderNo) {
+    return { ok: false, error: adminOrderError(error?.message ?? "unknown") };
+  }
+
+  const { data: order } = await supabase
+    .from("orders")
+    .select("id")
+    .eq("order_no", String(orderNo))
+    .maybeSingle();
+  if (!order) {
+    return { ok: false, error: "The order was created but could not be loaded. Open the orders list to find it." };
+  }
+
+  revalidatePath("/admin/orders");
+  const warning = (await phoneIsBlocked(d.customer_phone))
+    ? "This phone is on the blocklist — the order was still created."
+    : undefined;
+
+  return { ok: true, id: String(order.id), orderNo: String(orderNo), warning };
 }

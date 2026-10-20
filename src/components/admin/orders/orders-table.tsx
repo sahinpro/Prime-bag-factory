@@ -1,6 +1,6 @@
 "use client";
 
-import { Package, ShoppingCart } from "lucide-react";
+import { Package, Plus, ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
@@ -283,6 +283,14 @@ export function OrdersTable({
       <PageHeader
         title="Orders"
         description="Cash-on-delivery orders from the storefront, with the 50% advance tracked per order."
+        actions={
+          <Button size="sm" asChild>
+            <Link href="/admin/orders/new">
+              <Plus aria-hidden="true" strokeWidth={1.75} className="size-4" />
+              New order
+            </Link>
+          </Button>
+        }
       />
 
       <nav
