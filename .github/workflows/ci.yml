@@ -49,6 +49,15 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.2
+      # The build runs under Node, not `bun --bun` (same reason as the Playwright
+      # webServer): Turbopack's next/font/google build-time font download fails
+      # under Bun's runtime fetch on the runners — PR #7's check job died with
+      # 28 × "Can't resolve '@vercel/turbopack-next/internal/font/google/font'"
+      # while this same commit's e2e job (`npx next build`, Node) was green.
+      # Local `bun run build` still works; CI does not depend on that.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - uses: supabase/setup-cli@v1
         with:
           version: 2.121.0
@@ -70,7 +79,7 @@ jobs:
       - run: bun run typecheck
       - run: bun run test
       - run: bun run i18n:check
-      - run: bun run build
+      - run: npx next build
 
   e2e:
     runs-on: ubuntu-latest
@@ -114,6 +123,11 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.2
+      # Build and serve under Node — see the check job's comment (bun --bun +
+      # next/font/google breaks on runners; lighthouse only needs the artifact).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - uses: supabase/setup-cli@v1
         with:
           version: 2.121.0
@@ -124,10 +138,10 @@ jobs:
       - name: Apply migrations and seed
         run: supabase db reset
       - run: bun install --frozen-lockfile
-      - run: bun run build
+      - run: npx next build
       - name: Start production server
         run: |
-          bun run start &
+          npx next start &
           for i in $(seq 1 60); do curl -sf http://localhost:3000/en > /dev/null && break; sleep 1; done
           # Warm every audited route before scoring: the first request to each
           # route pays PPR resume + module-init costs, and Lighthouse must
