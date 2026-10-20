@@ -106,3 +106,31 @@ test("an order detail shows items, ledger, history and print links", async ({
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations).toEqual([]);
 });
+
+test("the order detail can block the customer's phone (B4)", async ({
+  page,
+}) => {
+  const authenticated = await openOrders(page);
+  test.skip(
+    authenticated === false,
+    "Set E2E_STAFF_EMAIL / E2E_STAFF_PASSWORD with a provisioned staff account.",
+  );
+
+  const hasOrders = await openFirstOrder(page);
+  test.skip(hasOrders === false, "No orders in this project yet.");
+
+  // Plan 15.2 B4: the escape hatch lives in the customer card and writes a
+  // normalized phone to blocked_contacts (unique (type, value) makes a
+  // double-block a friendly no-op, so this test is re-runnable).
+  const trigger = page.getByRole("button", { name: "Block this phone" });
+  await expect(trigger).toBeVisible();
+  await trigger.click();
+  const dialog = page.getByRole("dialog", { name: "Block this phone?" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Block phone" }).click();
+
+  await expect(page.getByText("Phone blocked.")).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(dialog).toBeHidden();
+});

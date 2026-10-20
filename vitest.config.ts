@@ -16,6 +16,13 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "./src"),
+      // src/server/* carries `import "server-only"`; under Node's default
+      // export condition that package throws at import time. Unit tests are
+      // server-side code paths, so resolve it to its own empty module.
+      "server-only": path.resolve(
+        import.meta.dirname,
+        "./node_modules/server-only/empty.js",
+      ),
     },
   },
 });

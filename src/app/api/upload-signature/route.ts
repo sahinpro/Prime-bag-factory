@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { buildSignedUploadParams, type SignableFolder } from "@/lib/cloudinary";
+import { getClientKey, isAllowed } from "@/server/abuse";
 
 /**
  * GET /api/upload-signature?folder=artwork
@@ -10,13 +11,23 @@ import { buildSignedUploadParams, type SignableFolder } from "@/lib/cloudinary";
  * the server (plan 8 "Cloudinary uploads from browser direct (signed)"). The
  * service api_secret never leaves the server, and the fixed folder allow-list
  * stops a client from targeting any other path.
+ *
+ * Plan 15.2 B3: the endpoint was unauthenticated and unthrottled (finding R1),
+ * so it now spends the `upload_ip` rule (20/hour per salted IP) and answers 429
+ * past it. Folder validation runs BEFORE the counter, so probing bad folders
+ * cannot burn a real user's window.
  */
-export function GET(request: Request) {
+export async function GET(request: Request) {
   const url = new URL(request.url);
   const requested = url.searchParams.get("folder") ?? "artwork";
   const allowed: readonly string[] = ["artwork"];
   if (!allowed.includes(requested)) {
     return NextResponse.json({ error: "unsupported_folder" }, { status: 400 });
+  }
+
+  const clientIp = await getClientKey();
+  if (clientIp && !(await isAllowed("upload_ip", clientIp))) {
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }
 
   try {

@@ -78,6 +78,14 @@ export const orderNoteSchema = z.object({
   admin_note: nullableText(4000),
 });
 
+// Plan 15.2 B4 — "Block this phone" from the order detail. Only the order id
+// travels; the phone is read server-side so the client cannot poison the
+// blocklist with an arbitrary value.
+export const orderBlockSchema = z.object({
+  id,
+  reason: nullableText(500),
+});
+
 export type SetOrderStatusInput = z.input<typeof setOrderStatusSchema>;
 export type RecordPaymentInput = z.input<typeof recordPaymentSchema>;
 export type OrderShippingInput = z.input<typeof orderShippingSchema>;

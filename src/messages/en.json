@@ -210,6 +210,7 @@
     "errDailyLimit": "Today's order capacity is full. Please try again tomorrow.",
     "errClosed": "Checkout is closed right now. Please try again later.",
     "errCodClosed": "Cash on delivery is not available right now.",
+    "errRateLimited": "Too many attempts from you right now. Please try again in an hour.",
     "errGeneric": "Something went wrong. Please try again."
   },
   "order": {

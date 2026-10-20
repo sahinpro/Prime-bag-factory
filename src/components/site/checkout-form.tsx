@@ -163,7 +163,10 @@ export function CheckoutForm({ zones }: { zones: ShippingZone[] }) {
       idempotencyRef.current = payload.idempotency_key;
 
     // Client pass of the server schema — instant field errors, no round trip.
-    const parsed = checkoutSchema.safeParse(payload);
+    // The honeypot is exempt here: a baited submit must still reach the
+    // server, which owns the fake-success verdict (plan 15.2 B3). Validating
+    // `website` client-side would silently swallow the bot's post.
+    const parsed = checkoutSchema.safeParse({ ...payload, website: "" });
     if (!parsed.success) {
       const errors: Record<string, string> = {};
       for (const issue of parsed.error.issues) {

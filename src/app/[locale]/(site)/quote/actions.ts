@@ -2,6 +2,12 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { quoteSchema } from "@/lib/validators/quote";
+import {
+  getClientKey,
+  isAllowed,
+  isBlocked,
+  normalizePhone,
+} from "@/server/abuse";
 import { notifyNewQuote } from "@/server/notifications";
 
 /**
@@ -74,7 +80,25 @@ export async function submitQuote(
 
   const data = parsed.data;
 
-  // 3. Rate limit: count this phone's requests in the rolling window.
+  // 3a. Blocklist (plan 15.2 B4): blocked phones and IPs see the same
+  //     generic error the insert failure produces — the block itself is
+  //     never named.
+  if (await isBlocked("phone", normalizePhone(data.phone))) {
+    return { ok: false, formError: "errGeneric" };
+  }
+  const clientIp = await getClientKey();
+  if (clientIp && (await isBlocked("ip_hash", clientIp))) {
+    return { ok: false, formError: "errGeneric" };
+  }
+
+  // 3b. Rate limits. (a) IP rule from the B1 RPC (plan 15.2 B3): stops phone-
+  //     number rotation, which used to make this endpoint unlimited-request
+  //     territory (finding R3). (b) the existing rolling per-phone count over
+  //     quote_requests is kept — it survives even if abuse.ts fails open.
+  if (clientIp && !(await isAllowed("quote_ip", clientIp))) {
+    return { ok: false, formError: "errRateLimited" };
+  }
+
   const admin = createAdminClient();
   const since = new Date(Date.now() - RATE_WINDOW_MS).toISOString();
   const { count } = await admin
