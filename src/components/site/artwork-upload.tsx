@@ -1,67 +1,83 @@
 "use client";
 
-import { Image as ImageIcon, Loader2, Upload, X } from "lucide-react";
+import { FileText, Loader2, Upload, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useId, useRef, useState } from "react";
 
+import { requestArtworkUpload } from "@/app/[locale]/(site)/quote/actions";
 import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/client";
+import { QUOTE_ATTACHMENT_BUCKET } from "@/lib/validators/quote-attachment";
 
 type Status = "idle" | "uploading" | "done" | "error";
 
-const MAX_BYTES = 8 * 1024 * 1024; // 8 MB
-const ACCEPT = "image/png,image/jpeg,image/webp,image/avif";
+const MAX_BYTES = 8 * 1024 * 1024; // 8 MB — matches the bucket file_size_limit
+const ACCEPT = "image/png,image/jpeg,image/webp,application/pdf";
 
 /**
- * Signed browser → Cloudinary artwork upload. Returns the delivered URL through
- * `onChange`; the parent stores it and the server action re-validates it. Nothing
- * is trusted from the client beyond an id/url string (AGENTS).
+ * Plan 15.2 B6 — private artwork upload. The server mints a random
+ * `<yyyy>/<uuid>.<ext>` path and a signed upload URL; we PUT the bytes
+ * straight to the private `quote-attachments` bucket with the browser SDK,
+ * then hand the OBJECT PATH (never a public URL) back to the form. The object
+ * is private, so there is no preview image — we show the file name instead.
+ * The server action re-validates the path and confirms the object exists.
  */
 export function ArtworkUpload({
   value,
   onChange,
-  folder = "artwork",
 }: {
   value: string | null;
-  onChange: (url: string | null) => void;
-  folder?: "artwork";
+  onChange: (path: string | null) => void;
 }) {
   const t = useTranslations("quote");
   const id = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<Status>(value ? "done" : "idle");
+  const [fileName, setFileName] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+
+  function reset() {
+    onChange(null);
+    setStatus("idle");
+    setFileName("");
+    setError(null);
+    if (inputRef.current) inputRef.current.value = "";
+  }
 
   async function handleFile(file: File) {
     setError(null);
     if (!ACCEPT.split(",").includes(file.type)) {
       setStatus("error");
-      setError(t("errGeneric"));
+      setError(t("errFileType"));
       return;
     }
     if (file.size > MAX_BYTES) {
       setStatus("error");
-      setError(t("errGeneric"));
+      setError(t("errFileTooLarge"));
       return;
     }
 
     try {
       setStatus("uploading");
-      const sigRes = await fetch(`/api/upload-signature?folder=${folder}`);
-      if (!sigRes.ok) throw new Error("signature failed");
-      const sig = await sigRes.json();
+      const res = await requestArtworkUpload({ mimeType: file.type });
+      if (!res.ok) {
+        setStatus("error");
+        setError(
+          res.error === "rate_limited" ? t("errRateLimited") : t("errGeneric"),
+        );
+        return;
+      }
 
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("api_key", sig.apiKey);
-      fd.append("timestamp", String(sig.timestamp));
-      fd.append("signature", sig.signature);
-      fd.append("folder", sig.folder);
+      const supabase = createClient();
+      const { error: upErr } = await supabase.storage
+        .from(QUOTE_ATTACHMENT_BUCKET)
+        .uploadToSignedUrl(res.path, res.token, file, {
+          contentType: file.type,
+        });
+      if (upErr) throw upErr;
 
-      const upRes = await fetch(sig.endpoint, { method: "POST", body: fd });
-      if (!upRes.ok) throw new Error("upload failed");
-      const json = await upRes.json();
-      if (!json.secure_url) throw new Error("no url");
-      onChange(json.secure_url as string);
+      setFileName(file.name);
+      onChange(res.path);
       setStatus("done");
     } catch {
       setStatus("error");
@@ -85,23 +101,16 @@ export function ArtworkUpload({
 
       {status === "done" && value ? (
         <div className="flex items-center gap-3 rounded-control border bg-surface p-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={value}
-            alt={t("uploaded")}
-            className="size-12 rounded-control object-cover"
-          />
-          <span className="flex-1 text-sm">{t("uploaded")}</span>
+          <FileText className="size-5 shrink-0 text-muted-foreground" />
+          <span className="min-w-0 flex-1 truncate text-sm" title={fileName}>
+            {fileName || t("uploaded")}
+          </span>
           <Button
             type="button"
             variant="ghost"
             size="icon-sm"
             aria-label={t("remove")}
-            onClick={() => {
-              onChange(null);
-              setStatus("idle");
-              if (inputRef.current) inputRef.current.value = "";
-            }}
+            onClick={reset}
           >
             <X aria-hidden />
           </Button>
@@ -134,7 +143,7 @@ export function ArtworkUpload({
           role="alert"
           className="flex items-center gap-1.5 text-sm text-destructive"
         >
-          <ImageIcon className="size-4" aria-hidden />
+          <FileText className="size-4" aria-hidden />
           {error}
         </p>
       ) : null}

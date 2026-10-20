@@ -298,7 +298,10 @@
     "errEmail": "Enter a valid email address.",
     "errRateLimited": "Too many requests — please try again later.",
     "errGeneric": "Something went wrong. Please try again.",
-    "errCustomization": "We couldn't read your bag configuration. Please run through the builder steps again and submit."
+    "errCustomization": "We couldn't read your bag configuration. Please run through the builder steps again and submit.",
+    "errAttachment": "We couldn't attach your artwork. Please re-upload the file, or submit without it.",
+    "errFileType": "Unsupported file type. Use a PNG, JPG, WEBP or PDF.",
+    "errFileTooLarge": "That file is larger than 8 MB. Please choose a smaller one."
   },
   "builder": {
     "title": "Custom Bag Builder",

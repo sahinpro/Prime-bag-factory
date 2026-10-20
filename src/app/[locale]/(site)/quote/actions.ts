@@ -1,10 +1,18 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
+
+import { z } from "zod";
+
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   builderCustomizationSchema,
   type BuilderCustomization,
 } from "@/lib/validators/customization";
+import {
+  extensionForMime,
+  QUOTE_ATTACHMENT_BUCKET,
+} from "@/lib/validators/quote-attachment";
 import { quoteSchema } from "@/lib/validators/quote";
 import {
   getClientKey,
@@ -31,6 +39,63 @@ export type QuoteResult = {
 
 const RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 const RATE_MAX = 5; // requests per phone per window
+
+/**
+ * Plan 15.2 B6 — issue a signed upload URL for customer artwork. The path is
+ * generated ENTIRELY server-side (`<yyyy>/<uuid>.<ext>`); the browser never
+ * chooses a filename, so it cannot target another object or forge the shape
+ * the quote form later posts back. The bytes go straight from the browser to
+ * the private bucket via the signed URL (the storage service writes them as
+ * superuser, so the deny-all RLS policy in the migration does not — and must
+ * not — block this path; proven by the Playwright upload e2e). Reuses the
+ * `upload_ip` budget the old Cloudinary signature endpoint spent (20/hour).
+ */
+const artworkRequestSchema = z.object({
+  mimeType: z.string().trim().min(1).max(80),
+});
+
+export type ArtworkUploadResult =
+  | { ok: true; path: string; token: string; signedUrl: string }
+  | { ok: false; error: "invalid_type" | "rate_limited" | "storage_unavailable" };
+
+export async function requestArtworkUpload(
+  input: unknown,
+): Promise<ArtworkUploadResult> {
+  const parsed = artworkRequestSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "invalid_type" };
+  const ext = extensionForMime(parsed.data.mimeType);
+  if (!ext) return { ok: false, error: "invalid_type" };
+
+  // Cheap type gate runs BEFORE the counter (probing bad mimes must not burn
+  // a real customer's window), then the per-IP budget.
+  const clientIp = await getClientKey();
+  if (clientIp && !(await isAllowed("upload_ip", clientIp))) {
+    return { ok: false, error: "rate_limited" };
+  }
+
+  const path = `${new Date().getFullYear()}/${randomUUID()}.${ext}`;
+  const admin = createAdminClient();
+  const { data, error } = await admin.storage
+    .from(QUOTE_ATTACHMENT_BUCKET)
+    .createSignedUploadUrl(path);
+  if (error || !data) return { ok: false, error: "storage_unavailable" };
+
+  return { ok: true, path, token: data.token, signedUrl: data.signedUrl };
+}
+
+/**
+ * Confirm a posted attachment path actually names an uploaded object before
+ * we store it. Runs on the service-role client (bypasses RLS); a missing or
+ * unreadable object is treated as absent, so a tampered hidden field that
+ * happens to match the path shape but was never uploaded is rejected.
+ */
+async function attachmentExists(path: string): Promise<boolean> {
+  const admin = createAdminClient();
+  const { error } = await admin.storage
+    .from(QUOTE_ATTACHMENT_BUCKET)
+    .info(path);
+  return !error;
+}
 
 function fieldCodeForIssue(code: string): string {
   if (code === "invalid_format") return "errEmail";
@@ -83,6 +148,11 @@ export async function submitQuote(
     // there would be invisible, so surface it as a form-level rejection.
     if (fieldErrors.customization)
       return { ok: false, formError: "errCustomization" };
+    // `attachment_path` is likewise hidden (set by the upload widget); a
+    // path that isn't a server-minted object path is a tamper, not a field
+    // the customer can correct, so reject at form level.
+    if (fieldErrors.attachment_path)
+      return { ok: false, formError: "errAttachment" };
     return { ok: false, fieldErrors };
   }
 
@@ -116,6 +186,14 @@ export async function submitQuote(
     .gte("created_at", since);
   if ((count ?? 0) >= RATE_MAX) {
     return { ok: false, formError: "errRateLimited" };
+  }
+
+  // 3c. Attachment (plan 15.2 B6): the path passed the shape validator, but
+  //     confirm an object was actually uploaded to it (via a signed URL) before
+  //     storing — otherwise a forged hidden field would point staff at a
+  //     signed URL for a file that never existed.
+  if (data.attachment_path && !(await attachmentExists(data.attachment_path))) {
+    return { ok: false, formError: "errAttachment" };
   }
 
   // 4. Builder snapshot (plan 15.2 B9, finding R10): the old code only did
