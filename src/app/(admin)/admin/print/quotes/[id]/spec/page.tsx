@@ -10,7 +10,10 @@ import {
 } from "@/components/admin/print/print-sheet";
 import { getAdminUser } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
-import { getAdminQuote } from "@/server/quotes";
+import {
+  createAttachmentReadUrl,
+  getAdminQuote,
+} from "@/server/quotes";
 import { getCompanyProfile } from "@/server/settings";
 
 export const instant = false;
@@ -54,6 +57,9 @@ export default async function QuoteSpecSheetPage({
 
   const ref = quote.id.slice(0, 8).toUpperCase();
   const builder = quote.builder;
+  // Private artwork (plan 15.2 B6): a short-lived signed GET URL so the sheet
+  // links to the file without ever exposing a stable public path.
+  const attachmentUrl = await createAttachmentReadUrl(quote.attachment_path);
   const size =
     quote.custom_size ??
     (builder?.size && (builder.size.width || builder.size.height)
@@ -133,7 +139,18 @@ export default async function QuoteSpecSheetPage({
           ) : null}
           {quote.attachment_path ? (
             <PrintRow label="Customer attachment">
-              {quote.attachment_path}
+              {attachmentUrl ? (
+                <a
+                  href={attachmentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="break-all underline"
+                >
+                  {quote.attachment_path}
+                </a>
+              ) : (
+                <span className="break-all">{quote.attachment_path}</span>
+              )}
             </PrintRow>
           ) : null}
           {quote.message ? (

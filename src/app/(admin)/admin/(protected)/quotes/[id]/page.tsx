@@ -5,7 +5,11 @@ import { z } from "zod";
 import { QuoteDetail } from "@/components/admin/quotes/quote-detail";
 import { PageHeader } from "@/components/admin/shell/page-header";
 import { getAdminUser } from "@/lib/auth";
-import { getAdminQuote, listAssignableStaff } from "@/server/quotes";
+import {
+  getAdminQuote,
+  listAssignableStaff,
+  createAttachmentReadUrl,
+} from "@/server/quotes";
 
 export const instant = false;
 
@@ -47,5 +51,15 @@ export default async function QuoteDetailPage({
   ]);
   if (!quote) notFound();
 
-  return <QuoteDetail quote={quote} staff={staff} />;
+  // Private artwork (plan 15.2 B6): a short-lived signed GET URL minted
+  // server-side so staff can open the file without a public URL ever existing.
+  const attachmentUrl = await createAttachmentReadUrl(quote.attachment_path);
+
+  return (
+    <QuoteDetail
+      quote={quote}
+      staff={staff}
+      attachmentUrl={attachmentUrl}
+    />
+  );
 }

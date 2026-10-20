@@ -1,4 +1,9 @@
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import {
+  isQuoteAttachmentPath,
+  QUOTE_ATTACHMENT_BUCKET,
+} from "@/lib/validators/quote-attachment";
 
 // Server-only data access for the admin quotes module (plan §9 Quotes / Phase 4,
 // layout 9c.8 "Quotes inbox / Quote detail"). Reads run through the cookie-based
@@ -286,6 +291,26 @@ export async function getAdminQuote(
     ...toAdminQuote(data, nowMs),
     builder: parseBuilder(data.customization),
   };
+}
+
+/**
+ * Plan 15.2 B6 — a short-lived signed GET URL so staff can open a private
+ * quote attachment. Generated server-side on the service-role client (the
+ * bucket denies every direct anon/authenticated read), so the browser never
+ * learns a stable URL for a customer's artwork. Returns null for an empty or
+ * malformed path, or when the object cannot be signed (missing/expired).
+ */
+export async function createAttachmentReadUrl(
+  path: string | null,
+  expiresIn = 300,
+): Promise<string | null> {
+  if (!path || !isQuoteAttachmentPath(path)) return null;
+  const admin = createAdminClient();
+  const { data, error } = await admin.storage
+    .from(QUOTE_ATTACHMENT_BUCKET)
+    .createSignedUrl(path, expiresIn);
+  if (error || !data) return null;
+  return data.signedUrl;
 }
 
 /** Staff who can own a quote — the roles with write access to quote_requests. */

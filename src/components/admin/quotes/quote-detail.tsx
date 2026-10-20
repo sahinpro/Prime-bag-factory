@@ -102,9 +102,11 @@ function DetailRow({
 export function QuoteDetail({
   quote,
   staff,
+  attachmentUrl,
 }: Readonly<{
   quote: AdminQuoteDetail;
   staff: AssignableStaff[];
+  attachmentUrl: string | null;
 }>) {
   const { saving, flash, run } = useActionSave();
 
@@ -400,29 +402,45 @@ export function QuoteDetail({
           <SectionCard title="Artwork attachment">
             {quote.attachment_path ? (
               <div className="space-y-3">
-                {/* The attachment is a Cloudinary URL uploaded from the public
-                    quote form; a plain img keeps the admin bundle free of
-                    remote-pattern image config. */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={quote.attachment_path}
-                  alt={`Artwork attachment for request ${ref}`}
-                  className="max-h-64 rounded-control border border-border object-contain"
-                />
-                <Button variant="outline" size="sm" asChild>
-                  <a
-                    href={quote.attachment_path}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <ExternalLink
-                      aria-hidden="true"
-                      strokeWidth={1.75}
-                      className="size-4"
-                    />
-                    Open full size
-                  </a>
-                </Button>
+                {attachmentUrl ? (
+                  <>
+                    {quote.attachment_path.endsWith(".pdf") ? null : (
+                      /* Private artwork opened via a short-lived signed URL
+                         (plan 15.2 B6); a plain img keeps the admin bundle
+                         free of remote-pattern image config. */
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={attachmentUrl}
+                        alt={`Artwork attachment for request ${ref}`}
+                        className="max-h-64 rounded-control border border-border object-contain"
+                      />
+                    )}
+                    <Button variant="outline" size="sm" asChild>
+                      <a
+                        href={attachmentUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <ExternalLink
+                          aria-hidden="true"
+                          strokeWidth={1.75}
+                          className="size-4"
+                        />
+                        {quote.attachment_path.endsWith(".pdf")
+                          ? "Open PDF"
+                          : "Open full size"}
+                      </a>
+                    </Button>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    The stored artwork could not be opened — the file may be
+                    missing.
+                  </p>
+                )}
+                <p className="break-all font-mono text-xs text-muted-foreground">
+                  {quote.attachment_path}
+                </p>
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
