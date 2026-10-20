@@ -50,6 +50,7 @@ export default defineConfig({
         /.*\.setup\.ts/,
         /a11y-admin\.spec\.ts/,
         /admin-orders\.spec\.ts/,
+        /quote-attachment\.spec\.ts/,
       ],
     },
     {
@@ -59,8 +60,13 @@ export default defineConfig({
         storageState: "e2e/.auth/admin.json",
       },
       dependencies: ["setup"],
-      // Authenticated admin screens: the axe matrix and the orders feature spec.
-      testMatch: [/a11y-admin\.spec\.ts/, /admin-orders\.spec\.ts/],
+      // Authenticated admin screens: the axe matrix, the orders feature spec and
+      // the private-artwork round trip (public upload + staff signed-URL read).
+      testMatch: [
+        /a11y-admin\.spec\.ts/,
+        /admin-orders\.spec\.ts/,
+        /quote-attachment\.spec\.ts/,
+      ],
       // Supabase SSR refreshes the session cookie on each authed request; many
       // parallel workers sharing one storageState race that refresh and abort
       // connections (ECONNRESET). Run these serially.
