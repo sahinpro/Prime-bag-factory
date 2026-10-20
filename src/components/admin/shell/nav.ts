@@ -121,7 +121,6 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: Boxes,
         roles: ["owner", "manager", "inventory"],
         badgeKey: "inventory_low",
-        hidden: true, // C4 — ships with E1
       },
     ],
   },
