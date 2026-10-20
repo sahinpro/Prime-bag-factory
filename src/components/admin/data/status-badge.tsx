@@ -109,6 +109,7 @@ export const STOCK_STATUS_META: Record<string, StatusMeta> = {
   ok: { tone: "success", icon: CheckCircle2, label: "In stock" },
   low: { tone: "warning", icon: TriangleAlert, label: "Low stock" },
   out: { tone: "destructive", icon: Ban, label: "Out of stock" },
+  untracked: { tone: "neutral", icon: Factory, label: "Made to order" },
 };
 
 export const URGENCY_STATUS_META: Record<string, StatusMeta> = {
