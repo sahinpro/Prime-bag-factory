@@ -62,7 +62,12 @@ test("the directory groups an order and a quote onto one customer and the drawer
     // One grouped row: the search finds it by the canonical phone. Scoped to
     // the <table> because the DataTable keeps the (css-hidden) mobile card
     // copy in the DOM at desktop widths.
-    await page.getByLabel("Search customers").fill(canonical);
+    // Under CI CPU contention App Router can briefly keep two copies of the
+    // client tree mounted during hydration, so the search input transiently
+    // matches twice; wait for it to settle to one before acting.
+    const search = page.getByLabel("Search customers");
+    await expect(search).toHaveCount(1, { timeout: 10_000 });
+    await search.fill(canonical);
     const row = page
       .locator("table")
       .getByRole("button", {
