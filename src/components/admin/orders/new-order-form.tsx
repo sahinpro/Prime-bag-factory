@@ -28,13 +28,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { computeAdminOrderTotals, type AdminOrderLineInput } from "@/lib/admin-order-totals";
+import {
+  computeAdminOrderTotals,
+  type AdminOrderLineInput,
+} from "@/lib/admin-order-totals";
 import { formatMoney, formatNumber } from "@/lib/format";
 import {
   ADMIN_INITIAL_STATUSES,
+  adminCreateOrderSchema,
   ORDER_CHANNEL_LABELS,
   ORDER_CHANNELS,
-  adminCreateOrderSchema,
   type AdminInitialStatus,
   type OrderChannel,
 } from "@/lib/validators/admin-order";
@@ -155,7 +158,12 @@ export function NewOrderForm({
       }
       return [
         ...prev,
-        { lineId: nextLineId(), variantId: v.variantId, qty: String(v.moq || 1), override: "" },
+        {
+          lineId: nextLineId(),
+          variantId: v.variantId,
+          qty: String(v.moq || 1),
+          override: "",
+        },
       ];
     });
     setSearch("");
@@ -210,7 +218,8 @@ export function NewOrderForm({
     totals.lines.map((pl, i) => [pricedInputs[i].variantId, pl]),
   );
 
-  const hasOverride = canOverride && lines.some((l) => l.override.trim() !== "");
+  const hasOverride =
+    canOverride && lines.some((l) => l.override.trim() !== "");
   const discountNum = Number(discount) || 0;
 
   function lineWarning(variantId: string, qty: number): string | null {
@@ -271,7 +280,8 @@ export function NewOrderForm({
     if (!parsed.success) {
       setFlash({
         kind: "error",
-        text: parsed.error.issues[0]?.message ?? "Check the highlighted fields.",
+        text:
+          parsed.error.issues[0]?.message ?? "Check the highlighted fields.",
       });
       return;
     }
@@ -298,7 +308,12 @@ export function NewOrderForm({
         title="New order"
         description="Record a phone, WhatsApp or walk-in order. Prices, MOQ and stock are recalculated in the database."
         actions={
-          <Button variant="outline" size="sm" onClick={() => router.push("/admin/orders")} type="button">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push("/admin/orders")}
+            type="button"
+          >
             Cancel
           </Button>
         }
@@ -310,9 +325,7 @@ export function NewOrderForm({
         <div className="space-y-6 lg:col-span-2">
           <Card>
             <CardHeader>
-              <h2 className="text-sm font-medium text-foreground">
-                Customer
-              </h2>
+              <h2 className="text-sm font-medium text-foreground">Customer</h2>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
@@ -344,7 +357,8 @@ export function NewOrderForm({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="customer-email">
-                  Email <span className="text-muted-foreground">(optional)</span>
+                  Email{" "}
+                  <span className="text-muted-foreground">(optional)</span>
                 </Label>
                 <Input
                   id="customer-email"
@@ -427,8 +441,15 @@ export function NewOrderForm({
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="variant-search" className="flex items-center gap-2">
-                  <Search aria-hidden="true" strokeWidth={1.75} className="size-4" />
+                <Label
+                  htmlFor="variant-search"
+                  className="flex items-center gap-2"
+                >
+                  <Search
+                    aria-hidden="true"
+                    strokeWidth={1.75}
+                    className="size-4"
+                  />
                   Add a product
                 </Label>
                 <Input
@@ -449,7 +470,9 @@ export function NewOrderForm({
                           className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-surface-2"
                         >
                           <span className="min-w-0">
-                            <span className="block truncate">{v.productTitle}</span>
+                            <span className="block truncate">
+                              {v.productTitle}
+                            </span>
                             <span className="block truncate text-xs text-muted-foreground">
                               {[v.sku, v.colorName, v.size]
                                 .filter(Boolean)
@@ -457,7 +480,9 @@ export function NewOrderForm({
                               {v.stockMode === "tracked"
                                 ? ` · ${formatNumber(v.available ?? 0, "en")} in stock`
                                 : " · made to order"}
-                              {v.moq > 0 ? ` · MOQ ${formatNumber(v.moq, "en")}` : ""}
+                              {v.moq > 0
+                                ? ` · MOQ ${formatNumber(v.moq, "en")}`
+                                : ""}
                             </span>
                           </span>
                           <Plus
@@ -490,7 +515,10 @@ export function NewOrderForm({
                     const v = variantById.get(l.variantId);
                     if (!v) return null;
                     const priced = perLine.get(v.variantId);
-                    const warning = lineWarning(v.variantId, Number(l.qty) || 0);
+                    const warning = lineWarning(
+                      v.variantId,
+                      Number(l.qty) || 0,
+                    );
                     return (
                       <li
                         key={l.lineId}
@@ -523,7 +551,10 @@ export function NewOrderForm({
                         </div>
                         <div className="mt-3 grid gap-3 sm:grid-cols-3">
                           <div className="space-y-1">
-                            <Label htmlFor={`qty-${l.lineId}`} className="text-xs">
+                            <Label
+                              htmlFor={`qty-${l.lineId}`}
+                              className="text-xs"
+                            >
                               Qty
                             </Label>
                             <Input
@@ -586,7 +617,9 @@ export function NewOrderForm({
                               }
                               value={l.override}
                               onChange={(e) =>
-                                updateLine(l.lineId, { override: e.target.value })
+                                updateLine(l.lineId, {
+                                  override: e.target.value,
+                                })
                               }
                             />
                           </div>

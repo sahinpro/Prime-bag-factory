@@ -27,7 +27,8 @@ export default defineConfig({
     // Dev-mode hydration/streaming was the source of the e2e flake; `next start`
     // serves the same artifact CI and production ship, so a green run here is a
     // green run for real. Playwright runs under Node — never start with `bun --bun`.
-    command: "npx next build && npx next start --hostname 127.0.0.1 --port 3000",
+    command:
+      "npx next build && npx next start --hostname 127.0.0.1 --port 3000",
     url: "http://127.0.0.1:3000/en",
     // The build is part of the command, so allow it to finish before timing out.
     timeout: 180_000,

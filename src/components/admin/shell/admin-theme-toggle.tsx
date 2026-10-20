@@ -17,7 +17,7 @@ export function AdminThemeToggle() {
   return (
     <Button
       variant="ghost"
-      size="icon"
+      size="lg"
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
       onClick={() => setTheme(isDark ? "light" : "dark")}
     >

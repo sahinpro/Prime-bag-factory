@@ -9,8 +9,8 @@ import { markAlertsRead } from "@/app/(admin)/admin/notifications/actions";
 import { ToneBadge } from "@/components/admin/data/status-badge";
 import { AdminThemeToggle } from "@/components/admin/shell/admin-theme-toggle";
 import { Breadcrumbs } from "@/components/admin/shell/breadcrumbs";
-import { CommandPalette } from "@/components/admin/shell/command-palette";
 import { MobileUserMenu } from "@/components/admin/shell/mobile-user-menu";
+import { useSearchPalette } from "@/components/admin/shell/search-palette";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -23,9 +23,10 @@ import { formatDate } from "@/lib/format";
 import type { AdminAlert } from "@/server/notifications";
 
 /**
- * Topbar (plan 9c.4): breadcrumb, a search button that opens the command palette
- * (Cmd/Ctrl+K), a notifications popover, the shared theme toggle and, on mobile,
- * a user menu. Sticky, h-16, bottom border.
+ * Topbar (plan 9c.4): breadcrumb, a compact search icon that opens the shared
+ * command palette (Cmd/Ctrl+K, see SearchPaletteProvider), a notifications
+ * popover, the shared theme toggle and, on mobile, a user menu. Sticky, h-16,
+ * bottom border. The full search box lives in the sidebar; here only the icon.
  *
  * The bell (Phase 4 task 2) shows recent `admin_alert` notifications from the
  * protected layout (RLS: owner/manager only — other roles receive an empty
@@ -39,21 +40,10 @@ export function Topbar({
   user: AdminUser;
   alerts?: AdminAlert[];
 }) {
-  const [paletteOpen, setPaletteOpen] = React.useState(false);
+  const { setOpen: setPaletteOpen } = useSearchPalette();
   const [marking, startMarking] = React.useTransition();
   const router = useRouter();
   const unread = alerts.filter((a) => a.unread).length;
-
-  React.useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setPaletteOpen((open) => !open);
-      }
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
 
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4">
@@ -64,21 +54,10 @@ export function Topbar({
       </div>
 
       <Button
-        variant="outline"
-        size="sm"
-        onClick={() => setPaletteOpen(true)}
-        className="hidden text-muted-foreground md:inline-flex"
-      >
-        <Search aria-hidden="true" strokeWidth={1.75} className="size-4" />
-        Search
-      </Button>
-
-      <Button
         variant="ghost"
-        size="icon"
+        size="lg"
         aria-label="Open command palette"
         onClick={() => setPaletteOpen(true)}
-        className="md:hidden"
       >
         <Search aria-hidden="true" strokeWidth={1.75} className="size-4" />
       </Button>
@@ -87,7 +66,7 @@ export function Topbar({
         <PopoverTrigger asChild>
           <Button
             variant="ghost"
-            size="icon"
+            size="lg"
             aria-label={
               unread > 0 ? `Notifications, ${unread} unread` : "Notifications"
             }
@@ -165,12 +144,6 @@ export function Topbar({
       <AdminThemeToggle />
 
       <MobileUserMenu user={user} />
-
-      <CommandPalette
-        open={paletteOpen}
-        onOpenChange={setPaletteOpen}
-        role={user.role}
-      />
     </header>
   );
 }

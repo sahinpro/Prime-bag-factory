@@ -1,5 +1,6 @@
 import { AppSidebar } from "@/components/admin/shell/app-sidebar";
 import type { BadgeKey } from "@/components/admin/shell/nav";
+import { SearchPaletteProvider } from "@/components/admin/shell/search-palette";
 import { Topbar } from "@/components/admin/shell/topbar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -27,25 +28,27 @@ export function AdminShell({
   return (
     <TooltipProvider>
       <SidebarProvider>
-        <a
-          href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-control focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:shadow-md"
-        >
-          Skip to content
-        </a>
-        <AppSidebar user={user} counts={counts} />
-        <SidebarInset>
-          <Topbar user={user} alerts={alerts} />
-          {/* SidebarInset already renders the single <main> landmark; this is a
-              plain content wrapper (the skip-link target). */}
-          <div
-            id="main"
-            tabIndex={-1}
-            className="mx-auto w-full max-w-360 flex-1 px-4 py-6 outline-none sm:px-6"
+        <SearchPaletteProvider role={user.role}>
+          <a
+            href="#main"
+            className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-control focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:shadow-md"
           >
-            {children}
-          </div>
-        </SidebarInset>
+            Skip to content
+          </a>
+          <AppSidebar user={user} counts={counts} />
+          <SidebarInset>
+            <Topbar user={user} alerts={alerts} />
+            {/* SidebarInset already renders the single <main> landmark; this is a
+                plain content wrapper (the skip-link target). */}
+            <div
+              id="main"
+              tabIndex={-1}
+              className="mx-auto w-full max-w-360 flex-1 px-4 py-6 outline-none sm:px-6"
+            >
+              {children}
+            </div>
+          </SidebarInset>
+        </SearchPaletteProvider>
       </SidebarProvider>
     </TooltipProvider>
   );

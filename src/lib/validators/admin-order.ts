@@ -24,7 +24,12 @@ function emptyToUndefined(value: unknown) {
 const optionalText = (max: number, message?: string) =>
   z.preprocess(
     emptyToUndefined,
-    z.string().trim().min(1, message ?? "required").max(max).optional(),
+    z
+      .string()
+      .trim()
+      .min(1, message ?? "required")
+      .max(max)
+      .optional(),
   );
 
 const requiredText = (max: number, message: string) =>
@@ -103,19 +108,16 @@ export const adminCreateOrderSchema = z
     customer_phone: staffPhone,
     customer_email: z.preprocess(
       emptyToUndefined,
-      z
-        .string()
-        .trim()
-        .email("Enter a valid email.")
-        .max(160)
-        .optional(),
+      z.string().trim().email("Enter a valid email.").max(160).optional(),
     ),
     division: optionalText(80),
     district: optionalText(80),
     area: optionalText(80),
     address_line: optionalText(300),
     shipping_zone_id: z.guid({ error: "Choose a shipping zone." }),
-    channel: z.enum(ORDER_CHANNELS, { message: "Choose how the order came in." }),
+    channel: z.enum(ORDER_CHANNELS, {
+      message: "Choose how the order came in.",
+    }),
     status: z.enum(ADMIN_INITIAL_STATUSES).default("confirmed"),
     admin_note: optionalText(4000),
     customer_note: optionalText(1000),

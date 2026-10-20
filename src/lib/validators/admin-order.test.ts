@@ -28,8 +28,14 @@ describe("adminCreateOrderSchema", () => {
   });
 
   it("normalises a Bangla / separated phone to canonical digits", () => {
-    expect(adminCreateOrderSchema.parse(base({ customer_phone: "০১৭১২ ৩৪৫ ৬৭৮" })).customer_phone).toBe("01712345678");
-    expect(adminCreateOrderSchema.parse(base({ customer_phone: "+880 1712-345678" })).customer_phone).toBe("+8801712345678");
+    expect(
+      adminCreateOrderSchema.parse(base({ customer_phone: "০১৭১২ ৩৪৫ ৬৭৮" }))
+        .customer_phone,
+    ).toBe("01712345678");
+    expect(
+      adminCreateOrderSchema.parse(base({ customer_phone: "+880 1712-345678" }))
+        .customer_phone,
+    ).toBe("+8801712345678");
   });
 
   it("rejects a phone with no usable number", () => {
@@ -39,19 +45,23 @@ describe("adminCreateOrderSchema", () => {
   });
 
   it("treats a blank email as absent", () => {
-    expect(adminCreateOrderSchema.parse(base({ customer_email: "" })).customer_email).toBeUndefined();
+    expect(
+      adminCreateOrderSchema.parse(base({ customer_email: "" })).customer_email,
+    ).toBeUndefined();
   });
 
   it("requires at least one item", () => {
-    expect(
-      adminCreateOrderSchema.safeParse(base({ items: [] })).success,
-    ).toBe(false);
+    expect(adminCreateOrderSchema.safeParse(base({ items: [] })).success).toBe(
+      false,
+    );
   });
 
   it("requires a reason for a discount", () => {
     const missing = adminCreateOrderSchema.safeParse(base({ discount: "200" }));
     expect(missing.success).toBe(false);
-    expect(missing.error?.issues.some((i) => i.path[0] === "reason")).toBe(true);
+    expect(missing.error?.issues.some((i) => i.path[0] === "reason")).toBe(
+      true,
+    );
 
     expect(
       adminCreateOrderSchema.safeParse(
