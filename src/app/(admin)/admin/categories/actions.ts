@@ -185,10 +185,27 @@ export async function reorderCategories(
   }
 
   const supabase = await createClient();
-  for (const [index, id] of parsed.data.orderedIds.entries()) {
+
+  // `sort_order` is only compared between siblings, so number each category by
+  // its position *within its own parent* as it appears in the flattened order
+  // (the client only ever emits sibling moves, keeping the list a valid DFS).
+  const { data: rows, error: readError } = await supabase
+    .from("categories")
+    .select("id, parent_id")
+    .in("id", parsed.data.orderedIds);
+  if (readError) return { ok: false, error: "Could not save the new order." };
+  const parentOf = new Map<string, string | null>(
+    (rows ?? []).map((r) => [r.id, r.parent_id ?? null]),
+  );
+
+  const seenPerParent = new Map<string | null, number>();
+  for (const id of parsed.data.orderedIds) {
+    const parent = parentOf.get(id) ?? null;
+    const next = seenPerParent.get(parent) ?? 0;
+    seenPerParent.set(parent, next + 1);
     const { error } = await supabase
       .from("categories")
-      .update({ sort_order: index })
+      .update({ sort_order: next })
       .eq("id", id);
     if (error) return { ok: false, error: "Could not save the new order." };
   }
