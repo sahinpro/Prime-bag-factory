@@ -1,8 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import { requireRole } from "@/lib/auth";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/server/audit";
 import {
@@ -95,6 +96,7 @@ export async function adjustStock(
   });
 
   revalidatePath("/admin/inventory");
+    revalidateTag(CACHE_TAGS.catalog, "max");
   return { ok: true };
 }
 
@@ -135,6 +137,7 @@ export async function setThreshold(
   });
 
   revalidatePath("/admin/inventory");
+    revalidateTag(CACHE_TAGS.catalog, "max");
   return { ok: true };
 }
 

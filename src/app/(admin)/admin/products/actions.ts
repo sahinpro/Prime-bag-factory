@@ -1,8 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import { requireRole } from "@/lib/auth";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import type { Database } from "@/lib/database.types";
 import { slugify } from "@/lib/slug";
 import { createClient } from "@/lib/supabase/server";
@@ -68,10 +69,17 @@ async function authorize(): Promise<AuthorizeResult> {
   }
 }
 
-/** Revalidate both the list and the editor after any product-scoped write. */
+/**
+ * Revalidate both the list and the editor after any product-scoped write, and
+ * expire the public `catalog` cache tag (plan 3b) — a product edit changes the
+ * home rails, nav, search, listings and its own detail page, all of which carry
+ * the `catalog` tag, so one call refreshes the whole public site. The product's
+ * own `product:{slug}` entry is tagged `catalog` too, so it is covered here.
+ */
 function touch(productId?: string) {
   revalidatePath("/admin/products");
   if (productId) revalidatePath(`/admin/products/${productId}`);
+  revalidateTag(CACHE_TAGS.catalog, "max");
 }
 
 /** Lowercased, hyphenated slug from a base string, with a uniqueness suffix. */
@@ -316,6 +324,7 @@ export async function deleteProduct(id: string): Promise<ProductActionResult> {
     recordId: id,
   });
   revalidatePath("/admin/products");
+  revalidateTag(CACHE_TAGS.catalog, "max");
   return { ok: true };
 }
 

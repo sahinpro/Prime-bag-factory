@@ -6,9 +6,24 @@ import { ProductGrid } from "@/components/site/product-grid";
 import { Link } from "@/i18n/navigation";
 import { isLocale, type Locale } from "@/i18n/routing";
 import { buildBreadcrumb, buildMetadata, jsonLd } from "@/lib/seo";
-import { getCollectionBySlug, localize } from "@/server/catalog";
+import {
+  getCollectionBySlug,
+  listSitemapCollections,
+  localize,
+} from "@/server/catalog";
 
 type RouteParams = { locale: string; slug: string };
+
+// Prerender every published collection page at build (plan 3b Static + ISR).
+// Unlisted slugs still render on request; the page keeps the Suspense/await-params
+// streaming pattern (partialPrefetching is on).
+// Cache Components requires a non-empty result, so an empty catalog falls back to
+// a single placeholder param that prerenders through `notFound()` into a 404.
+export async function generateStaticParams() {
+  const slugs = await listSitemapCollections();
+  if (slugs.length === 0) return [{ slug: "_" }];
+  return slugs.map((slug) => ({ slug }));
+}
 
 export async function generateMetadata({
   params,
