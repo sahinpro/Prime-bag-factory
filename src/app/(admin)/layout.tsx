@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { headers } from "next/headers";
 
 import { ThemeProvider } from "@/components/site/theme-provider";
 import { ThemeScript } from "@/components/site/theme-script";
@@ -32,9 +33,16 @@ export const metadata: Metadata = {
   },
 };
 
-export default function AdminRootLayout({
+export default async function AdminRootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  // D6 (plan §15): the proxy mints a per-request nonce for `/admin/*` and passes
+  // it as an internal `x-nonce` header. Reading it here keeps the whole admin
+  // tree dynamic (it already is — every page uses `connection()`) and stamps our
+  // own inline theme bootstrap; Next stamps its framework scripts automatically.
+  // The public `[locale]` layout never reads headers, so it stays static/PPR.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     <html
       lang="en"
@@ -42,7 +50,7 @@ export default function AdminRootLayout({
       className={`${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-background font-sans text-foreground">
-        <ThemeScript />
+        <ThemeScript nonce={nonce} />
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
