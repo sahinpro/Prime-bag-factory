@@ -11,7 +11,12 @@ import {
 
 import * as React from "react";
 
+import { SwatchChip } from "@/components/admin/catalog/swatch-chip";
 import { SwatchPicker } from "@/components/admin/catalog/swatch-picker";
+import { ActivityFeed } from "@/components/admin/dashboard/activity-feed";
+import { ChartCard } from "@/components/admin/dashboard/chart-card";
+import { ChartRangeMenu } from "@/components/admin/dashboard/chart-range-menu";
+import { ChartSkeleton } from "@/components/admin/dashboard/chart-skeleton";
 import { RadialGauge } from "@/components/admin/dashboard/radial-gauge";
 import { SegmentBar } from "@/components/admin/dashboard/segment-bar";
 import { StatCard } from "@/components/admin/dashboard/stat-card";
@@ -35,6 +40,8 @@ import { BilingualField } from "@/components/admin/forms/bilingual-field";
 import { ConfirmDialog } from "@/components/admin/forms/confirm-dialog";
 import { FormSection } from "@/components/admin/forms/form-section";
 import { ImageUploader } from "@/components/admin/forms/image-uploader";
+import { StickySaveBar } from "@/components/admin/forms/sticky-save-bar";
+import { TierEditor, type TierRow } from "@/components/admin/forms/tier-editor";
 import {
   PrintChecklist,
   PrintRow,
@@ -42,8 +49,12 @@ import {
 } from "@/components/admin/print/print-sheet";
 import { ColorChip } from "@/components/admin/quotes/color-chip";
 import { PageHeader } from "@/components/admin/shell/page-header";
+import { TabsBar } from "@/components/admin/shell/tabs-bar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+
+import type { DashboardData, Range } from "@/server/dashboard";
 
 const STATUS_DOMAINS: { domain: StatusDomain; values: string[] }[] = [
   { domain: "quote", values: ["new", "contacted", "quoted", "won", "lost"] },
@@ -314,6 +325,136 @@ function DetailDrawerDemo() {
   );
 }
 
+// TierEditor demo (plan 9c.5 Pricing): a controlled list of quantity ranges.
+// Local state only — nothing is saved. Overlaps/gaps surface as warnings, an
+// inverted range or zero price as an error, exactly as on the real product form.
+function TierEditorDemo() {
+  const [tiers, setTiers] = React.useState<TierRow[]>([
+    { min_qty: 1, max_qty: 50, unit_price: 320 },
+    { min_qty: 51, max_qty: 200, unit_price: 290 },
+    { min_qty: 201, max_qty: null, unit_price: 260 },
+  ]);
+  return <TierEditor tiers={tiers} onChange={setTiers} idPrefix="ds-tier" />;
+}
+
+// StickySaveBar demo (plan 9c.5): the bar returns null until the form is dirty.
+// Toggle the switch to preview the save/discard bar.
+function StickySaveBarDemo() {
+  const [dirty, setDirty] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
+  return (
+    <div className="space-y-3">
+      <label className="flex items-center gap-2 text-sm">
+        <Switch checked={dirty} onCheckedChange={setDirty} />
+        Mark form as having unsaved changes
+      </label>
+      <StickySaveBar
+        dirty={dirty}
+        saving={saving}
+        onSave={() => {
+          setSaving(true);
+          window.setTimeout(() => {
+            setSaving(false);
+            setDirty(false);
+          }, 800);
+        }}
+        onDiscard={() => setDirty(false)}
+      />
+    </div>
+  );
+}
+
+// TabsBar + ChartRangeMenu demo (plan 9c.3/9c.5): the range control is URL-synced
+// in real use; here it drives local state so the gallery stays self-contained.
+function RangeControlsDemo() {
+  const [range] = React.useState<Range>("30d");
+  return (
+    <div className="space-y-4">
+      <TabsBar value={range} baseQuery="" />
+      <div className="flex items-center gap-3">
+        <span className="text-xs text-muted-foreground">
+          ChartCard ⋯ menu (same range, as a dropdown):
+        </span>
+        <ChartRangeMenu value={range} baseQuery="" />
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Both set <code className="rounded-xs bg-surface-2 px-1">?range=</code>{" "}
+        on the current page in production; in this gallery they are inert.
+      </p>
+    </div>
+  );
+}
+
+// ChartCard + ChartSkeleton demo (plan 9c.9): the shell wraps a chart, and the
+// loading skeleton matches the content height so nothing shifts.
+function ChartCardDemo() {
+  return (
+    <div className="grid gap-4">
+      <ChartCard
+        title="Orders over time"
+        subtitle="Last 30 days"
+        info="Confirmed orders, grouped by day."
+        height="md"
+        footer="Updated just now"
+      >
+        <SegmentBar
+          segments={[
+            { label: "Pending", value: 5, color: "var(--chart-2)" },
+            { label: "Processing", value: 9, color: "var(--chart-1)" },
+            { label: "Delivered", value: 24, color: "var(--chart-3)" },
+          ]}
+        />
+      </ChartCard>
+      <ChartCard title="Loading chart" subtitle="Skeleton matches height" height="md">
+        <ChartSkeleton height="md" />
+      </ChartCard>
+    </div>
+  );
+}
+
+// ActivityFeed demo (plan 9c.7): compact newest-first rows. Entries match the
+// DashboardData["activity"] shape the dashboard passes in.
+const DEMO_ACTIVITY: DashboardData["activity"] = [
+  {
+    id: "a1",
+    action: "status_change",
+    table: "orders",
+    recordId: "o-1042",
+    actor: "Ayesha Rahman",
+    at: new Date(Date.now() - 12 * 60_000).toISOString(),
+  },
+  {
+    id: "a2",
+    action: "create",
+    table: "products",
+    recordId: "p-88",
+    actor: "Imran Kabir",
+    at: new Date(Date.now() - 3 * 60 * 60_000).toISOString(),
+  },
+  {
+    id: "a3",
+    action: "login",
+    table: "profiles",
+    recordId: null,
+    actor: null,
+    at: new Date(Date.now() - 26 * 60 * 60_000).toISOString(),
+  },
+];
+
+// SwatchChip demo (plan 9c.5): decorative round chips, selected vs unselected.
+function SwatchChipDemo() {
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      {swatches.map((s, i) => (
+        <div key={s.id} className="flex items-center gap-2">
+          <SwatchChip colorHex={s.colorHex} selected={i === 0} />
+          <span className="text-xs text-muted-foreground">{s.name}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function DesignSystemPage() {
   return (
     <div className="space-y-6">
@@ -396,6 +537,13 @@ export default function DesignSystemPage() {
           </div>
         </DemoCard>
 
+        <DemoCard title="Chart card, skeleton and range controls (9c.5 / 9c.9)">
+          <div className="space-y-6">
+            <ChartCardDemo />
+            <RangeControlsDemo />
+          </div>
+        </DemoCard>
+
         <DemoCard title="Data table and filters (9c.5)">
           <DataTableDemo />
         </DemoCard>
@@ -467,6 +615,10 @@ export default function DesignSystemPage() {
           />
         </DemoCard>
 
+        <DemoCard title="Swatch chips (9c.5)">
+          <SwatchChipDemo />
+        </DemoCard>
+
         <DemoCard title="Confirm dialog">
           <ConfirmDialog
             trigger={<Button variant="destructive">Archive product</Button>}
@@ -503,6 +655,20 @@ export default function DesignSystemPage() {
           <div className="flex flex-wrap gap-2">
             <ColorChip label="Body" name="Natural Jute" hex="#c8a86a" />
             <ColorChip label="Handle" name="Ink Canvas" hex="#1c1917" />
+          </div>
+        </DemoCard>
+
+        <DemoCard title="Tier editor — pricing (9c.5)">
+          <TierEditorDemo />
+        </DemoCard>
+
+        <DemoCard title="Sticky save bar (9c.5)">
+          <StickySaveBarDemo />
+        </DemoCard>
+
+        <DemoCard title="Activity feed (9c.7)">
+          <div className="rounded-card border">
+            <ActivityFeed entries={DEMO_ACTIVITY} />
           </div>
         </DemoCard>
       </div>
