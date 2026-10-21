@@ -145,8 +145,7 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Settings",
         href: "/admin/settings",
         icon: Settings,
-        roles: ["owner"],
-        hidden: true, // C4 — page not built (plan §9 "Settings")
+        roles: OWNER_MANAGER,
       },
       {
         label: "Audit log",
