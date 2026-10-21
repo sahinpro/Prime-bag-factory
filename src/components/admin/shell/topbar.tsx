@@ -28,8 +28,8 @@ import type { AdminAlert } from "@/server/notifications";
  * popover, the shared theme toggle and, on mobile, a user menu. Sticky, h-16,
  * bottom border. The full search box lives in the sidebar; here only the icon.
  *
- * The bell (Phase 4 task 2) shows recent `admin_alert` notifications from the
- * protected layout (RLS: owner/manager only — other roles receive an empty
+ * The bell shows recent `admin_alert` rows (new quotes and new orders) from
+ * the protected layout (RLS: owner/manager only — other roles receive an empty
  * list and the popover keeps its empty state). Unread count is a number, never
  * color alone (plan 9c.1), and "Mark all read" flips the outbox rows.
  */
@@ -105,21 +105,15 @@ export function Topbar({
           </div>
           {alerts.length === 0 ? (
             <p className="px-4 py-6 text-center text-sm text-muted-foreground">
-              No new notifications. New quote requests appear here.
+              No new notifications. New quotes and orders appear here.
             </p>
           ) : (
             <ul className="max-h-80 overflow-y-auto">
-              {alerts.map((alert) => (
-                <li key={alert.id} className="border-b last:border-b-0">
-                  <Link
-                    href={`/admin/quotes/${alert.quoteId}`}
-                    className="block px-4 py-3 text-sm hover:bg-surface-2"
-                  >
+              {alerts.map((alert) => {
+                const body = (
+                  <>
                     <span className="flex items-center justify-between gap-2">
-                      <span className="font-medium">
-                        New {alert.source === "builder" ? "builder" : "quote"}{" "}
-                        request
-                      </span>
+                      <span className="font-medium">{alert.title}</span>
                       {alert.unread ? (
                         <ToneBadge tone="ink" icon={Sparkles}>
                           New
@@ -127,15 +121,34 @@ export function Topbar({
                       ) : null}
                     </span>
                     <span className="mt-0.5 block text-muted-foreground">
-                      {alert.companyName || alert.contactName} ·{" "}
-                      <span className="font-mono">{alert.ref}</span>
+                      {alert.detail}
+                      {alert.ref ? (
+                        <>
+                          {" "}
+                          · <span className="font-mono">{alert.ref}</span>
+                        </>
+                      ) : null}
                     </span>
                     <span className="mt-0.5 block text-xs text-muted-foreground">
                       {formatDate(new Date(alert.createdAt), "en")}
                     </span>
-                  </Link>
-                </li>
-              ))}
+                  </>
+                );
+                return (
+                  <li key={alert.id} className="border-b last:border-b-0">
+                    {alert.href ? (
+                      <Link
+                        href={alert.href}
+                        className="block px-4 py-3 text-sm hover:bg-surface-2"
+                      >
+                        {body}
+                      </Link>
+                    ) : (
+                      <div className="block px-4 py-3 text-sm">{body}</div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </PopoverContent>
