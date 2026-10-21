@@ -15,6 +15,7 @@ import {
 } from "@/lib/validators/order-admin";
 import { normalizePhone } from "@/server/abuse";
 import { phoneIsBlocked } from "@/server/admin-orders";
+import { logAudit } from "@/server/audit";
 
 /**
  * Admin order fulfilment (plan §9 Orders, Phase 5 task 3). Same shape as the
@@ -99,30 +100,43 @@ async function callFulfilmentRpc(
 export async function setOrderStatus(
   payload: unknown,
 ): Promise<OrderActionResult> {
+  let actorId: string;
   try {
-    await requireRole(ORDER_ROLES);
+    actorId = (await requireRole(ORDER_ROLES)).id;
   } catch {
     return denied();
   }
   const parsed = setOrderStatusSchema.safeParse(payload);
   if (!parsed.success) return { ok: false, error: "Invalid status." };
-  const { id, status, note } = parsed.data;
+  const { id, status } = parsed.data;
   const result = await callFulfilmentRpc(
     {
       fn: "admin_set_order_status",
-      args: { p_order_id: id, p_to_status: status, p_note: note },
+      args: { p_order_id: id, p_to_status: status, p_note: parsed.data.note },
     },
     "Could not change the order status.",
   );
-  if (result.ok) revalidate(id);
+  if (result.ok) {
+    // The status RPC writes order_status_history, not the audit trail.
+    const supabase = await createClient();
+    await logAudit(supabase, {
+      actorId,
+      action: "order.status",
+      tableName: "orders",
+      recordId: id,
+      diff: { to_status: status },
+    });
+    revalidate(id);
+  }
   return result;
 }
 
 export async function recordPayment(
   payload: unknown,
 ): Promise<OrderActionResult> {
+  let actorId: string;
   try {
-    await requireRole(ORDER_ROLES);
+    actorId = (await requireRole(ORDER_ROLES)).id;
   } catch {
     return denied();
   }
@@ -148,15 +162,28 @@ export async function recordPayment(
     },
     "Could not record the payment.",
   );
-  if (result.ok) revalidate(id);
+  if (result.ok) {
+    // The payment RPC writes the ledger, not the audit trail. Amount + method,
+    // never the reference or free-text note.
+    const supabase = await createClient();
+    await logAudit(supabase, {
+      actorId,
+      action: "order.payment",
+      tableName: "orders",
+      recordId: id,
+      diff: { amount, method },
+    });
+    revalidate(id);
+  }
   return result;
 }
 
 export async function saveShippingDetails(
   payload: unknown,
 ): Promise<OrderActionResult> {
+  let actorId: string;
   try {
-    await requireRole(ORDER_ROLES);
+    actorId = (await requireRole(ORDER_ROLES)).id;
   } catch {
     return denied();
   }
@@ -177,6 +204,13 @@ export async function saveShippingDetails(
     .maybeSingle();
   if (error) return { ok: false, error: "Could not save the courier details." };
   if (!data) return { ok: false, error: "Order not found." };
+  await logAudit(supabase, {
+    actorId,
+    action: "order.shipping",
+    tableName: "orders",
+    recordId: id,
+    diff: { courier_name: fields.courier_name, tracking_code: fields.tracking_code },
+  });
   revalidate(id);
   return { ok: true };
 }
@@ -184,8 +218,9 @@ export async function saveShippingDetails(
 export async function saveOrderNote(
   payload: unknown,
 ): Promise<OrderActionResult> {
+  let actorId: string;
   try {
-    await requireRole(ORDER_ROLES);
+    actorId = (await requireRole(ORDER_ROLES)).id;
   } catch {
     return denied();
   }
@@ -201,6 +236,13 @@ export async function saveOrderNote(
     .maybeSingle();
   if (error) return { ok: false, error: "Could not save the note." };
   if (!data) return { ok: false, error: "Order not found." };
+  await logAudit(supabase, {
+    actorId,
+    action: "order.note",
+    tableName: "orders",
+    recordId: parsed.data.id,
+    diff: { fields: ["admin_note"] },
+  });
   revalidate(parsed.data.id);
   return { ok: true };
 }
@@ -246,6 +288,13 @@ export async function blockOrderPhone(
   if (error && error.code !== "23505") {
     return { ok: false, error: "Could not block this phone." };
   }
+  // Audit the block without the phone value (PII). Record the originating order.
+  await logAudit(supabase, {
+    actorId: staff.id,
+    action: "blocked_contact.create",
+    tableName: "blocked_contacts",
+    diff: { type: "phone", order_id: parsed.data.id },
+  });
   revalidate(parsed.data.id);
   return { ok: true };
 }

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { logAudit } from "@/server/audit";
 import {
   adjustStockSchema,
   setThresholdSchema,
@@ -58,8 +59,9 @@ function adjustError(message: string): string {
 export async function adjustStock(
   payload: unknown,
 ): Promise<InventoryActionResult> {
+  let actorId: string;
   try {
-    await requireRole(INVENTORY_ROLES);
+    actorId = (await requireRole(INVENTORY_ROLES)).id;
   } catch {
     return denied();
   }
@@ -82,6 +84,16 @@ export async function adjustStock(
   });
   if (error) return { ok: false, error: adjustError(error.message) };
 
+  // The RPC writes the inventory movement row but not the audit trail, so record
+  // the staff action here. reason + delta only (the free-text note can be long).
+  await logAudit(supabase, {
+    actorId,
+    action: "inventory.adjust",
+    tableName: "product_variants",
+    recordId: variantId,
+    diff: { delta, reason },
+  });
+
   revalidatePath("/admin/inventory");
   return { ok: true };
 }
@@ -89,8 +101,9 @@ export async function adjustStock(
 export async function setThreshold(
   payload: unknown,
 ): Promise<InventoryActionResult> {
+  let actorId: string;
   try {
-    await requireRole(INVENTORY_ROLES);
+    actorId = (await requireRole(INVENTORY_ROLES)).id;
   } catch {
     return denied();
   }
@@ -112,6 +125,14 @@ export async function setThreshold(
     .maybeSingle();
   if (error) return { ok: false, error: "Could not save the threshold." };
   if (!data) return { ok: false, error: "This variant no longer exists." };
+
+  await logAudit(supabase, {
+    actorId,
+    action: "inventory.threshold",
+    tableName: "product_variants",
+    recordId: variantId,
+    diff: { low_stock_threshold: threshold },
+  });
 
   revalidatePath("/admin/inventory");
   return { ok: true };

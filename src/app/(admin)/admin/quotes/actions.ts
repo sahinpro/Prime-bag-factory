@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth";
 import type { Database } from "@/lib/database.types";
 import { createClient } from "@/lib/supabase/server";
+import { logAudit } from "@/server/audit";
 import {
   assignQuoteSchema,
   quoteDetailsSchema,
@@ -31,6 +32,7 @@ type QuoteUpdate = Database["public"]["Tables"]["quote_requests"]["Update"];
 async function updateQuote(
   id: string,
   patch: QuoteUpdate,
+  audit: { actorId: string; action: string },
 ): Promise<QuoteActionResult> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -41,6 +43,14 @@ async function updateQuote(
     .maybeSingle();
   if (error) return { ok: false, error: "Could not save the quote." };
   if (!data) return { ok: false, error: "Quote not found." };
+  // Diff lists the changed field names only — never the note text or contact PII.
+  await logAudit(supabase, {
+    actorId: audit.actorId,
+    action: audit.action,
+    tableName: "quote_requests",
+    recordId: id,
+    diff: { fields: Object.keys(patch) },
+  });
   revalidatePath("/admin/quotes");
   revalidatePath(`/admin/quotes/${id}`);
   return { ok: true };
@@ -49,37 +59,48 @@ async function updateQuote(
 export async function updateQuoteStatus(
   payload: unknown,
 ): Promise<QuoteActionResult> {
+  let actorId: string;
   try {
-    await requireRole(QUOTE_ROLES);
+    actorId = (await requireRole(QUOTE_ROLES)).id;
   } catch {
     return denied();
   }
   const parsed = updateQuoteStatusSchema.safeParse(payload);
   if (!parsed.success) return { ok: false, error: "Invalid status." };
-  return updateQuote(parsed.data.id, { status: parsed.data.status });
+  return updateQuote(
+    parsed.data.id,
+    { status: parsed.data.status },
+    { actorId, action: "quote.status" },
+  );
 }
 
 export async function assignQuote(
   payload: unknown,
 ): Promise<QuoteActionResult> {
+  let actorId: string;
   try {
-    await requireRole(QUOTE_ROLES);
+    actorId = (await requireRole(QUOTE_ROLES)).id;
   } catch {
     return denied();
   }
   const parsed = assignQuoteSchema.safeParse(payload);
   if (!parsed.success) return { ok: false, error: "Invalid assignee." };
-  return updateQuote(parsed.data.id, {
-    assigned_to:
-      parsed.data.assigned_to === "" ? null : parsed.data.assigned_to,
-  });
+  return updateQuote(
+    parsed.data.id,
+    {
+      assigned_to:
+        parsed.data.assigned_to === "" ? null : parsed.data.assigned_to,
+    },
+    { actorId, action: "quote.assign" },
+  );
 }
 
 export async function saveQuoteDetails(
   payload: unknown,
 ): Promise<QuoteActionResult> {
+  let actorId: string;
   try {
-    await requireRole(QUOTE_ROLES);
+    actorId = (await requireRole(QUOTE_ROLES)).id;
   } catch {
     return denied();
   }
@@ -91,9 +112,13 @@ export async function saveQuoteDetails(
     };
   }
   const { id, ...fields } = parsed.data;
-  return updateQuote(id, {
-    quoted_amount: fields.quoted_amount,
-    valid_until: fields.valid_until,
-    internal_notes: fields.internal_notes,
-  });
+  return updateQuote(
+    id,
+    {
+      quoted_amount: fields.quoted_amount,
+      valid_until: fields.valid_until,
+      internal_notes: fields.internal_notes,
+    },
+    { actorId, action: "quote.details" },
+  );
 }

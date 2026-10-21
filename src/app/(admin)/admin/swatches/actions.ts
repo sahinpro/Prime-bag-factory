@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { logAudit } from "@/server/audit";
 import {
   swatchGroupInputSchema,
   swatchGroupUpdateSchema,
@@ -47,8 +48,9 @@ async function countSwatchReferences(
 export async function saveSwatchGroup(
   payload: SwatchGroupInput & { id?: string },
 ): Promise<SwatchActionResult> {
+  let actorId: string;
   try {
-    await requireRole(CATALOG_ROLES);
+    actorId = (await requireRole(CATALOG_ROLES)).id;
   } catch {
     return { ok: false, error: "You are not authorized to manage swatches." };
   }
@@ -86,6 +88,13 @@ export async function saveSwatchGroup(
       .select("id")
       .maybeSingle();
     if (error) return { ok: false, error: "Could not save the group." };
+    await logAudit(supabase, {
+      actorId,
+      action: "swatch_group.update",
+      tableName: "swatch_groups",
+      recordId: payload.id,
+      diff: { key: input.key, sort_order: input.sort_order },
+    });
     revalidatePath("/admin/swatches");
     return { ok: true, id: data?.id };
   }
@@ -96,6 +105,13 @@ export async function saveSwatchGroup(
     .select("id")
     .single();
   if (error) return { ok: false, error: "Could not create the group." };
+  await logAudit(supabase, {
+    actorId,
+    action: "swatch_group.create",
+    tableName: "swatch_groups",
+    recordId: data.id,
+    diff: { key: input.key },
+  });
   revalidatePath("/admin/swatches");
   return { ok: true, id: data.id };
 }
@@ -106,8 +122,9 @@ export async function deleteSwatchGroup(
   if (!swatchGroupUpdateSchema.shape.id.safeParse(id).success) {
     return { ok: false, error: "Invalid group." };
   }
+  let actorId: string;
   try {
-    await requireRole(CATALOG_ROLES);
+    actorId = (await requireRole(CATALOG_ROLES)).id;
   } catch {
     return { ok: false, error: "You are not authorized to manage swatches." };
   }
@@ -131,6 +148,12 @@ export async function deleteSwatchGroup(
   // `swatches.group_id` cascades, so the group's swatches go with it.
   const { error } = await supabase.from("swatch_groups").delete().eq("id", id);
   if (error) return { ok: false, error: "Could not delete the group." };
+  await logAudit(supabase, {
+    actorId,
+    action: "swatch_group.delete",
+    tableName: "swatch_groups",
+    recordId: id,
+  });
   revalidatePath("/admin/swatches");
   return { ok: true };
 }
@@ -140,8 +163,9 @@ export async function deleteSwatchGroup(
 export async function saveSwatch(
   payload: SwatchInput & { id?: string },
 ): Promise<SwatchActionResult> {
+  let actorId: string;
   try {
-    await requireRole(CATALOG_ROLES);
+    actorId = (await requireRole(CATALOG_ROLES)).id;
   } catch {
     return { ok: false, error: "You are not authorized to manage swatches." };
   }
@@ -172,6 +196,13 @@ export async function saveSwatch(
       .select("id")
       .maybeSingle();
     if (error) return { ok: false, error: "Could not save the swatch." };
+    await logAudit(supabase, {
+      actorId,
+      action: "swatch.update",
+      tableName: "swatches",
+      recordId: payload.id,
+      diff: { group_id: input.group_id, code: input.code ?? null, is_active: input.is_active },
+    });
     revalidatePath("/admin/swatches");
     return { ok: true, id: data?.id };
   }
@@ -182,6 +213,13 @@ export async function saveSwatch(
     .select("id")
     .single();
   if (error) return { ok: false, error: "Could not create the swatch." };
+  await logAudit(supabase, {
+    actorId,
+    action: "swatch.create",
+    tableName: "swatches",
+    recordId: data.id,
+    diff: { group_id: input.group_id, code: input.code ?? null },
+  });
   revalidatePath("/admin/swatches");
   return { ok: true, id: data.id };
 }
@@ -190,8 +228,9 @@ export async function deleteSwatch(id: string): Promise<SwatchActionResult> {
   if (!swatchUpdateSchema.shape.id.safeParse(id).success) {
     return { ok: false, error: "Invalid swatch." };
   }
+  let actorId: string;
   try {
-    await requireRole(CATALOG_ROLES);
+    actorId = (await requireRole(CATALOG_ROLES)).id;
   } catch {
     return { ok: false, error: "You are not authorized to manage swatches." };
   }
@@ -208,6 +247,12 @@ export async function deleteSwatch(id: string): Promise<SwatchActionResult> {
 
   const { error } = await supabase.from("swatches").delete().eq("id", id);
   if (error) return { ok: false, error: "Could not delete the swatch." };
+  await logAudit(supabase, {
+    actorId,
+    action: "swatch.delete",
+    tableName: "swatches",
+    recordId: id,
+  });
   revalidatePath("/admin/swatches");
   return { ok: true };
 }
