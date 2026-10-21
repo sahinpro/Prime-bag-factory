@@ -1,9 +1,12 @@
 import { cronAuthorized, deliverPendingEmails } from "@/server/notifications";
 
 /**
- * Plan 15.2 C1 — scheduled outbox sender. Vercel Cron calls GET on the
- * schedule in `vercel.json` and, when `CRON_SECRET` is set, sends
- * `Authorization: Bearer <secret>`. Missing or wrong secret is a 401.
+ * Plan 15.2 C1 — scheduled outbox sender. A pg_cron job (every 5 minutes,
+ * scheduled in migration `202610210002_c2_notification_cron`) fires this GET
+ * through pg_net with `Authorization: Bearer <CRON_SECRET>`; the secret lives
+ * in `settings.notification_cron` and must match this deployment's
+ * `CRON_SECRET`. (Vercel Cron was dropped — the Hobby plan forbids a schedule
+ * that runs more than once a day.) Missing or wrong secret is a 401.
  * The route never sends mail itself; it only runs the outbox worker.
  */
 export async function GET(request: Request) {
