@@ -308,7 +308,8 @@ export async function findConvertedOrderId(
     .select("id")
     .eq("source_quote_id", quoteId)
     .maybeSingle();
-  if (error) throw new Error("Failed to load the linked order.", { cause: error });
+  if (error)
+    throw new Error("Failed to load the linked order.", { cause: error });
   return data ? String(data.id) : null;
 }
 

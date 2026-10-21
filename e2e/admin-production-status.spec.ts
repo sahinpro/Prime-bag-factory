@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
-import { createClient } from "@supabase/supabase-js";
 import { expect, test, type Page } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
 
 /**
  * Production status + artwork approval (plan §15.2 F2). Seeds a linked bulk
@@ -141,10 +141,7 @@ test("a production move stores the status, writes audit and notifies", async ({
   }
 });
 
-async function cleanup(
-  db: ReturnType<typeof adminDb>,
-  orderId: string,
-) {
+async function cleanup(db: ReturnType<typeof adminDb>, orderId: string) {
   await db
     .from("notifications")
     .delete()
@@ -158,9 +155,6 @@ async function cleanup(
     .single();
   await db.from("orders").delete().eq("id", orderId);
   if (order?.source_quote_id) {
-    await db
-      .from("quote_requests")
-      .delete()
-      .eq("id", order.source_quote_id);
+    await db.from("quote_requests").delete().eq("id", order.source_quote_id);
   }
 }

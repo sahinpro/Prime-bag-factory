@@ -514,7 +514,9 @@ export type Database = {
           status: Database["public"]["Enums"]["order_status"];
           payment_method: Database["public"]["Enums"]["payment_method"];
           payment_status: Database["public"]["Enums"]["payment_status"];
-          production_status: Database["public"]["Enums"]["production_status"] | null;
+          production_status:
+            | Database["public"]["Enums"]["production_status"]
+            | null;
           idempotency_key: string | null;
           courier_name: string | null;
           tracking_code: string | null;
@@ -548,7 +550,9 @@ export type Database = {
           status?: Database["public"]["Enums"]["order_status"];
           payment_method?: Database["public"]["Enums"]["payment_method"];
           payment_status?: Database["public"]["Enums"]["payment_status"];
-          production_status?: Database["public"]["Enums"]["production_status"] | null;
+          production_status?:
+            | Database["public"]["Enums"]["production_status"]
+            | null;
           idempotency_key?: string | null;
           courier_name?: string | null;
           tracking_code?: string | null;
@@ -582,7 +586,9 @@ export type Database = {
           status?: Database["public"]["Enums"]["order_status"];
           payment_method?: Database["public"]["Enums"]["payment_method"];
           payment_status?: Database["public"]["Enums"]["payment_status"];
-          production_status?: Database["public"]["Enums"]["production_status"] | null;
+          production_status?:
+            | Database["public"]["Enums"]["production_status"]
+            | null;
           idempotency_key?: string | null;
           courier_name?: string | null;
           tracking_code?: string | null;
@@ -1564,6 +1570,10 @@ export type Database = {
       claim_pending_emails: {
         Args: { p_limit?: number };
         Returns: Database["public"]["Tables"]["notifications"]["Row"][];
+      };
+      reorder_categories: {
+        Args: { p_parent_id: string | null; p_ordered_ids: string[] };
+        Returns: void;
       };
     };
     Enums: {

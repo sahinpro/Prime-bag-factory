@@ -6,12 +6,12 @@ import { requireRole } from "@/lib/auth";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { slugify } from "@/lib/slug";
 import { createClient } from "@/lib/supabase/server";
-import { logAudit } from "@/server/audit";
 import {
   collectionInputSchema,
   collectionUpdateSchema,
   type CollectionInput,
 } from "@/lib/validators/collection";
+import { logAudit } from "@/server/audit";
 
 const CATALOG_ROLES = ["owner", "manager"] as const;
 
@@ -95,7 +95,7 @@ export async function saveCollection(
       diff: { slug, is_active: input.is_active },
     });
     revalidatePath("/admin/collections");
-      revalidateTag(CACHE_TAGS.catalog, "max");
+    revalidateTag(CACHE_TAGS.catalog, "max");
     return { ok: true, id: data?.id };
   }
 
@@ -117,7 +117,7 @@ export async function saveCollection(
     diff: { slug, is_active: input.is_active },
   });
   revalidatePath("/admin/collections");
-    revalidateTag(CACHE_TAGS.catalog, "max");
+  revalidateTag(CACHE_TAGS.catalog, "max");
   return { ok: true, id: data.id };
 }
 
@@ -159,6 +159,6 @@ export async function deleteCollection(
   });
 
   revalidatePath("/admin/collections");
-    revalidateTag(CACHE_TAGS.catalog, "max");
+  revalidateTag(CACHE_TAGS.catalog, "max");
   return { ok: true };
 }

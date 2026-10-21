@@ -49,7 +49,9 @@ export const categoryUpdateSchema = categoryInputSchema.extend({
 });
 
 export const categoryReorderSchema = z.object({
-  // Ordered list of ids; the index becomes `sort_order`.
+  // The sibling group being reordered (null = top level) and the new order of
+  // that group's ids. The RPC renumbers `sort_order` 0..n-1 within the group.
+  parentId: z.guid().nullable(),
   orderedIds: z.array(z.guid()).min(1),
 });
 

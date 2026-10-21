@@ -1,5 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
 import { expect, test, type Page } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
 
 /**
  * Sidebar count badges (plan §15.2 C3). The protected layout feeds

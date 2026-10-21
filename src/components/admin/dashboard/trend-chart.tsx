@@ -29,14 +29,12 @@ export function TrendChart({
       <div
         className="flex min-h-0 flex-1 items-end gap-px"
         role="img"
-        aria-label={
-          values
-            .map(
-              (v, i) =>
-                `${daysAgoLabel(values.length - 1 - i)}: ${formatValue(v)}`,
-            )
-            .join(", ")
-        }
+        aria-label={values
+          .map(
+            (v, i) =>
+              `${daysAgoLabel(values.length - 1 - i)}: ${formatValue(v)}`,
+          )
+          .join(", ")}
       >
         {values.map((v, i) => (
           <div

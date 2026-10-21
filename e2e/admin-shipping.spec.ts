@@ -1,5 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
 import { expect, test, type Page } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
 
 /**
  * Shipping zones admin (plan §9 / 15.2 E2): the DataTable + side Sheet editor for

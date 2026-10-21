@@ -4,10 +4,10 @@ import { timingSafeEqual } from "node:crypto";
 
 import { Resend } from "resend";
 
+import type { Json } from "@/lib/database.types";
 import { formatMoney } from "@/lib/format";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import type { Json } from "@/lib/database.types";
 
 // Notifications outbox (plan §3b and 15.2 C1).
 //
@@ -61,7 +61,10 @@ function shortRef(id: string): string {
 }
 
 function oneLine(value: string): string {
-  return value.replace(/[\r\n]+/g, " ").trim().slice(0, 120);
+  return value
+    .replace(/[\r\n]+/g, " ")
+    .trim()
+    .slice(0, 120);
 }
 
 /** Company identity for the email body/recipient, read with the service role

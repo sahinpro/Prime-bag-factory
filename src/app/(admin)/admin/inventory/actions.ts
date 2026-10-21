@@ -5,11 +5,11 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { requireRole } from "@/lib/auth";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { createClient } from "@/lib/supabase/server";
-import { logAudit } from "@/server/audit";
 import {
   adjustStockSchema,
   setThresholdSchema,
 } from "@/lib/validators/inventory";
+import { logAudit } from "@/server/audit";
 import { listMovements, type MovementRow } from "@/server/inventory";
 
 /**
@@ -23,9 +23,7 @@ import { listMovements, type MovementRow } from "@/server/inventory";
 
 const INVENTORY_ROLES = ["owner", "manager", "inventory"] as const;
 
-export type InventoryActionResult =
-  | { ok: true }
-  | { ok: false; error: string };
+export type InventoryActionResult = { ok: true } | { ok: false; error: string };
 
 const NOT_ALLOWED = "You are not authorized to manage inventory.";
 
@@ -70,8 +68,7 @@ export async function adjustStock(
   if (!parsed.success) {
     return {
       ok: false,
-      error:
-        parsed.error.issues[0]?.message ?? "The adjustment is not valid.",
+      error: parsed.error.issues[0]?.message ?? "The adjustment is not valid.",
     };
   }
   const { variantId, delta, reason, note } = parsed.data;
@@ -96,8 +93,8 @@ export async function adjustStock(
   });
 
   revalidatePath("/admin/inventory");
-    revalidateTag(CACHE_TAGS.catalog, "max");
-    revalidateTag(CACHE_TAGS.adminCounts, "max");
+  revalidateTag(CACHE_TAGS.catalog, "max");
+  revalidateTag(CACHE_TAGS.adminCounts, "max");
   return { ok: true };
 }
 
@@ -138,8 +135,8 @@ export async function setThreshold(
   });
 
   revalidatePath("/admin/inventory");
-    revalidateTag(CACHE_TAGS.catalog, "max");
-    revalidateTag(CACHE_TAGS.adminCounts, "max");
+  revalidateTag(CACHE_TAGS.catalog, "max");
+  revalidateTag(CACHE_TAGS.adminCounts, "max");
   return { ok: true };
 }
 

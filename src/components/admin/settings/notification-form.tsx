@@ -5,11 +5,11 @@ import * as React from "react";
 
 import { saveNotificationCron } from "@/app/(admin)/admin/settings/actions";
 import { FormSection } from "@/components/admin/forms/form-section";
+import { StickySaveBar } from "@/components/admin/forms/sticky-save-bar";
 import {
   FlashLine,
   useActionSave,
 } from "@/components/admin/products/use-action-save";
-import { StickySaveBar } from "@/components/admin/forms/sticky-save-bar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,7 +40,10 @@ export function NotificationForm({
   }
 
   function handleSave() {
-    return run(() => saveNotificationCron(form), "Notification settings saved.");
+    return run(
+      () => saveNotificationCron(form),
+      "Notification settings saved.",
+    );
   }
 
   return (
@@ -90,7 +93,11 @@ export function NotificationForm({
               onClick={() => setReveal((v) => !v)}
             >
               {reveal ? (
-                <EyeOff aria-hidden="true" strokeWidth={1.75} className="size-4" />
+                <EyeOff
+                  aria-hidden="true"
+                  strokeWidth={1.75}
+                  className="size-4"
+                />
               ) : (
                 <Eye aria-hidden="true" strokeWidth={1.75} className="size-4" />
               )}

@@ -47,9 +47,9 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { formatDate, formatMoney, formatNumber } from "@/lib/format";
 import {
+  allowedProductionMoves,
   PAYMENT_METHOD_LABELS,
   PAYMENT_METHODS,
-  allowedProductionMoves,
   type OrderStatus,
   type PaymentMethod,
   type ProductionStatus,
@@ -659,10 +659,7 @@ export function OrderDetail({ order }: Readonly<{ order: AdminOrder }>) {
                   sheet.
                 </p>
               )}
-              <ol
-                className="space-y-1.5"
-                aria-label="Production pipeline"
-              >
+              <ol className="space-y-1.5" aria-label="Production pipeline">
                 {productionMoves.map((value) => (
                   <li key={value}>
                     <Button

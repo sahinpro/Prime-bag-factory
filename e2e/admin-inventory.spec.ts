@@ -1,6 +1,6 @@
+import { expect, test, type Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import fs from "node:fs";
-import { expect, test, type Page } from "@playwright/test";
 
 /**
  * Inventory admin (plan §9 Inventory / 15.2 E1): the variant ledger list with
@@ -65,10 +65,7 @@ async function seedVariant() {
 }
 
 /** Open the list, wait for hydration to settle, search for `term`. */
-async function gotoInventory(
-  page: Page,
-  term?: string,
-): Promise<boolean> {
+async function gotoInventory(page: Page, term?: string): Promise<boolean> {
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto("/admin/inventory");
   if (page.url().includes("/admin/login")) return false;
@@ -230,8 +227,6 @@ test("nav shows the un-hidden Inventory link and still hides unbuilt pages (C4)"
   // Settings shipped with the Settings track and is now linked; only these
   // remain unbuilt and hidden.
   for (const unbuilt of ["Users", "Audit log"]) {
-    await expect(
-      sidebar.getByRole("link", { name: unbuilt }),
-    ).toHaveCount(0);
+    await expect(sidebar.getByRole("link", { name: unbuilt })).toHaveCount(0);
   }
 });

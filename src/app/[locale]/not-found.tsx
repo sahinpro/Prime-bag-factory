@@ -17,9 +17,7 @@ export default async function LocaleNotFound() {
         <Compass aria-hidden="true" strokeWidth={1.75} className="size-6" />
       </span>
       <div className="space-y-2">
-        <h1 className="text-2xl font-semibold text-foreground">
-          {t("title")}
-        </h1>
+        <h1 className="text-2xl font-semibold text-foreground">{t("title")}</h1>
         <p className="mx-auto max-w-md text-base text-muted-foreground">
           {t("description")}
         </p>

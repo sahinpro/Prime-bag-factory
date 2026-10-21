@@ -1,6 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
 
 /**
  * Admin Settings (plan §9 / order-of-work step 9): the company-profile and
@@ -93,7 +93,7 @@ test("a company profile edit round-trips to the settings row", async ({
       .select("id", { count: "exact", head: true })
       .eq("action", "settings.company");
     expect(count).not.toBeNull();
-    expect(count! ).toBeGreaterThan(0);
+    expect(count!).toBeGreaterThan(0);
   } finally {
     await db
       .from("settings")

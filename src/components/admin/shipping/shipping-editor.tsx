@@ -82,7 +82,8 @@ export function ShippingZoneEditor({
       name_en: form.name_en,
       name_bn: form.name_bn || undefined,
       fee: Number(form.fee) || 0,
-      free_over: form.free_over.trim() === "" ? undefined : Number(form.free_over),
+      free_over:
+        form.free_over.trim() === "" ? undefined : Number(form.free_over),
       is_active: form.is_active,
     };
   }
@@ -103,7 +104,9 @@ export function ShippingZoneEditor({
         aria-describedby={undefined}
       >
         <SheetHeader className="border-b border-border">
-          <SheetTitle>{zone ? "Edit shipping zone" : "New shipping zone"}</SheetTitle>
+          <SheetTitle>
+            {zone ? "Edit shipping zone" : "New shipping zone"}
+          </SheetTitle>
           <SheetDescription>
             Zones set the delivery fee at checkout. The fee is charged from the
             server, never from the browser.
@@ -144,7 +147,9 @@ export function ShippingZoneEditor({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="shipping-free-over">Free over (BDT, optional)</Label>
+                <Label htmlFor="shipping-free-over">
+                  Free over (BDT, optional)
+                </Label>
                 <Input
                   id="shipping-free-over"
                   type="number"
@@ -163,7 +168,10 @@ export function ShippingZoneEditor({
             </p>
           </FormSection>
 
-          <FormSection title="Availability" description="Show this zone at checkout.">
+          <FormSection
+            title="Availability"
+            description="Show this zone at checkout."
+          >
             <div className="flex items-center justify-between gap-3 rounded-control border border-sidebar-border bg-surface-2 px-3 py-2">
               <Label htmlFor="shipping-active" className="text-sm">
                 Active
@@ -189,7 +197,8 @@ export function ShippingZoneEditor({
                   Delete this zone
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Zones used by past orders cannot be deleted — deactivate instead.
+                  Zones used by past orders cannot be deleted — deactivate
+                  instead.
                 </p>
               </div>
               <ConfirmDialog
@@ -203,7 +212,11 @@ export function ShippingZoneEditor({
                     size="sm"
                     className="text-destructive hover:text-destructive"
                   >
-                    <Trash aria-hidden="true" strokeWidth={1.75} className="size-4" />
+                    <Trash
+                      aria-hidden="true"
+                      strokeWidth={1.75}
+                      className="size-4"
+                    />
                     Delete
                   </Button>
                 }

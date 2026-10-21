@@ -2,8 +2,8 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 
 import type { DataTableQuery } from "@/components/admin/data/data-table";
-import { ShippingManager } from "@/components/admin/shipping/shipping-table";
 import { PageHeader } from "@/components/admin/shell/page-header";
+import { ShippingManager } from "@/components/admin/shipping/shipping-table";
 import { getAdminUser } from "@/lib/auth";
 import { listAdminShippingZones } from "@/server/shipping";
 

@@ -100,7 +100,11 @@ function DashboardBody({
   const rangeLabel = `last ${data.days} days`;
   const totalPipeline = data.pipeline.reduce((sum, s) => sum + s.value, 0);
   const salesDaysAgo = (daysAgo: number) =>
-    daysAgo === 0 ? "Today" : daysAgo === 1 ? "Yesterday" : `${daysAgo} days ago`;
+    daysAgo === 0
+      ? "Today"
+      : daysAgo === 1
+        ? "Yesterday"
+        : `${daysAgo} days ago`;
   const money = (n: number) => formatMoney(n, "en");
 
   return (

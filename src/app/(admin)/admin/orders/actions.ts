@@ -161,7 +161,8 @@ export async function setProductionStatus(
     return denied();
   }
   const parsed = setProductionStatusSchema.safeParse(payload);
-  if (!parsed.success) return { ok: false, error: "Invalid production status." };
+  if (!parsed.success)
+    return { ok: false, error: "Invalid production status." };
   const { id, status } = parsed.data;
   const result = await callFulfilmentRpc(
     {
@@ -252,7 +253,10 @@ export async function saveShippingDetails(
     action: "order.shipping",
     tableName: "orders",
     recordId: id,
-    diff: { courier_name: fields.courier_name, tracking_code: fields.tracking_code },
+    diff: {
+      courier_name: fields.courier_name,
+      tracking_code: fields.tracking_code,
+    },
   });
   revalidate(id);
   return { ok: true };

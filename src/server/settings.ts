@@ -58,9 +58,7 @@ export type AdminSettings = {
   notificationCron: NotificationCron;
 };
 
-async function readSetting(
-  key: string,
-): Promise<Record<string, unknown>> {
+async function readSetting(key: string): Promise<Record<string, unknown>> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("settings")
@@ -71,9 +69,7 @@ async function readSetting(
 }
 
 function str(value: unknown): string | null {
-  return typeof value === "string" && value.trim() !== ""
-    ? value.trim()
-    : null;
+  return typeof value === "string" && value.trim() !== "" ? value.trim() : null;
 }
 
 /** The full editable settings snapshot for the admin page. */

@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
-import { createClient } from "@supabase/supabase-js";
 import { expect, test, type Page } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
 
 /**
  * Quote → bulk order conversion (plan §15.2 F1). Seeds a priced quote on the
@@ -97,13 +97,13 @@ test("converting a priced quote creates a linked bulk order and marks it won", a
     await expect(dialog).toContainText("1,000");
 
     await dialog.getByRole("button", { name: "Create order" }).click();
-    await page.waitForURL(/\/admin\/orders\/[0-9a-f-]{36}/, { timeout: 15_000 });
+    await page.waitForURL(/\/admin\/orders\/[0-9a-f-]{36}/, {
+      timeout: 15_000,
+    });
     orderId = new URL(page.url()).pathname.split("/").pop()!;
 
     // The order landed on the detail page.
-    await expect(
-      page.getByRole("heading", { level: 1 }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
     const { data: order } = await db
       .from("orders")
@@ -133,7 +133,11 @@ test("converting a priced quote creates a linked bulk order and marks it won", a
     expect(count).toBe(1);
   } finally {
     if (orderId) {
-      await db.from("notifications").delete().eq("template", "new_order").contains("payload", { order_id: orderId });
+      await db
+        .from("notifications")
+        .delete()
+        .eq("template", "new_order")
+        .contains("payload", { order_id: orderId });
       await db.from("audit_logs").delete().eq("record_id", orderId);
       await db.from("orders").delete().eq("id", orderId);
     }

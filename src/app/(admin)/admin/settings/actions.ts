@@ -77,7 +77,11 @@ export async function saveCompany(
     recordId: saved.id,
     // Which fields are populated — no email/phone value beyond the company
     // identity itself, and never any credential.
-    diff: { fields: Object.keys(value).filter((k) => value[k as keyof typeof value] != null) },
+    diff: {
+      fields: Object.keys(value).filter(
+        (k) => value[k as keyof typeof value] != null,
+      ),
+    },
   });
   revalidatePath("/admin/settings");
   revalidatePath("/admin", "layout");

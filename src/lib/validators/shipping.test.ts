@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  shippingZoneInputSchema,
-  shippingZoneUpdateSchema,
-} from "./shipping";
+import { shippingZoneInputSchema, shippingZoneUpdateSchema } from "./shipping";
 
 /**
  * Shipping zone validators (plan 15.2 E2). They mirror the DB contract on

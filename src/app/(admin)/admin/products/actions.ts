@@ -7,7 +7,6 @@ import { CACHE_TAGS } from "@/lib/cache-tags";
 import type { Database } from "@/lib/database.types";
 import { slugify } from "@/lib/slug";
 import { createClient } from "@/lib/supabase/server";
-import { logAudit } from "@/server/audit";
 import {
   bulkStatusSchema,
   productCreateSchema,
@@ -28,6 +27,7 @@ import {
   type ProductSeoInput,
   type VariantInput,
 } from "@/lib/validators/product";
+import { logAudit } from "@/server/audit";
 
 /**
  * Server actions for the Products module (plan 9c.8, AGENTS working rule 6 and

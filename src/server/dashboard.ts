@@ -279,10 +279,7 @@ export async function getDashboardData(range: Range): Promise<DashboardData> {
       salesTotal += amount;
       const ageDays = Math.min(
         days - 1,
-        Math.max(
-          0,
-          Math.floor((Date.now() - created.getTime()) / 86_400_000),
-        ),
+        Math.max(0, Math.floor((Date.now() - created.getTime()) / 86_400_000)),
       );
       salesSpark[days - 1 - ageDays] += amount;
     } else if (created >= priorStart) {
@@ -290,7 +287,9 @@ export async function getDashboardData(range: Range): Promise<DashboardData> {
     }
   }
   const salesDeltaPct =
-    priorSales > 0 ? Math.round(((salesTotal - priorSales) / priorSales) * 100) : null;
+    priorSales > 0
+      ? Math.round(((salesTotal - priorSales) / priorSales) * 100)
+      : null;
 
   // Current pending queue is a live state, not a windowed event count.
   const { count: pendingCount, error: pendingErr } = await supabase

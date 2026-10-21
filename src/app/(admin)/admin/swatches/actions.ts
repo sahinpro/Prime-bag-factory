@@ -5,7 +5,6 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { requireRole } from "@/lib/auth";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { createClient } from "@/lib/supabase/server";
-import { logAudit } from "@/server/audit";
 import {
   swatchGroupInputSchema,
   swatchGroupUpdateSchema,
@@ -14,6 +13,7 @@ import {
   type SwatchGroupInput,
   type SwatchInput,
 } from "@/lib/validators/swatch";
+import { logAudit } from "@/server/audit";
 
 const CATALOG_ROLES = ["owner", "manager"] as const;
 
@@ -97,7 +97,7 @@ export async function saveSwatchGroup(
       diff: { key: input.key, sort_order: input.sort_order },
     });
     revalidatePath("/admin/swatches");
-      revalidateTag(CACHE_TAGS.catalog, "max");
+    revalidateTag(CACHE_TAGS.catalog, "max");
     return { ok: true, id: data?.id };
   }
 
@@ -115,7 +115,7 @@ export async function saveSwatchGroup(
     diff: { key: input.key },
   });
   revalidatePath("/admin/swatches");
-    revalidateTag(CACHE_TAGS.catalog, "max");
+  revalidateTag(CACHE_TAGS.catalog, "max");
   return { ok: true, id: data.id };
 }
 
@@ -158,7 +158,7 @@ export async function deleteSwatchGroup(
     recordId: id,
   });
   revalidatePath("/admin/swatches");
-    revalidateTag(CACHE_TAGS.catalog, "max");
+  revalidateTag(CACHE_TAGS.catalog, "max");
   return { ok: true };
 }
 
@@ -205,10 +205,14 @@ export async function saveSwatch(
       action: "swatch.update",
       tableName: "swatches",
       recordId: payload.id,
-      diff: { group_id: input.group_id, code: input.code ?? null, is_active: input.is_active },
+      diff: {
+        group_id: input.group_id,
+        code: input.code ?? null,
+        is_active: input.is_active,
+      },
     });
     revalidatePath("/admin/swatches");
-      revalidateTag(CACHE_TAGS.catalog, "max");
+    revalidateTag(CACHE_TAGS.catalog, "max");
     return { ok: true, id: data?.id };
   }
 
@@ -226,7 +230,7 @@ export async function saveSwatch(
     diff: { group_id: input.group_id, code: input.code ?? null },
   });
   revalidatePath("/admin/swatches");
-    revalidateTag(CACHE_TAGS.catalog, "max");
+  revalidateTag(CACHE_TAGS.catalog, "max");
   return { ok: true, id: data.id };
 }
 
@@ -260,6 +264,6 @@ export async function deleteSwatch(id: string): Promise<SwatchActionResult> {
     recordId: id,
   });
   revalidatePath("/admin/swatches");
-    revalidateTag(CACHE_TAGS.catalog, "max");
+  revalidateTag(CACHE_TAGS.catalog, "max");
   return { ok: true };
 }

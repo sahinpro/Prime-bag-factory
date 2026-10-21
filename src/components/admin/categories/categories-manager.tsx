@@ -11,8 +11,9 @@ import {
 } from "@/app/(admin)/admin/categories/actions";
 import { CategoryEditor } from "@/components/admin/categories/category-editor";
 import {
+  buildCategoryTree,
   CategoryTree,
-  type FlatCategory,
+  type ParentKey,
 } from "@/components/admin/categories/category-tree";
 import { PageHeader } from "@/components/admin/shell/page-header";
 import { Button } from "@/components/ui/button";
@@ -22,38 +23,24 @@ import type { AdminCategory } from "@/server/categories";
 
 type Flash = { kind: "error" | "success"; text: string } | null;
 
-/** Depth-first flatten that respects `sort_order` and assigns an indent depth. */
-function buildFlatTree(categories: AdminCategory[]): FlatCategory[] {
-  const childrenOf = new Map<string | null, AdminCategory[]>();
-  for (const c of categories) {
-    const key = c.parent_id ?? null;
-    const bucket = childrenOf.get(key) ?? [];
-    bucket.push(c);
-    childrenOf.set(key, bucket);
-  }
+type ReorderAction = { parentId: ParentKey; orderedIds: string[] };
 
-  const out: FlatCategory[] = [];
-  const visited = new Set<string>();
-
-  function walk(parentKey: string | null, depth: number) {
-    for (const category of childrenOf.get(parentKey) ?? []) {
-      if (visited.has(category.id)) continue;
-      visited.add(category.id);
-      out.push({ category, depth });
-      walk(category.id, depth + 1);
-    }
-  }
-
-  walk(null, 0);
-
-  // Any rows whose parent is missing (defensive) are appended at the top level.
-  for (const category of categories) {
-    if (!visited.has(category.id)) {
-      visited.add(category.id);
-      out.push({ category, depth: 0 });
-    }
-  }
-  return out;
+/**
+ * Reassign `sort_order` (0..n-1) to the moved sibling group only, leaving every
+ * other row untouched. `buildCategoryTree` sorts each group by `sort_order`, so
+ * this makes the optimistic order appear instantly in the nested tree.
+ */
+function applyReorderToCategories(
+  categories: AdminCategory[],
+  { parentId, orderedIds }: ReorderAction,
+): AdminCategory[] {
+  const rank = new Map(orderedIds.map((id, index) => [id, index]));
+  return categories.map((c) => {
+    const next = rank.get(c.id);
+    if (next === undefined) return c;
+    if ((c.parent_id ?? null) !== parentId) return c;
+    return c.sort_order === next ? c : { ...c, sort_order: next };
+  });
 }
 
 function collectDescendants(
@@ -91,7 +78,17 @@ export function CategoriesManager({
   categories,
 }: Readonly<{ categories: AdminCategory[] }>) {
   const router = useRouter();
-  const flat = React.useMemo(() => buildFlatTree(categories), [categories]);
+  // Optimistic reorder: the tree moves instantly, then `router.refresh()` swaps
+  // in authoritative rows. On action failure we show a flash and the transition
+  // unwinds back to the last server state.
+  const [optimisticCategories, applyReorder] = React.useOptimistic(
+    categories,
+    applyReorderToCategories,
+  );
+  const tree = React.useMemo(
+    () => buildCategoryTree(optimisticCategories),
+    [optimisticCategories],
+  );
 
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [creating, setCreating] = React.useState(false);
@@ -139,9 +136,15 @@ export function CategoriesManager({
     router.refresh();
   }
 
-  function handleReorder(orderedIds: string[]) {
-    void reorderCategories(orderedIds).then((result) => {
-      if (!result.ok) setFlash({ kind: "error", text: result.error });
+  function handleReorder(parentId: ParentKey, orderedIds: string[]) {
+    setFlash(null);
+    React.startTransition(async () => {
+      applyReorder({ parentId, orderedIds });
+      const result = await reorderCategories(parentId, orderedIds);
+      if (!result.ok) {
+        setFlash({ kind: "error", text: result.error });
+        return;
+      }
       router.refresh();
     });
   }
@@ -186,7 +189,7 @@ export function CategoriesManager({
         <Card className="rounded-card py-0 lg:col-span-1">
           <CardContent className="px-2 py-2">
             <CategoryTree
-              nodes={flat}
+              nodes={tree}
               selectedId={creating ? null : activeId}
               onSelect={(id) => {
                 setCreating(false);
@@ -203,7 +206,7 @@ export function CategoriesManager({
               <CategoryEditor
                 key="new"
                 parentOptions={parentOptions}
-                initialSortOrder={flat.length}
+                initialSortOrder={categories.length}
                 onSave={handleSave}
               />
             ) : selected ? (

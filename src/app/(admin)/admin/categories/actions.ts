@@ -6,13 +6,13 @@ import { requireRole } from "@/lib/auth";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { slugify } from "@/lib/slug";
 import { createClient } from "@/lib/supabase/server";
-import { logAudit } from "@/server/audit";
 import {
   categoryInputSchema,
   categoryReorderSchema,
   categoryUpdateSchema,
   type CategoryInput,
 } from "@/lib/validators/category";
+import { logAudit } from "@/server/audit";
 
 const CATALOG_ROLES = ["owner", "manager"] as const;
 
@@ -95,10 +95,14 @@ export async function saveCategory(
       action: "category.update",
       tableName: "categories",
       recordId: input.id,
-      diff: { slug, is_active: input.is_active, parent_id: input.parent_id ?? null },
+      diff: {
+        slug,
+        is_active: input.is_active,
+        parent_id: input.parent_id ?? null,
+      },
     });
     revalidatePath("/admin/categories");
-      revalidateTag(CACHE_TAGS.catalog, "max");
+    revalidateTag(CACHE_TAGS.catalog, "max");
     return { ok: true, id: data?.id };
   }
 
@@ -120,7 +124,7 @@ export async function saveCategory(
     diff: { slug, is_active: input.is_active },
   });
   revalidatePath("/admin/categories");
-    revalidateTag(CACHE_TAGS.catalog, "max");
+  revalidateTag(CACHE_TAGS.catalog, "max");
   return { ok: true, id: data.id };
 }
 
@@ -168,14 +172,33 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
   });
 
   revalidatePath("/admin/categories");
-    revalidateTag(CACHE_TAGS.catalog, "max");
+  revalidateTag(CACHE_TAGS.catalog, "max");
   return { ok: true };
 }
 
+/** Translate the RPC's short, stable codes into staff prose. */
+function reorderError(message: string): string {
+  const code = message.trim().split(/\s+/)[0] ?? "";
+  switch (code) {
+    case "not_allowed":
+      return "You are not authorized to manage categories.";
+    case "invalid_group":
+      return "Categories can only be reordered among their siblings. Change a category's parent in the form instead.";
+    case "duplicate_id":
+      return "The new order contained a duplicate category.";
+    default:
+      if (message.includes("reorder_categories")) {
+        return "The reorder database function is missing. Apply supabase/migrations/202610210006_categories_reorder_rpc.sql first.";
+      }
+      return "Could not save the new order.";
+  }
+}
+
 export async function reorderCategories(
+  parentId: string | null,
   orderedIds: string[],
 ): Promise<ActionResult> {
-  const parsed = categoryReorderSchema.safeParse({ orderedIds });
+  const parsed = categoryReorderSchema.safeParse({ parentId, orderedIds });
   if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
   let actorId: string;
   try {
@@ -185,39 +208,24 @@ export async function reorderCategories(
   }
 
   const supabase = await createClient();
-
-  // `sort_order` is only compared between siblings, so number each category by
-  // its position *within its own parent* as it appears in the flattened order
-  // (the client only ever emits sibling moves, keeping the list a valid DFS).
-  const { data: rows, error: readError } = await supabase
-    .from("categories")
-    .select("id, parent_id")
-    .in("id", parsed.data.orderedIds);
-  if (readError) return { ok: false, error: "Could not save the new order." };
-  const parentOf = new Map<string, string | null>(
-    (rows ?? []).map((r) => [r.id, r.parent_id ?? null]),
-  );
-
-  const seenPerParent = new Map<string | null, number>();
-  for (const id of parsed.data.orderedIds) {
-    const parent = parentOf.get(id) ?? null;
-    const next = seenPerParent.get(parent) ?? 0;
-    seenPerParent.set(parent, next + 1);
-    const { error } = await supabase
-      .from("categories")
-      .update({ sort_order: next })
-      .eq("id", id);
-    if (error) return { ok: false, error: "Could not save the new order." };
-  }
+  // One set-based renumber of the sibling group (was N sequential UPDATEs).
+  const { error } = await supabase.rpc("reorder_categories", {
+    p_parent_id: parsed.data.parentId,
+    p_ordered_ids: parsed.data.orderedIds,
+  });
+  if (error) return { ok: false, error: reorderError(error.message) };
 
   await logAudit(supabase, {
     actorId,
     action: "category.reorder",
     tableName: "categories",
-    diff: { count: parsed.data.orderedIds.length },
+    diff: {
+      parent: parsed.data.parentId ?? "top",
+      count: parsed.data.orderedIds.length,
+    },
   });
 
   revalidatePath("/admin/categories");
-    revalidateTag(CACHE_TAGS.catalog, "max");
+  revalidateTag(CACHE_TAGS.catalog, "max");
   return { ok: true };
 }

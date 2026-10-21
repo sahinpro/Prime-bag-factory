@@ -218,9 +218,7 @@ export async function listFeaturedProducts(
   return fetchFeatured(limit);
 }
 
-export async function listRecentProducts(
-  limit = 8,
-): Promise<ProductSummary[]> {
+export async function listRecentProducts(limit = 8): Promise<ProductSummary[]> {
   "use cache";
   cacheLife("catalog");
   cacheTag(CACHE_TAGS.catalog);
@@ -249,50 +247,50 @@ export async function getCategoryBySlug(
   "use cache";
   cacheLife("catalog");
   cacheTag(CACHE_TAGS.catalog, CACHE_TAGS.category(slug));
-    const supabase = createPublicClient();
-    const { data: cat, error } = await supabase
-      .from("categories")
-      .select(
-        "id, parent_id, slug, name_en, name_bn, description_en, description_bn, image_path",
-      )
-      .eq("is_active", true)
-      .eq("slug", slug)
-      .maybeSingle();
-    if (error) throw new Error("Failed to load category.", { cause: error });
-    if (!cat) return null;
+  const supabase = createPublicClient();
+  const { data: cat, error } = await supabase
+    .from("categories")
+    .select(
+      "id, parent_id, slug, name_en, name_bn, description_en, description_bn, image_path",
+    )
+    .eq("is_active", true)
+    .eq("slug", slug)
+    .maybeSingle();
+  if (error) throw new Error("Failed to load category.", { cause: error });
+  if (!cat) return null;
 
-    const { data: links } = await supabase
-      .from("product_categories")
-      .select("product_id")
-      .eq("category_id", cat.id);
-    const productIds = (links ?? []).map(
-      (l: { product_id: string }) => l.product_id,
-    );
-    const products = await fetchProductsByIds(productIds, 48);
+  const { data: links } = await supabase
+    .from("product_categories")
+    .select("product_id")
+    .eq("category_id", cat.id);
+  const productIds = (links ?? []).map(
+    (l: { product_id: string }) => l.product_id,
+  );
+  const products = await fetchProductsByIds(productIds, 48);
 
-    const siblingsQuery = cat.parent_id ?? cat.id;
-    const { data: sib } = await supabase
-      .from("categories")
-      .select("slug, name_en, name_bn")
-      .eq("is_active", true)
-      .eq("parent_id", siblingsQuery)
-      .neq("slug", slug)
-      .order("sort_order");
+  const siblingsQuery = cat.parent_id ?? cat.id;
+  const { data: sib } = await supabase
+    .from("categories")
+    .select("slug, name_en, name_bn")
+    .eq("is_active", true)
+    .eq("parent_id", siblingsQuery)
+    .neq("slug", slug)
+    .order("sort_order");
 
-    return {
-      slug: cat.slug,
-      name_en: cat.name_en,
-      name_bn: cat.name_bn,
-      image_path: cat.image_path,
-      description_en: cat.description_en,
-      description_bn: cat.description_bn,
-      products,
-      siblings: (sib ?? []) as {
-        slug: string;
-        name_en: string;
-        name_bn: string | null;
-      }[],
-    } satisfies CategoryPage;
+  return {
+    slug: cat.slug,
+    name_en: cat.name_en,
+    name_bn: cat.name_bn,
+    image_path: cat.image_path,
+    description_en: cat.description_en,
+    description_bn: cat.description_bn,
+    products,
+    siblings: (sib ?? []) as {
+      slug: string;
+      name_en: string;
+      name_bn: string | null;
+    }[],
+  } satisfies CategoryPage;
 }
 
 export type CollectionPage = CategoryCard & {
@@ -307,37 +305,36 @@ export async function getCollectionBySlug(
   "use cache";
   cacheLife("catalog");
   cacheTag(CACHE_TAGS.catalog);
-    const supabase = createPublicClient();
-    const { data: col, error } = await supabase
-      .from("collections")
-      .select(
-        "id, slug, name_en, name_bn, description_en, description_bn, image_path",
-      )
-      .eq("is_active", true)
-      .eq("slug", slug)
-      .maybeSingle();
-    if (error)
-      throw new Error("Failed to load collection.", { cause: error });
-    if (!col) return null;
+  const supabase = createPublicClient();
+  const { data: col, error } = await supabase
+    .from("collections")
+    .select(
+      "id, slug, name_en, name_bn, description_en, description_bn, image_path",
+    )
+    .eq("is_active", true)
+    .eq("slug", slug)
+    .maybeSingle();
+  if (error) throw new Error("Failed to load collection.", { cause: error });
+  if (!col) return null;
 
-    const { data: links } = await supabase
-      .from("product_collections")
-      .select("product_id")
-      .eq("collection_id", col.id);
-    const productIds = (links ?? []).map(
-      (l: { product_id: string }) => l.product_id,
-    );
-    const products = await fetchProductsByIds(productIds, 48);
+  const { data: links } = await supabase
+    .from("product_collections")
+    .select("product_id")
+    .eq("collection_id", col.id);
+  const productIds = (links ?? []).map(
+    (l: { product_id: string }) => l.product_id,
+  );
+  const products = await fetchProductsByIds(productIds, 48);
 
-    return {
-      slug: col.slug,
-      name_en: col.name_en,
-      name_bn: col.name_bn,
-      image_path: col.image_path,
-      description_en: col.description_en,
-      description_bn: col.description_bn,
-      products,
-    } satisfies CollectionPage;
+  return {
+    slug: col.slug,
+    name_en: col.name_en,
+    name_bn: col.name_bn,
+    image_path: col.image_path,
+    description_en: col.description_en,
+    description_bn: col.description_bn,
+    products,
+  } satisfies CollectionPage;
 }
 
 export async function listPublicCollections(): Promise<CategoryCard[]> {
@@ -527,203 +524,201 @@ export async function getProductBySlug(
   "use cache";
   cacheLife("catalog");
   cacheTag(CACHE_TAGS.catalog, CACHE_TAGS.product(slug));
-    const supabase = createPublicClient();
-    const { data, error } = await supabase
-      .from("products")
-      .select(PRODUCT_SELECT)
-      .eq("status", "published")
-      .eq("slug", slug)
-      .maybeSingle();
-    if (error)
-      throw new Error("Failed to load the product.", { cause: error });
-    if (!data) return null;
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select(PRODUCT_SELECT)
+    .eq("status", "published")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (error) throw new Error("Failed to load the product.", { cause: error });
+  if (!data) return null;
 
-    const raw = data as unknown as {
-      id: string;
-      slug: string;
-      type: ProductType;
-      title_en: string;
-      title_bn: string | null;
-      short_description_en: string | null;
-      short_description_bn: string | null;
-      description_en: string | null;
-      description_bn: string | null;
-      material: string | null;
-      specs: unknown;
-      moq: unknown;
-      lead_time_days: unknown;
-      stock_mode: StockMode;
-      customization_enabled: boolean;
-      is_featured: boolean;
-      seo_title_en: string | null;
-      seo_title_bn: string | null;
-      seo_description_en: string | null;
-      seo_description_bn: string | null;
-      product_images:
-        | {
-            path: string;
-            alt_en: string | null;
-            alt_bn: string | null;
-            sort_order: unknown;
-            variant_id: string | null;
-          }[]
-        | null;
-      product_variants:
-        | {
-            id: string;
-            sku: string;
-            swatch_id: string | null;
-            color_name: string | null;
-            color_hex: string | null;
-            size: string | null;
-            price_delta: unknown;
-            stock_qty: unknown;
-            reserved_qty: unknown;
-            is_active: boolean;
-          }[]
-        | null;
-      price_tiers:
-        | { min_qty: unknown; max_qty: unknown; unit_price: unknown }[]
-        | null;
-      product_categories:
-        | {
-            is_primary: boolean;
-            categories: {
-              id: string;
-              slug: string;
-              name_en: string;
-              name_bn: string | null;
-            } | null;
-          }[]
-        | null;
-      product_custom_parts:
-        | {
-            id: string;
-            key: string;
-            label_en: string;
-            label_bn: string | null;
-            input_type: InputType;
-            is_required: boolean;
-            price_delta: unknown;
-            config: unknown;
-            help_text_en: string | null;
-            help_text_bn: string | null;
-            sort_order: unknown;
-            product_part_swatches:
-              | {
-                  swatch_id: string;
-                  is_default: boolean;
-                  price_delta: unknown;
-                }[]
-              | null;
-          }[]
-        | null;
-    };
-
-    const swatchMap = await getSwatchMap();
-
-    const variants: PublicVariant[] = (raw.product_variants ?? [])
-      .filter((v) => v.is_active)
-      .sort((a, b) => a.sku.localeCompare(b.sku))
-      .map((v) => ({
-        id: v.id,
-        sku: v.sku,
-        color_name: v.color_name,
-        color_hex: v.color_hex,
-        texture_path: v.swatch_id
-          ? (swatchMap.get(v.swatch_id)?.texture_image_path ?? null)
-          : null,
-        size: v.size,
-        price_delta: num(v.price_delta),
-        stock_qty: num(v.stock_qty),
-        reserved_qty: num(v.reserved_qty),
-      }));
-
-    const tiers: PublicTier[] = (raw.price_tiers ?? [])
-      .sort((a, b) => num(a.min_qty) - num(b.min_qty))
-      .map((t) => ({
-        min_qty: num(t.min_qty),
-        max_qty: t.max_qty == null ? null : num(t.max_qty),
-        unit_price: num(t.unit_price),
-      }));
-
-    const images: PublicImage[] = (raw.product_images ?? [])
-      .sort((a, b) => num(a.sort_order) - num(b.sort_order))
-      .map((im) => ({
-        path: im.path,
-        alt_en: im.alt_en,
-        alt_bn: im.alt_bn,
-        variant_id: im.variant_id,
-      }));
-
-    const categories = (raw.product_categories ?? [])
-      .map((c) => c.categories)
-      .filter(
-        (
-          c,
-        ): c is {
+  const raw = data as unknown as {
+    id: string;
+    slug: string;
+    type: ProductType;
+    title_en: string;
+    title_bn: string | null;
+    short_description_en: string | null;
+    short_description_bn: string | null;
+    description_en: string | null;
+    description_bn: string | null;
+    material: string | null;
+    specs: unknown;
+    moq: unknown;
+    lead_time_days: unknown;
+    stock_mode: StockMode;
+    customization_enabled: boolean;
+    is_featured: boolean;
+    seo_title_en: string | null;
+    seo_title_bn: string | null;
+    seo_description_en: string | null;
+    seo_description_bn: string | null;
+    product_images:
+      | {
+          path: string;
+          alt_en: string | null;
+          alt_bn: string | null;
+          sort_order: unknown;
+          variant_id: string | null;
+        }[]
+      | null;
+    product_variants:
+      | {
           id: string;
-          slug: string;
-          name_en: string;
-          name_bn: string | null;
-        } => Boolean(c),
-      );
+          sku: string;
+          swatch_id: string | null;
+          color_name: string | null;
+          color_hex: string | null;
+          size: string | null;
+          price_delta: unknown;
+          stock_qty: unknown;
+          reserved_qty: unknown;
+          is_active: boolean;
+        }[]
+      | null;
+    price_tiers:
+      | { min_qty: unknown; max_qty: unknown; unit_price: unknown }[]
+      | null;
+    product_categories:
+      | {
+          is_primary: boolean;
+          categories: {
+            id: string;
+            slug: string;
+            name_en: string;
+            name_bn: string | null;
+          } | null;
+        }[]
+      | null;
+    product_custom_parts:
+      | {
+          id: string;
+          key: string;
+          label_en: string;
+          label_bn: string | null;
+          input_type: InputType;
+          is_required: boolean;
+          price_delta: unknown;
+          config: unknown;
+          help_text_en: string | null;
+          help_text_bn: string | null;
+          sort_order: unknown;
+          product_part_swatches:
+            | {
+                swatch_id: string;
+                is_default: boolean;
+                price_delta: unknown;
+              }[]
+            | null;
+        }[]
+      | null;
+  };
 
-    const customParts: PublicCustomPart[] = (raw.product_custom_parts ?? [])
-      .sort((a, b) => num(a.sort_order) - num(b.sort_order))
-      .map((p) => ({
-        id: p.id,
-        key: p.key,
-        label_en: p.label_en,
-        label_bn: p.label_bn,
-        input_type: p.input_type,
-        is_required: p.is_required,
-        price_delta: num(p.price_delta),
-        config: p.config ?? {},
-        help_text_en: p.help_text_en,
-        help_text_bn: p.help_text_bn,
-        sort_order: num(p.sort_order),
-        allowed_swatches: (p.product_part_swatches ?? []).map((s) => {
-          const sw = swatchMap.get(s.swatch_id);
-          return {
-            swatch_id: s.swatch_id,
-            is_default: s.is_default,
-            price_delta: s.price_delta == null ? null : num(s.price_delta),
-            name_en: sw?.name_en ?? null,
-            name_bn: sw?.name_bn ?? null,
-            color_hex: sw?.color_hex ?? null,
-            texture_path: sw?.texture_image_path ?? null,
-          };
-        }),
-      }));
+  const swatchMap = await getSwatchMap();
 
-    return {
-      slug: raw.slug,
-      type: raw.type,
-      title_en: raw.title_en,
-      title_bn: raw.title_bn,
-      short_description_en: raw.short_description_en,
-      short_description_bn: raw.short_description_bn,
-      description_en: raw.description_en,
-      description_bn: raw.description_bn,
-      material: raw.material,
-      specs: raw.specs ?? null,
-      moq: num(raw.moq),
-      lead_time_days:
-        raw.lead_time_days == null ? null : num(raw.lead_time_days),
-      stock_mode: raw.stock_mode,
-      customization_enabled: raw.customization_enabled,
-      is_featured: raw.is_featured,
-      seo_title_en: raw.seo_title_en,
-      seo_title_bn: raw.seo_title_bn,
-      seo_description_en: raw.seo_description_en,
-      seo_description_bn: raw.seo_description_bn,
-      images,
-      variants,
-      tiers,
-      categories,
-      customParts,
-    } satisfies PublicProduct;
+  const variants: PublicVariant[] = (raw.product_variants ?? [])
+    .filter((v) => v.is_active)
+    .sort((a, b) => a.sku.localeCompare(b.sku))
+    .map((v) => ({
+      id: v.id,
+      sku: v.sku,
+      color_name: v.color_name,
+      color_hex: v.color_hex,
+      texture_path: v.swatch_id
+        ? (swatchMap.get(v.swatch_id)?.texture_image_path ?? null)
+        : null,
+      size: v.size,
+      price_delta: num(v.price_delta),
+      stock_qty: num(v.stock_qty),
+      reserved_qty: num(v.reserved_qty),
+    }));
+
+  const tiers: PublicTier[] = (raw.price_tiers ?? [])
+    .sort((a, b) => num(a.min_qty) - num(b.min_qty))
+    .map((t) => ({
+      min_qty: num(t.min_qty),
+      max_qty: t.max_qty == null ? null : num(t.max_qty),
+      unit_price: num(t.unit_price),
+    }));
+
+  const images: PublicImage[] = (raw.product_images ?? [])
+    .sort((a, b) => num(a.sort_order) - num(b.sort_order))
+    .map((im) => ({
+      path: im.path,
+      alt_en: im.alt_en,
+      alt_bn: im.alt_bn,
+      variant_id: im.variant_id,
+    }));
+
+  const categories = (raw.product_categories ?? [])
+    .map((c) => c.categories)
+    .filter(
+      (
+        c,
+      ): c is {
+        id: string;
+        slug: string;
+        name_en: string;
+        name_bn: string | null;
+      } => Boolean(c),
+    );
+
+  const customParts: PublicCustomPart[] = (raw.product_custom_parts ?? [])
+    .sort((a, b) => num(a.sort_order) - num(b.sort_order))
+    .map((p) => ({
+      id: p.id,
+      key: p.key,
+      label_en: p.label_en,
+      label_bn: p.label_bn,
+      input_type: p.input_type,
+      is_required: p.is_required,
+      price_delta: num(p.price_delta),
+      config: p.config ?? {},
+      help_text_en: p.help_text_en,
+      help_text_bn: p.help_text_bn,
+      sort_order: num(p.sort_order),
+      allowed_swatches: (p.product_part_swatches ?? []).map((s) => {
+        const sw = swatchMap.get(s.swatch_id);
+        return {
+          swatch_id: s.swatch_id,
+          is_default: s.is_default,
+          price_delta: s.price_delta == null ? null : num(s.price_delta),
+          name_en: sw?.name_en ?? null,
+          name_bn: sw?.name_bn ?? null,
+          color_hex: sw?.color_hex ?? null,
+          texture_path: sw?.texture_image_path ?? null,
+        };
+      }),
+    }));
+
+  return {
+    slug: raw.slug,
+    type: raw.type,
+    title_en: raw.title_en,
+    title_bn: raw.title_bn,
+    short_description_en: raw.short_description_en,
+    short_description_bn: raw.short_description_bn,
+    description_en: raw.description_en,
+    description_bn: raw.description_bn,
+    material: raw.material,
+    specs: raw.specs ?? null,
+    moq: num(raw.moq),
+    lead_time_days: raw.lead_time_days == null ? null : num(raw.lead_time_days),
+    stock_mode: raw.stock_mode,
+    customization_enabled: raw.customization_enabled,
+    is_featured: raw.is_featured,
+    seo_title_en: raw.seo_title_en,
+    seo_title_bn: raw.seo_title_bn,
+    seo_description_en: raw.seo_description_en,
+    seo_description_bn: raw.seo_description_bn,
+    images,
+    variants,
+    tiers,
+    categories,
+    customParts,
+  } satisfies PublicProduct;
 }
 
 /** Related products: published items sharing any category, excluding the slug. */

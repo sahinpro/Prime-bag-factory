@@ -11,11 +11,11 @@ import {
   builderCustomizationSchema,
   type BuilderCustomization,
 } from "@/lib/validators/customization";
+import { quoteSchema } from "@/lib/validators/quote";
 import {
   extensionForMime,
   QUOTE_ATTACHMENT_BUCKET,
 } from "@/lib/validators/quote-attachment";
-import { quoteSchema } from "@/lib/validators/quote";
 import {
   getClientKey,
   isAllowed,
@@ -58,7 +58,10 @@ const artworkRequestSchema = z.object({
 
 export type ArtworkUploadResult =
   | { ok: true; path: string; token: string; signedUrl: string }
-  | { ok: false; error: "invalid_type" | "rate_limited" | "storage_unavailable" };
+  | {
+      ok: false;
+      error: "invalid_type" | "rate_limited" | "storage_unavailable";
+    };
 
 export async function requestArtworkUpload(
   input: unknown,

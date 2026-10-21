@@ -4,11 +4,11 @@ import * as React from "react";
 
 import { saveCompany } from "@/app/(admin)/admin/settings/actions";
 import { FormSection } from "@/components/admin/forms/form-section";
+import { StickySaveBar } from "@/components/admin/forms/sticky-save-bar";
 import {
   FlashLine,
   useActionSave,
 } from "@/components/admin/products/use-action-save";
-import { StickySaveBar } from "@/components/admin/forms/sticky-save-bar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { CompanyProfile } from "@/server/settings";
@@ -35,8 +35,7 @@ export function CompanyForm({
   );
   const [form, setForm] = React.useState(baseline);
 
-  const dirty =
-    JSON.stringify(form) !== JSON.stringify(baseline);
+  const dirty = JSON.stringify(form) !== JSON.stringify(baseline);
 
   function set<K extends keyof typeof form>(key: K, value: string) {
     setForm((prev) => ({ ...prev, [key]: value }));

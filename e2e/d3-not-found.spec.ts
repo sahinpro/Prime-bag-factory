@@ -19,7 +19,9 @@ for (const locale of locales) {
       page.getByRole("heading", { level: 1, name: HEADINGS[locale] }),
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: locale === "en" ? "Go to homepage" : "হোমপেজে যান" }),
+      page.getByRole("link", {
+        name: locale === "en" ? "Go to homepage" : "হোমপেজে যান",
+      }),
     ).toBeVisible();
   });
 

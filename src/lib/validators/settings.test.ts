@@ -11,7 +11,12 @@ import { companySchema, notificationCronSchema } from "./settings";
  */
 
 describe("companySchema", () => {
-  const base = { name: "Prime Bag Factory", phone: "", whatsapp: "", email: "" };
+  const base = {
+    name: "Prime Bag Factory",
+    phone: "",
+    whatsapp: "",
+    email: "",
+  };
 
   it("accepts a complete profile and coerces blanks to null", () => {
     const parsed = companySchema.safeParse({
@@ -30,20 +35,24 @@ describe("companySchema", () => {
 
   it("requires a non-blank company name", () => {
     expect(companySchema.safeParse({ ...base, name: "" }).success).toBe(false);
-    expect(companySchema.safeParse({ ...base, name: "   " }).success).toBe(false);
+    expect(companySchema.safeParse({ ...base, name: "   " }).success).toBe(
+      false,
+    );
   });
 
   it("rejects a malformed email but accepts a blank one", () => {
-    expect(companySchema.safeParse({ ...base, email: "not-an-email" }).success)
-      .toBe(false);
+    expect(
+      companySchema.safeParse({ ...base, email: "not-an-email" }).success,
+    ).toBe(false);
     const blank = companySchema.safeParse({ ...base, email: "" });
     expect(blank.success).toBe(true);
     if (blank.success) expect(blank.data.email).toBeNull();
   });
 
   it("enforces the name length cap", () => {
-    expect(companySchema.safeParse({ ...base, name: "a".repeat(121) }).success)
-      .toBe(false);
+    expect(
+      companySchema.safeParse({ ...base, name: "a".repeat(121) }).success,
+    ).toBe(false);
   });
 });
 
@@ -64,15 +73,18 @@ describe("notificationCronSchema", () => {
     });
     expect(parsed.success).toBe(true);
     if (parsed.success) {
-      expect(parsed.data.url).toBe("https://app.example.com/api/cron/send-notifications");
+      expect(parsed.data.url).toBe(
+        "https://app.example.com/api/cron/send-notifications",
+      );
       expect(parsed.data.secret).toBe("s3cr3t-value");
     }
   });
 
   it("refuses a url that is not http(s)", () => {
     for (const bad of ["ftp://x", "javascript:alert(1)", "://nope"]) {
-      expect(notificationCronSchema.safeParse({ url: bad, secret: "" }).success)
-        .toBe(false);
+      expect(
+        notificationCronSchema.safeParse({ url: bad, secret: "" }).success,
+      ).toBe(false);
     }
   });
 });

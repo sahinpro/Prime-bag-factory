@@ -8,7 +8,6 @@ import {
   deleteShippingZone,
   saveShippingZone,
 } from "@/app/(admin)/admin/shipping/actions";
-import { ShippingZoneEditor } from "@/components/admin/shipping/shipping-editor";
 import {
   createColumnHelper,
   DataTable,
@@ -19,6 +18,7 @@ import { EmptyState } from "@/components/admin/data/empty-state";
 import { FilterBar } from "@/components/admin/data/filter-bar";
 import { ToneBadge } from "@/components/admin/data/status-badge";
 import { PageHeader } from "@/components/admin/shell/page-header";
+import { ShippingZoneEditor } from "@/components/admin/shipping/shipping-editor";
 import { Button } from "@/components/ui/button";
 import { formatMoney } from "@/lib/format";
 import type { ShippingZoneInput } from "@/lib/validators/shipping";
@@ -200,7 +200,11 @@ export function ShippingManager({
               size="sm"
               onClick={() => openEdit(row.original)}
             >
-              <Pencil aria-hidden="true" strokeWidth={1.75} className="size-4" />
+              <Pencil
+                aria-hidden="true"
+                strokeWidth={1.75}
+                className="size-4"
+              />
               Edit
               <span className="sr-only">: {row.original.name_en}</span>
             </Button>

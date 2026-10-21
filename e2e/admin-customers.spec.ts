@@ -1,5 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
 import { expect, test } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
 
 /**
  * Customers directory (plan §9): rows derived from orders + quote_requests
@@ -68,22 +68,16 @@ test("the directory groups an order and a quote onto one customer and the drawer
     const search = page.getByLabel("Search customers");
     await expect(search).toHaveCount(1, { timeout: 10_000 });
     await search.fill(canonical);
-    const row = page
-      .locator("table")
-      .getByRole("button", {
-        name: new RegExp(`open history for ${canonical}`),
-      });
+    const row = page.locator("table").getByRole("button", {
+      name: new RegExp(`open history for ${canonical}`),
+    });
     await expect(row).toHaveCount(1);
 
     await row.click();
     const drawer = page.getByRole("dialog");
-    await expect(
-      drawer.getByRole("heading", { level: 2, name }),
-    ).toBeVisible();
+    await expect(drawer.getByRole("heading", { level: 2, name })).toBeVisible();
     // Both histories, each linking to its real detail page.
-    await expect(
-      drawer.getByRole("link", { name: orderNo }),
-    ).toBeVisible();
+    await expect(drawer.getByRole("link", { name: orderNo })).toBeVisible();
     await expect(
       drawer.getByRole("link", { name: "Form request" }),
     ).toBeVisible();
@@ -115,14 +109,10 @@ test("nav hides links to pages that are not built yet (C4)", async ({
   );
 
   const sidebar = page.getByRole("complementary", { name: "Admin sidebar" });
-  await expect(
-    sidebar.getByRole("link", { name: "Customers" }),
-  ).toBeVisible();
+  await expect(sidebar.getByRole("link", { name: "Customers" })).toBeVisible();
   // Inventory shipped with E1 and Settings with the Settings track, so both are
   // now linked. Only these remain unbuilt and hidden.
   for (const unbuilt of ["Users", "Audit log"]) {
-    await expect(
-      sidebar.getByRole("link", { name: unbuilt }),
-    ).toHaveCount(0);
+    await expect(sidebar.getByRole("link", { name: unbuilt })).toHaveCount(0);
   }
 });

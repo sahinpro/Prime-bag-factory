@@ -2,15 +2,19 @@
 
 import {
   DndContext,
+  DragOverlay,
   KeyboardSensor,
   PointerSensor,
   closestCenter,
   useSensor,
   useSensors,
+  type Announcements,
   type DragEndEvent,
+  type DragStartEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
+  arrayMove,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
@@ -24,120 +28,67 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { AdminCategory } from "@/server/categories";
 
-export type FlatCategory = { category: AdminCategory; depth: number };
+export type CategoryTreeNode = {
+  category: AdminCategory;
+  children: CategoryTreeNode[];
+};
 
-type ParentKey = string | null;
-
-function parentKey(node: FlatCategory): ParentKey {
-  return node.category.parent_id ?? null;
-}
+export type ParentKey = string | null;
 
 /**
- * The `nodes` array is a depth-first flatten, so every subtree occupies a
- * contiguous block. Reordering only makes sense *between siblings* (same
- * parent): `sort_order` is compared within a parent, so moving a node past its
- * own child is a no-op. These helpers work on whole subtree blocks so a parent
- * always travels with its descendants.
+ * Build a nested tree from a flat category list. Children are ordered by
+ * `sort_order` (then name) so an optimistic `sort_order` change re-sorts the
+ * group immediately. A row whose parent is missing is treated as a root
+ * (defensive against orphaned rows).
  */
-
-/** `[start, end)` indices of the subtree rooted at `start`. */
-function subtreeRange(nodes: FlatCategory[], start: number): [number, number] {
-  const depth = nodes[start].depth;
-  let end = start + 1;
-  while (end < nodes.length && nodes[end].depth > depth) end += 1;
-  return [start, end];
-}
-
-/** Index of the previous sibling (same parent) or -1 if there is none. */
-function prevSiblingIndex(nodes: FlatCategory[], i: number): number {
-  const { depth } = nodes[i];
-  const parent = parentKey(nodes[i]);
-  for (let k = i - 1; k >= 0; k -= 1) {
-    if (nodes[k].depth === depth) {
-      return parentKey(nodes[k]) === parent ? k : -1;
-    }
-    if (nodes[k].depth < depth) return -1;
-    // Deeper rows are inside the previous sibling's subtree — keep scanning up.
+export function buildCategoryTree(
+  categories: AdminCategory[],
+): CategoryTreeNode[] {
+  const byId = new Map<string, CategoryTreeNode>();
+  for (const category of categories) {
+    byId.set(category.id, { category, children: [] });
   }
-  return -1;
-}
-
-/** Index of the next sibling (same parent) or -1 if there is none. */
-function nextSiblingIndex(nodes: FlatCategory[], i: number): number {
-  const [, end] = subtreeRange(nodes, i);
-  if (end >= nodes.length) return -1;
-  return nodes[end].depth === nodes[i].depth && parentKey(nodes[end]) === parentKey(nodes[i])
-    ? end
-    : -1;
-}
-
-function orderedIds(nodes: FlatCategory[]): string[] {
-  return nodes.map((n) => n.category.id);
-}
-
-/** Swap the two adjacent subtree blocks containing `i` and `j` (must be siblings). */
-function swapSiblingBlocks(
-  nodes: FlatCategory[],
-  i: number,
-  j: number,
-): string[] | null {
-  const [aStart, aEnd] = subtreeRange(nodes, Math.min(i, j));
-  const [bStart, bEnd] = subtreeRange(nodes, Math.max(i, j));
-  if (aEnd !== bStart) return null; // siblings are adjacent in DFS order
-  return orderedIds([
-    ...nodes.slice(0, aStart),
-    ...nodes.slice(bStart, bEnd),
-    ...nodes.slice(aStart, aEnd),
-    ...nodes.slice(bEnd),
-  ]);
+  const roots: CategoryTreeNode[] = [];
+  for (const node of byId.values()) {
+    const parent = node.category.parent_id
+      ? byId.get(node.category.parent_id)
+      : undefined;
+    if (parent) parent.children.push(node);
+    else roots.push(node);
+  }
+  const sortGroup = (list: CategoryTreeNode[]) => {
+    list.sort(
+      (a, b) =>
+        a.category.sort_order - b.category.sort_order ||
+        a.category.name_en.localeCompare(b.category.name_en),
+    );
+    for (const node of list) sortGroup(node.children);
+  };
+  sortGroup(roots);
+  return roots;
 }
 
 /**
- * Drop `activeId` next to `overId`, only when they are siblings; otherwise the
- * drag cannot be represented (parenting is edited in the form, not by dragging)
- * so we return null and the list stays put.
- */
-function moveNodeBetweenSiblings(
-  nodes: FlatCategory[],
-  activeId: string,
-  overId: string,
-): string[] | null {
-  const ai = nodes.findIndex((n) => n.category.id === activeId);
-  const oi = nodes.findIndex((n) => n.category.id === overId);
-  if (ai < 0 || oi < 0) return null;
-  if (parentKey(nodes[ai]) !== parentKey(nodes[oi])) return null;
-  const [as, ae] = subtreeRange(nodes, ai);
-  const block = nodes.slice(as, ae);
-  const rest = [...nodes.slice(0, as), ...nodes.slice(ae)];
-  const oi2 = rest.findIndex((n) => n.category.id === overId);
-  if (oi2 < 0) return null;
-  const [os, oe] = subtreeRange(rest, oi2);
-  const insertAt = ai < oi ? oe : os; // dragging down → after target, up → before
-  return orderedIds([
-    ...rest.slice(0, insertAt),
-    ...block,
-    ...rest.slice(insertAt),
-  ]);
-}
-
-/**
- * CategoryTree (plan 9c.8): a flattened, indented tree with drag-to-reorder AND
- * keyboard-accessible Move up / Move down buttons (AGENTS: drag is never the only
- * way to reorder). Dragging changes display order only; parenting is set in the
- * editor. Selecting a row opens it in the editor panel.
+ * CategoryTree (plan 9c.8): a NESTED tree where every sibling group is its own
+ * `SortableContext`, so dragging can only reorder among real siblings (exactly
+ * what `sort_order` supports — parenting stays in the editor). Children render
+ * inside their parent's `<li>`, so a dragged parent carries its whole subtree,
+ * and its children collapse while it is in the air. Keyboard Move up/down
+ * buttons share the same reorder callback.
  */
 export function CategoryTree({
   nodes,
   selectedId,
   onSelect,
   onReorder,
-}: {
-  nodes: FlatCategory[];
+}: Readonly<{
+  nodes: CategoryTreeNode[];
   selectedId: string | null;
   onSelect: (id: string) => void;
-  onReorder: (orderedIds: string[]) => void;
-}) {
-  const ids = nodes.map((n) => n.category.id);
+  onReorder: (parentId: ParentKey, orderedIds: string[]) => void;
+}>) {
+  const [activeId, setActiveId] = React.useState<string | null>(null);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, {
@@ -145,27 +96,62 @@ export function CategoryTree({
     }),
   );
 
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const ordered = moveNodeBetweenSiblings(
-      nodes,
-      String(active.id),
-      String(over.id),
-    );
-    if (ordered) onReorder(ordered);
+  // id -> node (for the drag overlay) and parent -> ordered ids (for drag-end).
+  const { nodeById, groupIds } = React.useMemo(() => {
+    const nodeById = new Map<string, CategoryTreeNode>();
+    const groupIds = new Map<ParentKey, string[]>();
+    const walk = (list: CategoryTreeNode[], parentId: ParentKey) => {
+      if (list.length)
+        groupIds.set(
+          parentId,
+          list.map((n) => n.category.id),
+        );
+      for (const node of list) {
+        nodeById.set(node.category.id, node);
+        walk(node.children, node.category.id);
+      }
+    };
+    walk(nodes, null);
+    return { nodeById, groupIds };
+  }, [nodes]);
+
+  const nameOf = React.useCallback(
+    (id: string | number) =>
+      nodeById.get(String(id))?.category.name_en ?? "item",
+    [nodeById],
+  );
+
+  const announcements: Announcements = {
+    onDragStart: ({ active }) => `Picked up ${nameOf(active.id)}.`,
+    onDragOver: ({ active, over }) =>
+      over
+        ? `${nameOf(active.id)} is over ${nameOf(over.id)}.`
+        : `${nameOf(active.id)} has no valid drop target.`,
+    onDragEnd: ({ active, over }) =>
+      over
+        ? `${nameOf(active.id)} was moved next to ${nameOf(over.id)}.`
+        : `Moving ${nameOf(active.id)} was cancelled.`,
+    onDragCancel: ({ active }) => `Moving ${nameOf(active.id)} was cancelled.`,
+  };
+
+  function handleDragStart(event: DragStartEvent) {
+    setActiveId(String(event.active.id));
   }
 
-  function move(id: string, direction: -1 | 1) {
-    const index = nodes.findIndex((n) => n.category.id === id);
-    if (index < 0) return;
-    const sib =
-      direction === -1
-        ? prevSiblingIndex(nodes, index)
-        : nextSiblingIndex(nodes, index);
-    if (sib < 0) return; // no sibling in that direction (button is disabled)
-    const ordered = swapSiblingBlocks(nodes, index, sib);
-    if (ordered) onReorder(ordered);
+  function handleDragEnd(event: DragEndEvent) {
+    setActiveId(null);
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const activeParent = (active.data.current?.parentId as ParentKey) ?? null;
+    const overParent = (over.data.current?.parentId as ParentKey) ?? null;
+    // Only reorder within one sibling group; a cross-group drop is ignored so
+    // the list never implies a reparent the editor owns.
+    if (activeParent !== overParent) return;
+    const ids = groupIds.get(activeParent) ?? [];
+    const oldIndex = ids.indexOf(String(active.id));
+    const newIndex = ids.indexOf(String(over.id));
+    if (oldIndex < 0 || newIndex < 0) return;
+    onReorder(activeParent, arrayMove(ids, oldIndex, newIndex));
   }
 
   if (nodes.length === 0) {
@@ -176,80 +162,186 @@ export function CategoryTree({
     );
   }
 
+  const activeNode = activeId ? nodeById.get(activeId) : undefined;
+
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      onDragCancel={() => setActiveId(null)}
+      accessibility={{ announcements }}
     >
-      <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-        <ul className="divide-y divide-sidebar-border">
-          {nodes.map((node, index) => (
-            <SortableRow
-              key={node.category.id}
-              node={node}
-              canMoveUp={prevSiblingIndex(nodes, index) >= 0}
-              canMoveDown={nextSiblingIndex(nodes, index) >= 0}
-              selected={node.category.id === selectedId}
-              onSelect={() => onSelect(node.category.id)}
-              onMoveUp={() => move(node.category.id, -1)}
-              onMoveDown={() => move(node.category.id, 1)}
-            />
-          ))}
-        </ul>
-      </SortableContext>
+      <SortableGroup
+        nodes={nodes}
+        parentId={null}
+        isRoot
+        selectedId={selectedId}
+        onSelect={onSelect}
+        onReorder={onReorder}
+      />
+      <DragOverlay>
+        {activeNode ? <DragGhost category={activeNode.category} /> : null}
+      </DragOverlay>
     </DndContext>
   );
 }
 
-function SortableRow({
+function SortableGroup({
+  nodes,
+  parentId,
+  isRoot = false,
+  selectedId,
+  onSelect,
+  onReorder,
+}: Readonly<{
+  nodes: CategoryTreeNode[];
+  parentId: ParentKey;
+  isRoot?: boolean;
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+  onReorder: (parentId: ParentKey, orderedIds: string[]) => void;
+}>) {
+  const ids = nodes.map((n) => n.category.id);
+
+  function move(id: string, direction: -1 | 1) {
+    const index = ids.indexOf(id);
+    const target = index + direction;
+    if (index < 0 || target < 0 || target >= ids.length) return;
+    onReorder(parentId, arrayMove(ids, index, target));
+  }
+
+  return (
+    <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+      <ul
+        className={cn(
+          "space-y-0.5",
+          !isRoot && "ml-4 mt-0.5 border-l border-sidebar-border pl-2",
+        )}
+      >
+        {nodes.map((node, index) => (
+          <SortableBranch
+            key={node.category.id}
+            node={node}
+            parentId={parentId}
+            canMoveUp={index > 0}
+            canMoveDown={index < nodes.length - 1}
+            selected={node.category.id === selectedId}
+            onSelect={onSelect}
+            onMoveUp={() => move(node.category.id, -1)}
+            onMoveDown={() => move(node.category.id, 1)}
+            onReorder={onReorder}
+            selectedId={selectedId}
+          />
+        ))}
+      </ul>
+    </SortableContext>
+  );
+}
+
+function SortableBranch({
   node,
+  parentId,
   canMoveUp,
   canMoveDown,
   selected,
   onSelect,
   onMoveUp,
   onMoveDown,
-}: {
-  node: FlatCategory;
+  onReorder,
+  selectedId,
+}: Readonly<{
+  node: CategoryTreeNode;
+  parentId: ParentKey;
   canMoveUp: boolean;
   canMoveDown: boolean;
   selected: boolean;
-  onSelect: () => void;
+  onSelect: (id: string) => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
-}) {
+  onReorder: (parentId: ParentKey, orderedIds: string[]) => void;
+  selectedId: string | null;
+}>) {
   const {
     attributes,
     listeners,
     setNodeRef,
+    setActivatorNodeRef,
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: node.category.id });
+  } = useSortable({ id: node.category.id, data: { parentId } });
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
   };
 
-  const { category, depth } = node;
-
   return (
     <li
       ref={setNodeRef}
       style={style}
-      className={cn(
-        "flex items-center gap-1 py-1.5 pr-2 text-sm",
-        isDragging && "z-10 opacity-60",
-      )}
+      className={cn(isDragging && "opacity-40")}
     >
+      <CategoryRow
+        category={node.category}
+        selected={selected}
+        onSelect={() => onSelect(node.category.id)}
+        canMoveUp={canMoveUp}
+        canMoveDown={canMoveDown}
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
+        activatorRef={setActivatorNodeRef}
+        handleAttributes={attributes}
+        handleListeners={listeners}
+      />
+      {/* Collapse the dragged parent's subtree so descendants travel with it. */}
+      {node.children.length > 0 && !isDragging ? (
+        <SortableGroup
+          nodes={node.children}
+          parentId={node.category.id}
+          selectedId={selectedId}
+          onSelect={onSelect}
+          onReorder={onReorder}
+        />
+      ) : null}
+    </li>
+  );
+}
+
+function CategoryRow({
+  category,
+  selected,
+  onSelect,
+  canMoveUp,
+  canMoveDown,
+  onMoveUp,
+  onMoveDown,
+  activatorRef,
+  handleAttributes,
+  handleListeners,
+}: Readonly<{
+  category: AdminCategory;
+  selected: boolean;
+  onSelect: () => void;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  activatorRef?: (node: HTMLElement | null) => void;
+  handleAttributes?: ReturnType<typeof useSortable>["attributes"];
+  handleListeners?: ReturnType<typeof useSortable>["listeners"];
+}>) {
+  return (
+    <div className="flex items-center gap-1 py-1.5 pr-2 text-sm">
       <button
         type="button"
+        ref={activatorRef}
         aria-label={`Reorder ${category.name_en}`}
         className="flex size-7 shrink-0 cursor-grab items-center justify-center rounded-md text-muted-foreground hover:bg-surface-2 active:cursor-grabbing touch-none"
-        {...attributes}
-        {...listeners}
+        {...handleAttributes}
+        {...handleListeners}
       >
         <GripVertical
           aria-hidden="true"
@@ -262,7 +354,6 @@ function SortableRow({
         type="button"
         onClick={onSelect}
         aria-current={selected}
-        style={{ paddingLeft: `${depth * 16 + 4}px` }}
         className={cn(
           "flex min-w-0 flex-1 items-center gap-2 rounded-md py-1.5 pr-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
           selected ? "bg-surface-2 font-medium" : "hover:bg-surface-2/60",
@@ -309,6 +400,25 @@ function SortableRow({
           />
         </Button>
       </div>
-    </li>
+    </div>
+  );
+}
+
+/** Static clone of a row shown under the cursor while dragging (no children). */
+function DragGhost({ category }: Readonly<{ category: AdminCategory }>) {
+  return (
+    <div className="flex items-center gap-2 rounded-md border border-sidebar-border bg-surface-2 px-2 py-1.5 text-sm shadow-lg">
+      <GripVertical
+        aria-hidden="true"
+        strokeWidth={1.75}
+        className="size-4 shrink-0 text-muted-foreground"
+      />
+      <span className="truncate">{category.name_en}</span>
+      {category.name_bn ? (
+        <span lang="bn" className="truncate text-xs text-muted-foreground">
+          {category.name_bn}
+        </span>
+      ) : null}
+    </div>
   );
 }

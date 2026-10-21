@@ -4,12 +4,12 @@ import { revalidatePath } from "next/cache";
 
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { logAudit } from "@/server/audit";
 import {
   shippingZoneInputSchema,
   shippingZoneUpdateSchema,
   type ShippingZoneInput,
 } from "@/lib/validators/shipping";
+import { logAudit } from "@/server/audit";
 
 const ZONE_ROLES = ["owner", "manager"] as const;
 
@@ -38,7 +38,10 @@ export async function saveShippingZone(
   try {
     actorId = (await requireRole(ZONE_ROLES)).id;
   } catch {
-    return { ok: false, error: "You are not authorized to manage shipping zones." };
+    return {
+      ok: false,
+      error: "You are not authorized to manage shipping zones.",
+    };
   }
 
   const supabase = await createClient();
@@ -59,7 +62,11 @@ export async function saveShippingZone(
       action: "shipping_zone.update",
       tableName: "shipping_zones",
       recordId: input.id,
-      diff: { fee: input.fee, free_over: input.free_over ?? null, is_active: input.is_active },
+      diff: {
+        fee: input.fee,
+        free_over: input.free_over ?? null,
+        is_active: input.is_active,
+      },
     });
     revalidatePath("/admin/shipping");
     return { ok: true, id: data?.id };
@@ -79,7 +86,11 @@ export async function saveShippingZone(
     action: "shipping_zone.create",
     tableName: "shipping_zones",
     recordId: data.id,
-    diff: { fee: input.fee, free_over: input.free_over ?? null, is_active: input.is_active },
+    diff: {
+      fee: input.fee,
+      free_over: input.free_over ?? null,
+      is_active: input.is_active,
+    },
   });
   revalidatePath("/admin/shipping");
   return { ok: true, id: data.id };
@@ -95,7 +106,10 @@ export async function deleteShippingZone(
   try {
     actorId = (await requireRole(ZONE_ROLES)).id;
   } catch {
-    return { ok: false, error: "You are not authorized to manage shipping zones." };
+    return {
+      ok: false,
+      error: "You are not authorized to manage shipping zones.",
+    };
   }
 
   const supabase = await createClient();
