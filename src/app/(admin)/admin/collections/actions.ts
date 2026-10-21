@@ -1,10 +1,12 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import { requireRole } from "@/lib/auth";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { slugify } from "@/lib/slug";
 import { createClient } from "@/lib/supabase/server";
+import { logAudit } from "@/server/audit";
 import {
   collectionInputSchema,
   collectionUpdateSchema,
@@ -57,8 +59,9 @@ function toRow(input: CollectionInput, slug: string) {
 export async function saveCollection(
   payload: CollectionInput & { id?: string },
 ): Promise<CollectionActionResult> {
+  let actorId: string;
   try {
-    await requireRole(CATALOG_ROLES);
+    actorId = (await requireRole(CATALOG_ROLES)).id;
   } catch {
     return {
       ok: false,
@@ -84,7 +87,15 @@ export async function saveCollection(
       .select("id")
       .maybeSingle();
     if (error) return { ok: false, error: "Could not save the collection." };
+    await logAudit(supabase, {
+      actorId,
+      action: "collection.update",
+      tableName: "collections",
+      recordId: input.id,
+      diff: { slug, is_active: input.is_active },
+    });
     revalidatePath("/admin/collections");
+      revalidateTag(CACHE_TAGS.catalog, "max");
     return { ok: true, id: data?.id };
   }
 
@@ -98,7 +109,15 @@ export async function saveCollection(
     .select("id")
     .single();
   if (error) return { ok: false, error: "Could not create the collection." };
+  await logAudit(supabase, {
+    actorId,
+    action: "collection.create",
+    tableName: "collections",
+    recordId: data.id,
+    diff: { slug, is_active: input.is_active },
+  });
   revalidatePath("/admin/collections");
+    revalidateTag(CACHE_TAGS.catalog, "max");
   return { ok: true, id: data.id };
 }
 
@@ -108,8 +127,9 @@ export async function deleteCollection(
   if (!collectionUpdateSchema.shape.id.safeParse(id).success) {
     return { ok: false, error: "Invalid collection." };
   }
+  let actorId: string;
   try {
-    await requireRole(CATALOG_ROLES);
+    actorId = (await requireRole(CATALOG_ROLES)).id;
   } catch {
     return {
       ok: false,
@@ -131,6 +151,14 @@ export async function deleteCollection(
   const { error } = await supabase.from("collections").delete().eq("id", id);
   if (error) return { ok: false, error: "Could not delete the collection." };
 
+  await logAudit(supabase, {
+    actorId,
+    action: "collection.delete",
+    tableName: "collections",
+    recordId: id,
+  });
+
   revalidatePath("/admin/collections");
+    revalidateTag(CACHE_TAGS.catalog, "max");
   return { ok: true };
 }

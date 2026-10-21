@@ -1,11 +1,13 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import { requireRole } from "@/lib/auth";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import type { Database } from "@/lib/database.types";
 import { slugify } from "@/lib/slug";
 import { createClient } from "@/lib/supabase/server";
+import { logAudit } from "@/server/audit";
 import {
   bulkStatusSchema,
   productCreateSchema,
@@ -52,10 +54,13 @@ function firstError(error: { issues: { message: string }[] }): string {
   return error.issues[0]?.message ?? "The form has errors.";
 }
 
-async function authorize(): Promise<ProductActionResult | null> {
+type AuthorizeResult =
+  | { ok: true; actorId: string }
+  | { ok: false; error: string };
+
+async function authorize(): Promise<AuthorizeResult> {
   try {
-    await requireRole(CATALOG_ROLES);
-    return null;
+    return { ok: true, actorId: (await requireRole(CATALOG_ROLES)).id };
   } catch {
     return {
       ok: false,
@@ -64,10 +69,17 @@ async function authorize(): Promise<ProductActionResult | null> {
   }
 }
 
-/** Revalidate both the list and the editor after any product-scoped write. */
+/**
+ * Revalidate both the list and the editor after any product-scoped write, and
+ * expire the public `catalog` cache tag (plan 3b) — a product edit changes the
+ * home rails, nav, search, listings and its own detail page, all of which carry
+ * the `catalog` tag, so one call refreshes the whole public site. The product's
+ * own `product:{slug}` entry is tagged `catalog` too, so it is covered here.
+ */
 function touch(productId?: string) {
   revalidatePath("/admin/products");
   if (productId) revalidatePath(`/admin/products/${productId}`);
+  revalidateTag(CACHE_TAGS.catalog, "max");
 }
 
 /** Lowercased, hyphenated slug from a base string, with a uniqueness suffix. */
@@ -95,8 +107,9 @@ async function ensureUniqueSlug(
 export async function createProduct(
   payload: ProductCreateInput,
 ): Promise<ProductActionResult> {
-  const denied = await authorize();
-  if (denied) return denied;
+  const auth = await authorize();
+  if (!auth.ok) return auth;
+  const actorId = auth.actorId;
 
   const parsed = productCreateSchema.safeParse(payload);
   if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
@@ -117,6 +130,13 @@ export async function createProduct(
   if (error || !data) {
     return { ok: false, error: "Could not create the product." };
   }
+  await logAudit(supabase, {
+    actorId,
+    action: "product.create",
+    tableName: "products",
+    recordId: data.id,
+    diff: { slug, status: parsed.data.status },
+  });
   touch(data.id);
   return { ok: true, id: data.id };
 }
@@ -147,8 +167,9 @@ export async function saveProductGeneral(
   id: string,
   payload: ProductGeneralInput,
 ): Promise<ProductActionResult> {
-  const denied = await authorize();
-  if (denied) return denied;
+  const auth = await authorize();
+  if (!auth.ok) return auth;
+  const actorId = auth.actorId;
 
   const parsed = productGeneralSchema.safeParse(payload);
   if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
@@ -167,6 +188,13 @@ export async function saveProductGeneral(
     .update(toGeneralRow(parsed.data, slug))
     .eq("id", id);
   if (error) return { ok: false, error: "Could not save the product." };
+  await logAudit(supabase, {
+    actorId,
+    action: "product.update",
+    tableName: "products",
+    recordId: id,
+    diff: { slug, status: parsed.data.status },
+  });
   touch(id);
   return { ok: true, id };
 }
@@ -177,8 +205,9 @@ export async function saveProductSeo(
   id: string,
   payload: ProductSeoInput,
 ): Promise<ProductActionResult> {
-  const denied = await authorize();
-  if (denied) return denied;
+  const auth = await authorize();
+  if (!auth.ok) return auth;
+  const actorId = auth.actorId;
 
   const parsed = productSeoSchema.safeParse(payload);
   if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
@@ -197,6 +226,13 @@ export async function saveProductSeo(
     })
     .eq("id", id);
   if (error) return { ok: false, error: "Could not save the SEO fields." };
+  await logAudit(supabase, {
+    actorId,
+    action: "product.seo",
+    tableName: "products",
+    recordId: id,
+    diff: { fields: ["seo_title", "seo_description"] },
+  });
   touch(id);
   return { ok: true, id };
 }
@@ -207,8 +243,9 @@ export async function setProductStatus(
   id: string,
   status: "draft" | "published" | "archived",
 ): Promise<ProductActionResult> {
-  const denied = await authorize();
-  if (denied) return denied;
+  const auth = await authorize();
+  if (!auth.ok) return auth;
+  const actorId = auth.actorId;
 
   const parsed = productStatusSchema.safeParse({ id, status });
   if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
@@ -219,6 +256,13 @@ export async function setProductStatus(
     .update({ status: parsed.data.status })
     .eq("id", parsed.data.id);
   if (error) return { ok: false, error: "Could not change the status." };
+  await logAudit(supabase, {
+    actorId,
+    action: "product.status",
+    tableName: "products",
+    recordId: parsed.data.id,
+    diff: { status: parsed.data.status },
+  });
   touch(parsed.data.id);
   return { ok: true };
 }
@@ -227,8 +271,9 @@ export async function bulkSetProductStatus(
   ids: string[],
   status: "draft" | "published" | "archived",
 ): Promise<ProductActionResult> {
-  const denied = await authorize();
-  if (denied) return denied;
+  const auth = await authorize();
+  if (!auth.ok) return auth;
+  const actorId = auth.actorId;
 
   const parsed = bulkStatusSchema.safeParse({ ids, status });
   if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
@@ -240,6 +285,12 @@ export async function bulkSetProductStatus(
     .in("id", parsed.data.ids);
   if (error)
     return { ok: false, error: "Could not update the selected products." };
+  await logAudit(supabase, {
+    actorId,
+    action: "product.bulk_status",
+    tableName: "products",
+    diff: { count: parsed.data.ids.length, status },
+  });
   touch();
   return { ok: true };
 }
@@ -247,8 +298,9 @@ export async function bulkSetProductStatus(
 // ------------------------------------------------------------------ delete --
 
 export async function deleteProduct(id: string): Promise<ProductActionResult> {
-  const denied = await authorize();
-  if (denied) return denied;
+  const auth = await authorize();
+  if (!auth.ok) return auth;
+  const actorId = auth.actorId;
   if (!productStatusSchema.shape.id.safeParse(id).success) {
     return { ok: false, error: "Invalid product." };
   }
@@ -265,7 +317,14 @@ export async function deleteProduct(id: string): Promise<ProductActionResult> {
   // category/collection joins, custom parts and their swatch allow-lists.
   const { error } = await supabase.from("products").delete().eq("id", id);
   if (error) return { ok: false, error: "Could not delete the product." };
+  await logAudit(supabase, {
+    actorId,
+    action: "product.delete",
+    tableName: "products",
+    recordId: id,
+  });
   revalidatePath("/admin/products");
+  revalidateTag(CACHE_TAGS.catalog, "max");
   return { ok: true };
 }
 
@@ -275,8 +334,9 @@ export async function savePriceTiers(
   productId: string,
   tiers: PriceTierInput[],
 ): Promise<ProductActionResult> {
-  const denied = await authorize();
-  if (denied) return denied;
+  const auth = await authorize();
+  if (!auth.ok) return auth;
+  const actorId = auth.actorId;
 
   const parsed = savePriceTiersSchema.safeParse({
     product_id: productId,
@@ -301,6 +361,13 @@ export async function savePriceTiers(
     const { error: ins } = await supabase.from("price_tiers").insert(rows);
     if (ins) return { ok: false, error: "Could not save the price tiers." };
   }
+  await logAudit(supabase, {
+    actorId,
+    action: "product.tiers",
+    tableName: "products",
+    recordId: productId,
+    diff: { count: parsed.data.tiers.length },
+  });
   touch(productId);
   return { ok: true };
 }
@@ -309,8 +376,9 @@ export async function saveVariants(
   productId: string,
   variants: VariantInput[],
 ): Promise<ProductActionResult> {
-  const denied = await authorize();
-  if (denied) return denied;
+  const auth = await authorize();
+  if (!auth.ok) return auth;
+  const actorId = auth.actorId;
 
   const parsed = saveVariantsSchema.safeParse({
     product_id: productId,
@@ -363,6 +431,13 @@ export async function saveVariants(
       return { ok: false, error: "Could not save the variants." };
     }
   }
+  await logAudit(supabase, {
+    actorId,
+    action: "product.variants",
+    tableName: "products",
+    recordId: productId,
+    diff: { count: parsed.data.variants.length },
+  });
   touch(productId);
   return { ok: true };
 }
@@ -371,8 +446,9 @@ export async function saveImages(
   productId: string,
   images: ProductImageInput[],
 ): Promise<ProductActionResult> {
-  const denied = await authorize();
-  if (denied) return denied;
+  const auth = await authorize();
+  if (!auth.ok) return auth;
+  const actorId = auth.actorId;
 
   const parsed = saveImagesSchema.safeParse({ product_id: productId, images });
   if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
@@ -396,6 +472,13 @@ export async function saveImages(
     const { error: ins } = await supabase.from("product_images").insert(rows);
     if (ins) return { ok: false, error: "Could not save the images." };
   }
+  await logAudit(supabase, {
+    actorId,
+    action: "product.images",
+    tableName: "products",
+    recordId: productId,
+    diff: { count: parsed.data.images.length },
+  });
   touch(productId);
   return { ok: true };
 }
@@ -404,8 +487,9 @@ export async function setProductCategories(
   productId: string,
   categories: { category_id: string; is_primary: boolean }[],
 ): Promise<ProductActionResult> {
-  const denied = await authorize();
-  if (denied) return denied;
+  const auth = await authorize();
+  if (!auth.ok) return auth;
+  const actorId = auth.actorId;
 
   const parsed = setCategoriesSchema.safeParse({
     product_id: productId,
@@ -436,6 +520,13 @@ export async function setProductCategories(
       .insert(rows);
     if (ins) return { ok: false, error: "Could not save the categories." };
   }
+  await logAudit(supabase, {
+    actorId,
+    action: "product.categories",
+    tableName: "products",
+    recordId: productId,
+    diff: { count: parsed.data.categories.length },
+  });
   touch(productId);
   return { ok: true };
 }
@@ -444,8 +535,9 @@ export async function setProductCollections(
   productId: string,
   collectionIds: string[],
 ): Promise<ProductActionResult> {
-  const denied = await authorize();
-  if (denied) return denied;
+  const auth = await authorize();
+  if (!auth.ok) return auth;
+  const actorId = auth.actorId;
 
   const parsed = setCollectionsSchema.safeParse({
     product_id: productId,
@@ -470,6 +562,13 @@ export async function setProductCollections(
       .insert(rows);
     if (ins) return { ok: false, error: "Could not save the collections." };
   }
+  await logAudit(supabase, {
+    actorId,
+    action: "product.collections",
+    tableName: "products",
+    recordId: productId,
+    diff: { count: parsed.data.collection_ids.length },
+  });
   touch(productId);
   return { ok: true };
 }
@@ -478,8 +577,9 @@ export async function saveCustomParts(
   productId: string,
   parts: CustomPartInput[],
 ): Promise<ProductActionResult> {
-  const denied = await authorize();
-  if (denied) return denied;
+  const auth = await authorize();
+  if (!auth.ok) return auth;
+  const actorId = auth.actorId;
 
   const parsed = saveCustomPartsSchema.safeParse({
     product_id: productId,
@@ -543,6 +643,13 @@ export async function saveCustomParts(
       }
     }
   }
+  await logAudit(supabase, {
+    actorId,
+    action: "product.custom_parts",
+    tableName: "products",
+    recordId: productId,
+    diff: { count: parsed.data.parts.length },
+  });
   touch(productId);
   return { ok: true };
 }

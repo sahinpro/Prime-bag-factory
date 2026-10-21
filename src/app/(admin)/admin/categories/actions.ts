@@ -1,10 +1,12 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import { requireRole } from "@/lib/auth";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { slugify } from "@/lib/slug";
 import { createClient } from "@/lib/supabase/server";
+import { logAudit } from "@/server/audit";
 import {
   categoryInputSchema,
   categoryReorderSchema,
@@ -63,8 +65,9 @@ function toRow(input: CategoryInput, slug: string) {
 export async function saveCategory(
   payload: CategoryInput & { id?: string },
 ): Promise<ActionResult> {
+  let actorId: string;
   try {
-    await requireRole(CATALOG_ROLES);
+    actorId = (await requireRole(CATALOG_ROLES)).id;
   } catch {
     return { ok: false, error: "You are not authorized to manage categories." };
   }
@@ -87,7 +90,15 @@ export async function saveCategory(
       .select("id")
       .maybeSingle();
     if (error) return { ok: false, error: "Could not save the category." };
+    await logAudit(supabase, {
+      actorId,
+      action: "category.update",
+      tableName: "categories",
+      recordId: input.id,
+      diff: { slug, is_active: input.is_active, parent_id: input.parent_id ?? null },
+    });
     revalidatePath("/admin/categories");
+      revalidateTag(CACHE_TAGS.catalog, "max");
     return { ok: true, id: data?.id };
   }
 
@@ -101,7 +112,15 @@ export async function saveCategory(
     .select("id")
     .single();
   if (error) return { ok: false, error: "Could not create the category." };
+  await logAudit(supabase, {
+    actorId,
+    action: "category.create",
+    tableName: "categories",
+    recordId: data.id,
+    diff: { slug, is_active: input.is_active },
+  });
   revalidatePath("/admin/categories");
+    revalidateTag(CACHE_TAGS.catalog, "max");
   return { ok: true, id: data.id };
 }
 
@@ -109,8 +128,9 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
   if (!categoryUpdateSchema.shape.id.safeParse(id).success) {
     return { ok: false, error: "Invalid category." };
   }
+  let actorId: string;
   try {
-    await requireRole(CATALOG_ROLES);
+    actorId = (await requireRole(CATALOG_ROLES)).id;
   } catch {
     return { ok: false, error: "You are not authorized to manage categories." };
   }
@@ -140,7 +160,15 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
     };
   }
 
+  await logAudit(supabase, {
+    actorId,
+    action: "category.delete",
+    tableName: "categories",
+    recordId: id,
+  });
+
   revalidatePath("/admin/categories");
+    revalidateTag(CACHE_TAGS.catalog, "max");
   return { ok: true };
 }
 
@@ -149,8 +177,9 @@ export async function reorderCategories(
 ): Promise<ActionResult> {
   const parsed = categoryReorderSchema.safeParse({ orderedIds });
   if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
+  let actorId: string;
   try {
-    await requireRole(CATALOG_ROLES);
+    actorId = (await requireRole(CATALOG_ROLES)).id;
   } catch {
     return { ok: false, error: "You are not authorized to manage categories." };
   }
@@ -164,6 +193,14 @@ export async function reorderCategories(
     if (error) return { ok: false, error: "Could not save the new order." };
   }
 
+  await logAudit(supabase, {
+    actorId,
+    action: "category.reorder",
+    tableName: "categories",
+    diff: { count: parsed.data.orderedIds.length },
+  });
+
   revalidatePath("/admin/categories");
+    revalidateTag(CACHE_TAGS.catalog, "max");
   return { ok: true };
 }

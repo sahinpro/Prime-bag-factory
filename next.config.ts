@@ -31,6 +31,25 @@ const nextConfig: NextConfig = {
   },
   cacheComponents: true,
   partialPrefetching: true,
+  // Public catalog reads cache under this profile. The plan's backstop was a
+  // 300s ISR revalidate; no built-in profile equals five minutes, so define it.
+  // On-demand `revalidateTag("catalog")` from admin saves is the primary
+  // invalidation — this TTL is only the safety net if a tag call is ever missed.
+  cacheLife: {
+    catalog: {
+      stale: 60, // serve the previous entry for 60s while it regenerates
+      revalidate: 300, // background-refresh after 5 minutes
+      expire: 3600, // hard-serve-stale ceiling of 1 hour
+    },
+    // Sidebar count badges (C3): cached only briefly so a badge is never far off
+    // even if a public order/quote lands between invalidations; every writer
+    // revalidateTag's it, so this TTL is just the staleness ceiling.
+    adminCounts: {
+      stale: 0,
+      revalidate: 30, // background-refresh after 30s
+      expire: 300, // ceiling of 5 minutes
+    },
+  },
   experimental: {
     // Inline the small atomic (Tailwind) stylesheet into the <head> so the
     // hero text — the LCP element on the public pages — paints without waiting

@@ -227,7 +227,9 @@ test("nav shows the un-hidden Inventory link and still hides unbuilt pages (C4)"
 
   const sidebar = page.getByRole("complementary", { name: "Admin sidebar" });
   await expect(sidebar.getByRole("link", { name: "Inventory" })).toBeVisible();
-  for (const unbuilt of ["Users", "Settings", "Audit log"]) {
+  // Settings shipped with the Settings track and is now linked; only these
+  // remain unbuilt and hidden.
+  for (const unbuilt of ["Users", "Audit log"]) {
     await expect(
       sidebar.getByRole("link", { name: unbuilt }),
     ).toHaveCount(0);

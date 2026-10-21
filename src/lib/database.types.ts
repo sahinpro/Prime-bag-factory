@@ -514,7 +514,7 @@ export type Database = {
           status: Database["public"]["Enums"]["order_status"];
           payment_method: Database["public"]["Enums"]["payment_method"];
           payment_status: Database["public"]["Enums"]["payment_status"];
-          production_status: string | null;
+          production_status: Database["public"]["Enums"]["production_status"] | null;
           idempotency_key: string | null;
           courier_name: string | null;
           tracking_code: string | null;
@@ -548,7 +548,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["order_status"];
           payment_method?: Database["public"]["Enums"]["payment_method"];
           payment_status?: Database["public"]["Enums"]["payment_status"];
-          production_status?: string | null;
+          production_status?: Database["public"]["Enums"]["production_status"] | null;
           idempotency_key?: string | null;
           courier_name?: string | null;
           tracking_code?: string | null;
@@ -582,7 +582,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["order_status"];
           payment_method?: Database["public"]["Enums"]["payment_method"];
           payment_status?: Database["public"]["Enums"]["payment_status"];
-          production_status?: string | null;
+          production_status?: Database["public"]["Enums"]["production_status"] | null;
           idempotency_key?: string | null;
           courier_name?: string | null;
           tracking_code?: string | null;
@@ -1513,10 +1513,23 @@ export type Database = {
       has_role: { Args: { roles: string[] }; Returns: boolean };
       place_order: { Args: { payload: Json }; Returns: string };
       admin_create_order: { Args: { payload: Json }; Returns: string };
+      create_order_bulk: { Args: { p_payload: Json }; Returns: string };
+      convert_quote_to_order: {
+        Args: { p_quote_id: string; p_payload?: Json };
+        Returns: string;
+      };
       admin_set_order_status: {
         Args: {
           p_order_id: string;
           p_to_status: Database["public"]["Enums"]["order_status"];
+          p_note?: string | null;
+        };
+        Returns: string;
+      };
+      admin_set_production_status: {
+        Args: {
+          p_order_id: string;
+          p_to_status: Database["public"]["Enums"]["production_status"];
           p_note?: string | null;
         };
         Returns: string;
@@ -1576,6 +1589,12 @@ export type Database = {
         | "cancelled"
         | "returned";
       order_type: "retail" | "bulk";
+      production_status:
+        | "awaiting_artwork"
+        | "artwork_approved"
+        | "in_production"
+        | "qc"
+        | "ready";
       payment_method:
         | "cod"
         | "bkash_manual"

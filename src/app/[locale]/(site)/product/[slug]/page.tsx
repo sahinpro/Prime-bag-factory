@@ -15,11 +15,24 @@ import { buildBreadcrumb, buildMetadata, jsonLd, siteUrl } from "@/lib/seo";
 import {
   getProductBySlug,
   getRelatedProducts,
+  listSitemapProducts,
   localize,
   type PublicProduct,
 } from "@/server/catalog";
 
 type RouteParams = { locale: string; slug: string };
+
+// Prerender every published product page at build (plan 3b Static + ISR; locales
+// come from the `[locale]` layout). Unlisted slugs still render on request — the
+// page keeps the Suspense/await-params streaming pattern (partialPrefetching is
+// on), so the shell prerenders and the product streams in.
+// Cache Components requires a non-empty result, so an empty catalog falls back to
+// a single placeholder param that prerenders through `notFound()` into a 404.
+export async function generateStaticParams() {
+  const products = await listSitemapProducts();
+  if (products.length === 0) return [{ slug: "_" }];
+  return products.map((p) => ({ slug: p.slug }));
+}
 
 export async function generateMetadata({
   params,

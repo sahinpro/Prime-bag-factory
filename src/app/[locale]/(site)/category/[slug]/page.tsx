@@ -6,9 +6,24 @@ import { ProductGrid } from "@/components/site/product-grid";
 import { Link } from "@/i18n/navigation";
 import { isLocale, type Locale } from "@/i18n/routing";
 import { buildBreadcrumb, buildMetadata, jsonLd } from "@/lib/seo";
-import { getCategoryBySlug, localize } from "@/server/catalog";
+import {
+  getCategoryBySlug,
+  listSitemapCategories,
+  localize,
+} from "@/server/catalog";
 
 type RouteParams = { locale: string; slug: string };
+
+// Prerender every published category page at build (plan 3b Static + ISR). The
+// page keeps the Suspense/await-params streaming pattern (partialPrefetching is
+// on), so the shell prerenders and the category streams in.
+// Cache Components requires a non-empty result, so an empty catalog falls back to
+// a single placeholder param that prerenders through `notFound()` into a 404.
+export async function generateStaticParams() {
+  const slugs = await listSitemapCategories();
+  if (slugs.length === 0) return [{ slug: "_" }];
+  return slugs.map((slug) => ({ slug }));
+}
 
 export async function generateMetadata({
   params,

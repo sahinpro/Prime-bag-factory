@@ -1,5 +1,8 @@
 "use server";
 
+import { revalidateTag } from "next/cache";
+
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { createPublicClient } from "@/lib/supabase/server";
 import { checkoutSchema, orderLookupSchema } from "@/lib/validators/checkout";
 import { getClientKey, hashPhone, isAllowed, isBlocked, normalizePhone } from "@/server/abuse";
@@ -145,6 +148,7 @@ export async function placeCheckoutOrder(
     };
   }
 
+  revalidateTag(CACHE_TAGS.adminCounts, "max");
   return { ok: true, orderNo: String(orderNo) };
 }
 

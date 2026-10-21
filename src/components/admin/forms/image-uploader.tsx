@@ -1,6 +1,7 @@
 "use client";
 
 import { ImagePlus, Loader2, Trash2, Upload } from "lucide-react";
+import Image from "next/image";
 import * as React from "react";
 
 import { uploadMedia } from "@/app/(admin)/admin/media/actions";
@@ -152,13 +153,13 @@ export function ImageUploader({
               aspect === "square" ? "w-28 shrink-0" : "w-40 shrink-0",
             )}
           >
-            {/* Admin preview only; the public catalog renders with next/image. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            {/* Cloudinary preview (`value` is always the returned secure_url);
+                the same optimized next/image path the public catalog uses. */}
+            <Image
               src={value}
-              alt={
-                fileName ? `Selected image preview` : "Selected image preview"
-              }
+              alt="Selected image preview"
+              fill
+              sizes={aspect === "square" ? "112px" : "160px"}
               className="size-full object-cover"
             />
             {busy ? (

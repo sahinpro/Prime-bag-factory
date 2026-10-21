@@ -1,21 +1,27 @@
 import "server-only";
 
-import { unstable_cache } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import type { Database } from "@/lib/database.types";
 import { createPublicClient } from "@/lib/supabase/server";
 
 /**
  * Public catalog reads (plan 3b). These run on the cookie-free anon client so a
- * Server Component using them can stay Static / ISR; results are memoized with
- * `unstable_cache` under the shared `catalog` tag. RLS enforces visibility (only
- * published products, active categories/collections/variants/swatches, published
- * content — verified in the Phase 1 policies); the explicit `.eq("status",
- * "published")` / `.eq("is_active", true)` filters below are belt-and-braces.
+ * Server Component using them can stay Static / ISR; each read is memoized with
+ * the `"use cache"` directive under a shared `catalog` cache tag (plan 3b cache
+ * tags). Cache Components is on (`next.config.ts`), so uncached reads already run
+ * per request and only these tagged scopes are stored. RLS enforces visibility
+ * (only published products, active categories/collections/variants/swatches,
+ * published content — verified in the Phase 1 policies); the explicit `.eq(
+ * "status", "published")` / `.eq("is_active", true)` filters below are
+ * belt-and-braces. An admin catalog save calls `revalidateTag(CATALOG_TAG)` so
+ * the whole public site refreshes on demand; the `catalog` cacheLife profile is
+ * only a backstop.
  */
 
 /** Shared tag so one admin catalog save can refresh every public page at once. */
-export const CATALOG_TAG = "catalog";
+export const CATALOG_TAG = CACHE_TAGS.catalog;
 
 type ProductType = Database["public"]["Enums"]["product_type"];
 type StockMode = Database["public"]["Enums"]["product_stock_mode"];
@@ -90,14 +96,12 @@ async function fetchNavCategories(): Promise<NavCategory[]> {
   }));
 }
 
-export const getNavCategories = unstable_cache(
-  fetchNavCategories,
-  ["nav-categories"],
-  {
-    revalidate: 300,
-    tags: [CATALOG_TAG],
-  },
-);
+export async function getNavCategories(): Promise<NavCategory[]> {
+  "use cache";
+  cacheLife("catalog");
+  cacheTag(CACHE_TAGS.catalog);
+  return fetchNavCategories();
+}
 
 // ------------------------------------------------------------- summaries ----
 
@@ -205,22 +209,22 @@ async function fetchRecent(limit: number): Promise<ProductSummary[]> {
   return ((data ?? []) as unknown as SummaryRow[]).map(toSummary);
 }
 
-export function listFeaturedProducts(limit = 8): Promise<ProductSummary[]> {
-  return unstable_cache(
-    () => fetchFeatured(limit),
-    ["featured", String(limit)],
-    {
-      revalidate: 300,
-      tags: [CATALOG_TAG],
-    },
-  )();
+export async function listFeaturedProducts(
+  limit = 8,
+): Promise<ProductSummary[]> {
+  "use cache";
+  cacheLife("catalog");
+  cacheTag(CACHE_TAGS.catalog);
+  return fetchFeatured(limit);
 }
 
-export function listRecentProducts(limit = 8): Promise<ProductSummary[]> {
-  return unstable_cache(() => fetchRecent(limit), ["recent", String(limit)], {
-    revalidate: 300,
-    tags: [CATALOG_TAG],
-  })();
+export async function listRecentProducts(
+  limit = 8,
+): Promise<ProductSummary[]> {
+  "use cache";
+  cacheLife("catalog");
+  cacheTag(CACHE_TAGS.catalog);
+  return fetchRecent(limit);
 }
 
 // ------------------------------------------------------ category / collection ----
@@ -239,57 +243,56 @@ export type CategoryPage = CategoryCard & {
   siblings: { slug: string; name_en: string; name_bn: string | null }[];
 };
 
-export function getCategoryBySlug(slug: string): Promise<CategoryPage | null> {
-  return unstable_cache(
-    async () => {
-      const supabase = createPublicClient();
-      const { data: cat, error } = await supabase
-        .from("categories")
-        .select(
-          "id, parent_id, slug, name_en, name_bn, description_en, description_bn, image_path",
-        )
-        .eq("is_active", true)
-        .eq("slug", slug)
-        .maybeSingle();
-      if (error) throw new Error("Failed to load category.", { cause: error });
-      if (!cat) return null;
+export async function getCategoryBySlug(
+  slug: string,
+): Promise<CategoryPage | null> {
+  "use cache";
+  cacheLife("catalog");
+  cacheTag(CACHE_TAGS.catalog, CACHE_TAGS.category(slug));
+    const supabase = createPublicClient();
+    const { data: cat, error } = await supabase
+      .from("categories")
+      .select(
+        "id, parent_id, slug, name_en, name_bn, description_en, description_bn, image_path",
+      )
+      .eq("is_active", true)
+      .eq("slug", slug)
+      .maybeSingle();
+    if (error) throw new Error("Failed to load category.", { cause: error });
+    if (!cat) return null;
 
-      const { data: links } = await supabase
-        .from("product_categories")
-        .select("product_id")
-        .eq("category_id", cat.id);
-      const productIds = (links ?? []).map(
-        (l: { product_id: string }) => l.product_id,
-      );
-      const products = await fetchProductsByIds(productIds, 48);
+    const { data: links } = await supabase
+      .from("product_categories")
+      .select("product_id")
+      .eq("category_id", cat.id);
+    const productIds = (links ?? []).map(
+      (l: { product_id: string }) => l.product_id,
+    );
+    const products = await fetchProductsByIds(productIds, 48);
 
-      const siblingsQuery = cat.parent_id ?? cat.id;
-      const { data: sib } = await supabase
-        .from("categories")
-        .select("slug, name_en, name_bn")
-        .eq("is_active", true)
-        .eq("parent_id", siblingsQuery)
-        .neq("slug", slug)
-        .order("sort_order");
+    const siblingsQuery = cat.parent_id ?? cat.id;
+    const { data: sib } = await supabase
+      .from("categories")
+      .select("slug, name_en, name_bn")
+      .eq("is_active", true)
+      .eq("parent_id", siblingsQuery)
+      .neq("slug", slug)
+      .order("sort_order");
 
-      return {
-        slug: cat.slug,
-        name_en: cat.name_en,
-        name_bn: cat.name_bn,
-        image_path: cat.image_path,
-        description_en: cat.description_en,
-        description_bn: cat.description_bn,
-        products,
-        siblings: (sib ?? []) as {
-          slug: string;
-          name_en: string;
-          name_bn: string | null;
-        }[],
-      } satisfies CategoryPage;
-    },
-    ["category-by-slug", slug],
-    { revalidate: 300, tags: [CATALOG_TAG] },
-  )();
+    return {
+      slug: cat.slug,
+      name_en: cat.name_en,
+      name_bn: cat.name_bn,
+      image_path: cat.image_path,
+      description_en: cat.description_en,
+      description_bn: cat.description_bn,
+      products,
+      siblings: (sib ?? []) as {
+        slug: string;
+        name_en: string;
+        name_bn: string | null;
+      }[],
+    } satisfies CategoryPage;
 }
 
 export type CollectionPage = CategoryCard & {
@@ -298,81 +301,76 @@ export type CollectionPage = CategoryCard & {
   products: ProductSummary[];
 };
 
-export function getCollectionBySlug(
+export async function getCollectionBySlug(
   slug: string,
 ): Promise<CollectionPage | null> {
-  return unstable_cache(
-    async () => {
-      const supabase = createPublicClient();
-      const { data: col, error } = await supabase
-        .from("collections")
-        .select(
-          "id, slug, name_en, name_bn, description_en, description_bn, image_path",
-        )
-        .eq("is_active", true)
-        .eq("slug", slug)
-        .maybeSingle();
-      if (error)
-        throw new Error("Failed to load collection.", { cause: error });
-      if (!col) return null;
+  "use cache";
+  cacheLife("catalog");
+  cacheTag(CACHE_TAGS.catalog);
+    const supabase = createPublicClient();
+    const { data: col, error } = await supabase
+      .from("collections")
+      .select(
+        "id, slug, name_en, name_bn, description_en, description_bn, image_path",
+      )
+      .eq("is_active", true)
+      .eq("slug", slug)
+      .maybeSingle();
+    if (error)
+      throw new Error("Failed to load collection.", { cause: error });
+    if (!col) return null;
 
-      const { data: links } = await supabase
-        .from("product_collections")
-        .select("product_id")
-        .eq("collection_id", col.id);
-      const productIds = (links ?? []).map(
-        (l: { product_id: string }) => l.product_id,
-      );
-      const products = await fetchProductsByIds(productIds, 48);
+    const { data: links } = await supabase
+      .from("product_collections")
+      .select("product_id")
+      .eq("collection_id", col.id);
+    const productIds = (links ?? []).map(
+      (l: { product_id: string }) => l.product_id,
+    );
+    const products = await fetchProductsByIds(productIds, 48);
 
-      return {
-        slug: col.slug,
-        name_en: col.name_en,
-        name_bn: col.name_bn,
-        image_path: col.image_path,
-        description_en: col.description_en,
-        description_bn: col.description_bn,
-        products,
-      } satisfies CollectionPage;
-    },
-    ["collection-by-slug", slug],
-    { revalidate: 300, tags: [CATALOG_TAG] },
-  )();
+    return {
+      slug: col.slug,
+      name_en: col.name_en,
+      name_bn: col.name_bn,
+      image_path: col.image_path,
+      description_en: col.description_en,
+      description_bn: col.description_bn,
+      products,
+    } satisfies CollectionPage;
 }
 
-export const listPublicCollections = unstable_cache(
-  async (): Promise<CategoryCard[]> => {
-    const supabase = createPublicClient();
-    const { data, error } = await supabase
-      .from("collections")
-      .select("slug, name_en, name_bn, image_path")
-      .eq("is_active", true)
-      .order("sort_order")
-      .order("name_en");
-    if (error) throw new Error("Failed to load collections.", { cause: error });
-    return (data ?? []) as CategoryCard[];
-  },
-  ["public-collections"],
-  { revalidate: 300, tags: [CATALOG_TAG] },
-);
+export async function listPublicCollections(): Promise<CategoryCard[]> {
+  "use cache";
+  cacheLife("catalog");
+  cacheTag(CACHE_TAGS.catalog);
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("collections")
+    .select("slug, name_en, name_bn, image_path")
+    .eq("is_active", true)
+    .order("sort_order")
+    .order("name_en");
+  if (error) throw new Error("Failed to load collections.", { cause: error });
+  return (data ?? []) as CategoryCard[];
+}
 
-export const listTopLevelCategoryCards = unstable_cache(
-  async (): Promise<CategoryCard[]> => {
-    const supabase = createPublicClient();
-    const { data, error } = await supabase
-      .from("categories")
-      .select("slug, name_en, name_bn, image_path")
-      .eq("is_active", true)
-      .is("parent_id", null)
-      .order("sort_order")
-      .order("name_en")
-      .limit(8);
-    if (error) throw new Error("Failed to load categories.", { cause: error });
-    return (data ?? []) as CategoryCard[];
-  },
-  ["public-category-cards"],
-  { revalidate: 300, tags: [CATALOG_TAG] },
-);
+export async function listTopLevelCategoryCards(): Promise<CategoryCard[]> {
+  "use cache";
+  cacheLife("catalog");
+  cacheTag(CACHE_TAGS.catalog);
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("categories")
+    .select("slug, name_en, name_bn, image_path")
+    .eq("is_active", true)
+    .is("parent_id", null)
+    .order("sort_order")
+    .order("name_en")
+    .limit(8);
+  if (error) throw new Error("Failed to load categories.", { cause: error });
+  return (data ?? []) as CategoryCard[];
+}
 
 // ----------------------------------------------------------------- search ----
 
@@ -386,23 +384,25 @@ export function searchProducts(q: string): Promise<ProductSummary[]> {
   if (term.length === 0) return listRecentProducts(24);
   const escaped = term.replace(/[%_,()]/g, " ").trim();
   if (escaped.length === 0) return listRecentProducts(24);
-  const like = `%${escaped}%`;
-  return unstable_cache(
-    async () => {
-      const supabase = createPublicClient();
-      const { data, error } = await supabase
-        .from("products")
-        .select(SUMMARY_SELECT)
-        .eq("status", "published")
-        .or(`title_en.ilike.${like},title_bn.ilike.${like}`)
-        .order("updated_at", { ascending: false })
-        .limit(48);
-      if (error) throw new Error("Search failed.", { cause: error });
-      return ((data ?? []) as unknown as SummaryRow[]).map(toSummary);
-    },
-    ["search", escaped.toLowerCase()],
-    { revalidate: 120, tags: [CATALOG_TAG] },
-  )();
+  return searchPublished(escaped.toLowerCase());
+}
+
+/** Cached search body — the normalized term is the cache key (ilike is CI). */
+async function searchPublished(term: string): Promise<ProductSummary[]> {
+  "use cache";
+  cacheLife("catalog");
+  cacheTag(CACHE_TAGS.catalog);
+  const like = `%${term}%`;
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select(SUMMARY_SELECT)
+    .eq("status", "published")
+    .or(`title_en.ilike.${like},title_bn.ilike.${like}`)
+    .order("updated_at", { ascending: false })
+    .limit(48);
+  if (error) throw new Error("Search failed.", { cause: error });
+  return ((data ?? []) as unknown as SummaryRow[]).map(toSummary);
 }
 
 // ------------------------------------------------------------ full product ----
@@ -521,210 +521,209 @@ async function getSwatchMap(): Promise<Map<string, SwatchLite>> {
   return map;
 }
 
-export function getProductBySlug(slug: string): Promise<PublicProduct | null> {
-  return unstable_cache(
-    async () => {
-      const supabase = createPublicClient();
-      const { data, error } = await supabase
-        .from("products")
-        .select(PRODUCT_SELECT)
-        .eq("status", "published")
-        .eq("slug", slug)
-        .maybeSingle();
-      if (error)
-        throw new Error("Failed to load the product.", { cause: error });
-      if (!data) return null;
+export async function getProductBySlug(
+  slug: string,
+): Promise<PublicProduct | null> {
+  "use cache";
+  cacheLife("catalog");
+  cacheTag(CACHE_TAGS.catalog, CACHE_TAGS.product(slug));
+    const supabase = createPublicClient();
+    const { data, error } = await supabase
+      .from("products")
+      .select(PRODUCT_SELECT)
+      .eq("status", "published")
+      .eq("slug", slug)
+      .maybeSingle();
+    if (error)
+      throw new Error("Failed to load the product.", { cause: error });
+    if (!data) return null;
 
-      const raw = data as unknown as {
-        id: string;
-        slug: string;
-        type: ProductType;
-        title_en: string;
-        title_bn: string | null;
-        short_description_en: string | null;
-        short_description_bn: string | null;
-        description_en: string | null;
-        description_bn: string | null;
-        material: string | null;
-        specs: unknown;
-        moq: unknown;
-        lead_time_days: unknown;
-        stock_mode: StockMode;
-        customization_enabled: boolean;
-        is_featured: boolean;
-        seo_title_en: string | null;
-        seo_title_bn: string | null;
-        seo_description_en: string | null;
-        seo_description_bn: string | null;
-        product_images:
-          | {
-              path: string;
-              alt_en: string | null;
-              alt_bn: string | null;
-              sort_order: unknown;
-              variant_id: string | null;
-            }[]
-          | null;
-        product_variants:
-          | {
-              id: string;
-              sku: string;
-              swatch_id: string | null;
-              color_name: string | null;
-              color_hex: string | null;
-              size: string | null;
-              price_delta: unknown;
-              stock_qty: unknown;
-              reserved_qty: unknown;
-              is_active: boolean;
-            }[]
-          | null;
-        price_tiers:
-          | { min_qty: unknown; max_qty: unknown; unit_price: unknown }[]
-          | null;
-        product_categories:
-          | {
-              is_primary: boolean;
-              categories: {
-                id: string;
-                slug: string;
-                name_en: string;
-                name_bn: string | null;
-              } | null;
-            }[]
-          | null;
-        product_custom_parts:
-          | {
-              id: string;
-              key: string;
-              label_en: string;
-              label_bn: string | null;
-              input_type: InputType;
-              is_required: boolean;
-              price_delta: unknown;
-              config: unknown;
-              help_text_en: string | null;
-              help_text_bn: string | null;
-              sort_order: unknown;
-              product_part_swatches:
-                | {
-                    swatch_id: string;
-                    is_default: boolean;
-                    price_delta: unknown;
-                  }[]
-                | null;
-            }[]
-          | null;
-      };
-
-      const swatchMap = await getSwatchMap();
-
-      const variants: PublicVariant[] = (raw.product_variants ?? [])
-        .filter((v) => v.is_active)
-        .sort((a, b) => a.sku.localeCompare(b.sku))
-        .map((v) => ({
-          id: v.id,
-          sku: v.sku,
-          color_name: v.color_name,
-          color_hex: v.color_hex,
-          texture_path: v.swatch_id
-            ? (swatchMap.get(v.swatch_id)?.texture_image_path ?? null)
-            : null,
-          size: v.size,
-          price_delta: num(v.price_delta),
-          stock_qty: num(v.stock_qty),
-          reserved_qty: num(v.reserved_qty),
-        }));
-
-      const tiers: PublicTier[] = (raw.price_tiers ?? [])
-        .sort((a, b) => num(a.min_qty) - num(b.min_qty))
-        .map((t) => ({
-          min_qty: num(t.min_qty),
-          max_qty: t.max_qty == null ? null : num(t.max_qty),
-          unit_price: num(t.unit_price),
-        }));
-
-      const images: PublicImage[] = (raw.product_images ?? [])
-        .sort((a, b) => num(a.sort_order) - num(b.sort_order))
-        .map((im) => ({
-          path: im.path,
-          alt_en: im.alt_en,
-          alt_bn: im.alt_bn,
-          variant_id: im.variant_id,
-        }));
-
-      const categories = (raw.product_categories ?? [])
-        .map((c) => c.categories)
-        .filter(
-          (
-            c,
-          ): c is {
+    const raw = data as unknown as {
+      id: string;
+      slug: string;
+      type: ProductType;
+      title_en: string;
+      title_bn: string | null;
+      short_description_en: string | null;
+      short_description_bn: string | null;
+      description_en: string | null;
+      description_bn: string | null;
+      material: string | null;
+      specs: unknown;
+      moq: unknown;
+      lead_time_days: unknown;
+      stock_mode: StockMode;
+      customization_enabled: boolean;
+      is_featured: boolean;
+      seo_title_en: string | null;
+      seo_title_bn: string | null;
+      seo_description_en: string | null;
+      seo_description_bn: string | null;
+      product_images:
+        | {
+            path: string;
+            alt_en: string | null;
+            alt_bn: string | null;
+            sort_order: unknown;
+            variant_id: string | null;
+          }[]
+        | null;
+      product_variants:
+        | {
             id: string;
-            slug: string;
-            name_en: string;
-            name_bn: string | null;
-          } => Boolean(c),
-        );
+            sku: string;
+            swatch_id: string | null;
+            color_name: string | null;
+            color_hex: string | null;
+            size: string | null;
+            price_delta: unknown;
+            stock_qty: unknown;
+            reserved_qty: unknown;
+            is_active: boolean;
+          }[]
+        | null;
+      price_tiers:
+        | { min_qty: unknown; max_qty: unknown; unit_price: unknown }[]
+        | null;
+      product_categories:
+        | {
+            is_primary: boolean;
+            categories: {
+              id: string;
+              slug: string;
+              name_en: string;
+              name_bn: string | null;
+            } | null;
+          }[]
+        | null;
+      product_custom_parts:
+        | {
+            id: string;
+            key: string;
+            label_en: string;
+            label_bn: string | null;
+            input_type: InputType;
+            is_required: boolean;
+            price_delta: unknown;
+            config: unknown;
+            help_text_en: string | null;
+            help_text_bn: string | null;
+            sort_order: unknown;
+            product_part_swatches:
+              | {
+                  swatch_id: string;
+                  is_default: boolean;
+                  price_delta: unknown;
+                }[]
+              | null;
+          }[]
+        | null;
+    };
 
-      const customParts: PublicCustomPart[] = (raw.product_custom_parts ?? [])
-        .sort((a, b) => num(a.sort_order) - num(b.sort_order))
-        .map((p) => ({
-          id: p.id,
-          key: p.key,
-          label_en: p.label_en,
-          label_bn: p.label_bn,
-          input_type: p.input_type,
-          is_required: p.is_required,
-          price_delta: num(p.price_delta),
-          config: p.config ?? {},
-          help_text_en: p.help_text_en,
-          help_text_bn: p.help_text_bn,
-          sort_order: num(p.sort_order),
-          allowed_swatches: (p.product_part_swatches ?? []).map((s) => {
-            const sw = swatchMap.get(s.swatch_id);
-            return {
-              swatch_id: s.swatch_id,
-              is_default: s.is_default,
-              price_delta: s.price_delta == null ? null : num(s.price_delta),
-              name_en: sw?.name_en ?? null,
-              name_bn: sw?.name_bn ?? null,
-              color_hex: sw?.color_hex ?? null,
-              texture_path: sw?.texture_image_path ?? null,
-            };
-          }),
-        }));
+    const swatchMap = await getSwatchMap();
 
-      return {
-        slug: raw.slug,
-        type: raw.type,
-        title_en: raw.title_en,
-        title_bn: raw.title_bn,
-        short_description_en: raw.short_description_en,
-        short_description_bn: raw.short_description_bn,
-        description_en: raw.description_en,
-        description_bn: raw.description_bn,
-        material: raw.material,
-        specs: raw.specs ?? null,
-        moq: num(raw.moq),
-        lead_time_days:
-          raw.lead_time_days == null ? null : num(raw.lead_time_days),
-        stock_mode: raw.stock_mode,
-        customization_enabled: raw.customization_enabled,
-        is_featured: raw.is_featured,
-        seo_title_en: raw.seo_title_en,
-        seo_title_bn: raw.seo_title_bn,
-        seo_description_en: raw.seo_description_en,
-        seo_description_bn: raw.seo_description_bn,
-        images,
-        variants,
-        tiers,
-        categories,
-        customParts,
-      } satisfies PublicProduct;
-    },
-    ["product-by-slug", slug],
-    { revalidate: 300, tags: [CATALOG_TAG] },
-  )();
+    const variants: PublicVariant[] = (raw.product_variants ?? [])
+      .filter((v) => v.is_active)
+      .sort((a, b) => a.sku.localeCompare(b.sku))
+      .map((v) => ({
+        id: v.id,
+        sku: v.sku,
+        color_name: v.color_name,
+        color_hex: v.color_hex,
+        texture_path: v.swatch_id
+          ? (swatchMap.get(v.swatch_id)?.texture_image_path ?? null)
+          : null,
+        size: v.size,
+        price_delta: num(v.price_delta),
+        stock_qty: num(v.stock_qty),
+        reserved_qty: num(v.reserved_qty),
+      }));
+
+    const tiers: PublicTier[] = (raw.price_tiers ?? [])
+      .sort((a, b) => num(a.min_qty) - num(b.min_qty))
+      .map((t) => ({
+        min_qty: num(t.min_qty),
+        max_qty: t.max_qty == null ? null : num(t.max_qty),
+        unit_price: num(t.unit_price),
+      }));
+
+    const images: PublicImage[] = (raw.product_images ?? [])
+      .sort((a, b) => num(a.sort_order) - num(b.sort_order))
+      .map((im) => ({
+        path: im.path,
+        alt_en: im.alt_en,
+        alt_bn: im.alt_bn,
+        variant_id: im.variant_id,
+      }));
+
+    const categories = (raw.product_categories ?? [])
+      .map((c) => c.categories)
+      .filter(
+        (
+          c,
+        ): c is {
+          id: string;
+          slug: string;
+          name_en: string;
+          name_bn: string | null;
+        } => Boolean(c),
+      );
+
+    const customParts: PublicCustomPart[] = (raw.product_custom_parts ?? [])
+      .sort((a, b) => num(a.sort_order) - num(b.sort_order))
+      .map((p) => ({
+        id: p.id,
+        key: p.key,
+        label_en: p.label_en,
+        label_bn: p.label_bn,
+        input_type: p.input_type,
+        is_required: p.is_required,
+        price_delta: num(p.price_delta),
+        config: p.config ?? {},
+        help_text_en: p.help_text_en,
+        help_text_bn: p.help_text_bn,
+        sort_order: num(p.sort_order),
+        allowed_swatches: (p.product_part_swatches ?? []).map((s) => {
+          const sw = swatchMap.get(s.swatch_id);
+          return {
+            swatch_id: s.swatch_id,
+            is_default: s.is_default,
+            price_delta: s.price_delta == null ? null : num(s.price_delta),
+            name_en: sw?.name_en ?? null,
+            name_bn: sw?.name_bn ?? null,
+            color_hex: sw?.color_hex ?? null,
+            texture_path: sw?.texture_image_path ?? null,
+          };
+        }),
+      }));
+
+    return {
+      slug: raw.slug,
+      type: raw.type,
+      title_en: raw.title_en,
+      title_bn: raw.title_bn,
+      short_description_en: raw.short_description_en,
+      short_description_bn: raw.short_description_bn,
+      description_en: raw.description_en,
+      description_bn: raw.description_bn,
+      material: raw.material,
+      specs: raw.specs ?? null,
+      moq: num(raw.moq),
+      lead_time_days:
+        raw.lead_time_days == null ? null : num(raw.lead_time_days),
+      stock_mode: raw.stock_mode,
+      customization_enabled: raw.customization_enabled,
+      is_featured: raw.is_featured,
+      seo_title_en: raw.seo_title_en,
+      seo_title_bn: raw.seo_title_bn,
+      seo_description_en: raw.seo_description_en,
+      seo_description_bn: raw.seo_description_bn,
+      images,
+      variants,
+      tiers,
+      categories,
+      customParts,
+    } satisfies PublicProduct;
 }
 
 /** Related products: published items sharing any category, excluding the slug. */
@@ -761,37 +760,35 @@ export type CategoryOption = {
 };
 
 /** id + bilingual title for the quote form's product picker. */
-export const listProductOptions = unstable_cache(
-  async (): Promise<ProductOption[]> => {
-    const supabase = createPublicClient();
-    const { data, error } = await supabase
-      .from("products")
-      .select("id, slug, title_en, title_bn")
-      .eq("status", "published")
-      .order("title_en");
-    if (error)
-      throw new Error("Failed to load product options.", { cause: error });
-    return (data ?? []) as ProductOption[];
-  },
-  ["product-options"],
-  { revalidate: 300, tags: [CATALOG_TAG] },
-);
+export async function listProductOptions(): Promise<ProductOption[]> {
+  "use cache";
+  cacheLife("catalog");
+  cacheTag(CACHE_TAGS.catalog);
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select("id, slug, title_en, title_bn")
+    .eq("status", "published")
+    .order("title_en");
+  if (error)
+    throw new Error("Failed to load product options.", { cause: error });
+  return (data ?? []) as ProductOption[];
+}
 
-export const listCategoryOptions = unstable_cache(
-  async (): Promise<CategoryOption[]> => {
-    const supabase = createPublicClient();
-    const { data, error } = await supabase
-      .from("categories")
-      .select("id, name_en, name_bn")
-      .eq("is_active", true)
-      .order("name_en");
-    if (error)
-      throw new Error("Failed to load category options.", { cause: error });
-    return (data ?? []) as CategoryOption[];
-  },
-  ["category-options"],
-  { revalidate: 300, tags: [CATALOG_TAG] },
-);
+export async function listCategoryOptions(): Promise<CategoryOption[]> {
+  "use cache";
+  cacheLife("catalog");
+  cacheTag(CACHE_TAGS.catalog);
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("categories")
+    .select("id, name_en, name_bn")
+    .eq("is_active", true)
+    .order("name_en");
+  if (error)
+    throw new Error("Failed to load category options.", { cause: error });
+  return (data ?? []) as CategoryOption[];
+}
 
 // ---------------------------------------------------------------- swatches ----
 
@@ -811,100 +808,96 @@ export type SwatchGroup = {
 };
 
 /** Groups + their active swatches for the builder's color pickers. */
-export const listSwatchGroups = unstable_cache(
-  async (): Promise<SwatchGroup[]> => {
-    const supabase = createPublicClient();
-    const [{ data: groups, error: gErr }, { data: swatches, error: sErr }] =
-      await Promise.all([
-        supabase
-          .from("swatch_groups")
-          .select("id, key, name_en, name_bn, sort_order")
-          .order("sort_order"),
-        supabase
-          .from("swatches")
-          .select("id, group_id, name_en, name_bn, color_hex, sort_order")
-          .eq("is_active", true)
-          .order("sort_order"),
-      ]);
-    if (gErr) throw new Error("Failed to load swatch groups.", { cause: gErr });
-    if (sErr) throw new Error("Failed to load swatches.", { cause: sErr });
+export async function listSwatchGroups(): Promise<SwatchGroup[]> {
+  "use cache";
+  cacheLife("catalog");
+  cacheTag(CACHE_TAGS.catalog);
+  const supabase = createPublicClient();
+  const [{ data: groups, error: gErr }, { data: swatches, error: sErr }] =
+    await Promise.all([
+      supabase
+        .from("swatch_groups")
+        .select("id, key, name_en, name_bn, sort_order")
+        .order("sort_order"),
+      supabase
+        .from("swatches")
+        .select("id, group_id, name_en, name_bn, color_hex, sort_order")
+        .eq("is_active", true)
+        .order("sort_order"),
+    ]);
+  if (gErr) throw new Error("Failed to load swatch groups.", { cause: gErr });
+  if (sErr) throw new Error("Failed to load swatches.", { cause: sErr });
 
-    const byGroup = new Map<string, BuilderSwatch[]>();
-    for (const s of (swatches ?? []) as (BuilderSwatch & {
-      group_id: string;
-    })[]) {
-      const list = byGroup.get(s.group_id) ?? [];
-      list.push({
-        id: s.id,
-        name_en: s.name_en,
-        name_bn: s.name_bn,
-        color_hex: s.color_hex,
-      });
-      byGroup.set(s.group_id, list);
-    }
+  const byGroup = new Map<string, BuilderSwatch[]>();
+  for (const s of (swatches ?? []) as (BuilderSwatch & {
+    group_id: string;
+  })[]) {
+    const list = byGroup.get(s.group_id) ?? [];
+    list.push({
+      id: s.id,
+      name_en: s.name_en,
+      name_bn: s.name_bn,
+      color_hex: s.color_hex,
+    });
+    byGroup.set(s.group_id, list);
+  }
 
-    return (
-      (groups ?? []) as {
-        id: string;
-        key: string;
-        name_en: string;
-        name_bn: string | null;
-      }[]
-    ).map((g) => ({ ...g, swatches: byGroup.get(g.id) ?? [] }));
-  },
-  ["swatch-groups"],
-  { revalidate: 300, tags: [CATALOG_TAG] },
-);
+  return (
+    (groups ?? []) as {
+      id: string;
+      key: string;
+      name_en: string;
+      name_bn: string | null;
+    }[]
+  ).map((g) => ({ ...g, swatches: byGroup.get(g.id) ?? [] }));
+}
 
 // ------------------------------------------------------------------ sitemap ----
 
 export type SitemapEntry = { slug: string; updated_at: string };
 
 /** Every published product slug for the XML sitemap (plan 8 SEO). */
-export const listSitemapProducts = unstable_cache(
-  async (): Promise<SitemapEntry[]> => {
-    const supabase = createPublicClient();
-    const { data, error } = await supabase
-      .from("products")
-      .select("slug, updated_at")
-      .eq("status", "published")
-      .order("updated_at", { ascending: false });
-    if (error)
-      throw new Error("Failed to load sitemap products.", { cause: error });
-    return (data ?? []) as SitemapEntry[];
-  },
-  ["sitemap-products"],
-  { revalidate: 3600, tags: [CATALOG_TAG] },
-);
+export async function listSitemapProducts(): Promise<SitemapEntry[]> {
+  "use cache";
+  cacheLife("catalog");
+  cacheTag(CACHE_TAGS.catalog);
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select("slug, updated_at")
+    .eq("status", "published")
+    .order("updated_at", { ascending: false });
+  if (error)
+    throw new Error("Failed to load sitemap products.", { cause: error });
+  return (data ?? []) as SitemapEntry[];
+}
 
 /** Every active category slug (all levels) for the XML sitemap. */
-export const listSitemapCategories = unstable_cache(
-  async (): Promise<string[]> => {
-    const supabase = createPublicClient();
-    const { data, error } = await supabase
-      .from("categories")
-      .select("slug")
-      .eq("is_active", true);
-    if (error)
-      throw new Error("Failed to load sitemap categories.", { cause: error });
-    return ((data ?? []) as { slug: string }[]).map((r) => r.slug);
-  },
-  ["sitemap-categories"],
-  { revalidate: 3600, tags: [CATALOG_TAG] },
-);
+export async function listSitemapCategories(): Promise<string[]> {
+  "use cache";
+  cacheLife("catalog");
+  cacheTag(CACHE_TAGS.catalog);
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("categories")
+    .select("slug")
+    .eq("is_active", true);
+  if (error)
+    throw new Error("Failed to load sitemap categories.", { cause: error });
+  return ((data ?? []) as { slug: string }[]).map((r) => r.slug);
+}
 
 /** Every active collection slug for the XML sitemap. */
-export const listSitemapCollections = unstable_cache(
-  async (): Promise<string[]> => {
-    const supabase = createPublicClient();
-    const { data, error } = await supabase
-      .from("collections")
-      .select("slug")
-      .eq("is_active", true);
-    if (error)
-      throw new Error("Failed to load sitemap collections.", { cause: error });
-    return ((data ?? []) as { slug: string }[]).map((r) => r.slug);
-  },
-  ["sitemap-collections"],
-  { revalidate: 3600, tags: [CATALOG_TAG] },
-);
+export async function listSitemapCollections(): Promise<string[]> {
+  "use cache";
+  cacheLife("catalog");
+  cacheTag(CACHE_TAGS.catalog);
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("collections")
+    .select("slug")
+    .eq("is_active", true);
+  if (error)
+    throw new Error("Failed to load sitemap collections.", { cause: error });
+  return ((data ?? []) as { slug: string }[]).map((r) => r.slug);
+}

@@ -1,8 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import { requireRole } from "@/lib/auth";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import type { Database } from "@/lib/database.types";
 import { createClient } from "@/lib/supabase/server";
 import { adminCreateOrderSchema } from "@/lib/validators/admin-order";
@@ -12,9 +13,11 @@ import {
   orderShippingSchema,
   recordPaymentSchema,
   setOrderStatusSchema,
+  setProductionStatusSchema,
 } from "@/lib/validators/order-admin";
 import { normalizePhone } from "@/server/abuse";
 import { phoneIsBlocked } from "@/server/admin-orders";
+import { logAudit } from "@/server/audit";
 
 /**
  * Admin order fulfilment (plan §9 Orders, Phase 5 task 3). Same shape as the
@@ -40,6 +43,8 @@ function denied(): OrderActionResult {
 function revalidate(orderId: string) {
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
+  // Any status/fulfilment move can change the pending-order sidebar badge.
+  revalidateTag(CACHE_TAGS.adminCounts, "max");
 }
 
 /**
@@ -57,6 +62,10 @@ function fulfilmentError(message: string, fallback: string): string {
       return "This order has already shipped, so it can no longer be cancelled. Use Returned once the customer sends it back.";
     case "cannot_return_before_delivery":
       return "Only a delivered order can be marked as returned.";
+    case "production_not_applicable":
+      return "Production tracking is only for bulk/custom orders.";
+    case "invalid_production_transition":
+      return "That production step is not allowed from the current stage — move one step at a time.";
     case "invalid_amount":
       return "Enter a payment amount greater than zero.";
     case "payment_exceeds_balance":
@@ -67,6 +76,9 @@ function fulfilmentError(message: string, fallback: string): string {
         message.includes("admin_record_payment")
       ) {
         return "The order fulfilment database functions are missing. Apply supabase/migrations/202610180002_phase5_order_fulfilment.sql first.";
+      }
+      if (message.includes("admin_set_production_status")) {
+        return "The production status database function is missing. Apply supabase/migrations/202610210005_f2_production_status.sql first.";
       }
       return fallback;
   }
@@ -80,6 +92,10 @@ type FulfilmentRpc =
   | {
       fn: "admin_record_payment";
       args: Database["public"]["Functions"]["admin_record_payment"]["Args"];
+    }
+  | {
+      fn: "admin_set_production_status";
+      args: Database["public"]["Functions"]["admin_set_production_status"]["Args"];
     };
 
 async function callFulfilmentRpc(
@@ -99,20 +115,60 @@ async function callFulfilmentRpc(
 export async function setOrderStatus(
   payload: unknown,
 ): Promise<OrderActionResult> {
+  let actorId: string;
   try {
-    await requireRole(ORDER_ROLES);
+    actorId = (await requireRole(ORDER_ROLES)).id;
   } catch {
     return denied();
   }
   const parsed = setOrderStatusSchema.safeParse(payload);
   if (!parsed.success) return { ok: false, error: "Invalid status." };
-  const { id, status, note } = parsed.data;
+  const { id, status } = parsed.data;
   const result = await callFulfilmentRpc(
     {
       fn: "admin_set_order_status",
-      args: { p_order_id: id, p_to_status: status, p_note: note },
+      args: { p_order_id: id, p_to_status: status, p_note: parsed.data.note },
     },
     "Could not change the order status.",
+  );
+  if (result.ok) {
+    // The status RPC writes order_status_history, not the audit trail.
+    const supabase = await createClient();
+    await logAudit(supabase, {
+      actorId,
+      action: "order.status",
+      tableName: "orders",
+      recordId: id,
+      diff: { to_status: status },
+    });
+    revalidate(id);
+  }
+  return result;
+}
+
+/**
+ * Plan 15.2 F2 — move a bulk/custom order along the production pipeline. The
+ * RPC owns the transition legality, the `audit_logs` row and the admin-bell
+ * notification (all in one transaction), so this action does NOT call
+ * `logAudit` — see server/audit.ts.
+ */
+export async function setProductionStatus(
+  payload: unknown,
+): Promise<OrderActionResult> {
+  try {
+    await requireRole(ORDER_ROLES);
+  } catch {
+    return denied();
+  }
+  const parsed = setProductionStatusSchema.safeParse(payload);
+  if (!parsed.success) return { ok: false, error: "Invalid production status." };
+  const { id, status } = parsed.data;
+  const result = await callFulfilmentRpc(
+    {
+      fn: "admin_set_production_status",
+      args: { p_order_id: id, p_to_status: status, p_note: parsed.data.note },
+    },
+    "Could not change the production status.",
   );
   if (result.ok) revalidate(id);
   return result;
@@ -121,8 +177,9 @@ export async function setOrderStatus(
 export async function recordPayment(
   payload: unknown,
 ): Promise<OrderActionResult> {
+  let actorId: string;
   try {
-    await requireRole(ORDER_ROLES);
+    actorId = (await requireRole(ORDER_ROLES)).id;
   } catch {
     return denied();
   }
@@ -148,15 +205,28 @@ export async function recordPayment(
     },
     "Could not record the payment.",
   );
-  if (result.ok) revalidate(id);
+  if (result.ok) {
+    // The payment RPC writes the ledger, not the audit trail. Amount + method,
+    // never the reference or free-text note.
+    const supabase = await createClient();
+    await logAudit(supabase, {
+      actorId,
+      action: "order.payment",
+      tableName: "orders",
+      recordId: id,
+      diff: { amount, method },
+    });
+    revalidate(id);
+  }
   return result;
 }
 
 export async function saveShippingDetails(
   payload: unknown,
 ): Promise<OrderActionResult> {
+  let actorId: string;
   try {
-    await requireRole(ORDER_ROLES);
+    actorId = (await requireRole(ORDER_ROLES)).id;
   } catch {
     return denied();
   }
@@ -177,6 +247,13 @@ export async function saveShippingDetails(
     .maybeSingle();
   if (error) return { ok: false, error: "Could not save the courier details." };
   if (!data) return { ok: false, error: "Order not found." };
+  await logAudit(supabase, {
+    actorId,
+    action: "order.shipping",
+    tableName: "orders",
+    recordId: id,
+    diff: { courier_name: fields.courier_name, tracking_code: fields.tracking_code },
+  });
   revalidate(id);
   return { ok: true };
 }
@@ -184,8 +261,9 @@ export async function saveShippingDetails(
 export async function saveOrderNote(
   payload: unknown,
 ): Promise<OrderActionResult> {
+  let actorId: string;
   try {
-    await requireRole(ORDER_ROLES);
+    actorId = (await requireRole(ORDER_ROLES)).id;
   } catch {
     return denied();
   }
@@ -201,6 +279,13 @@ export async function saveOrderNote(
     .maybeSingle();
   if (error) return { ok: false, error: "Could not save the note." };
   if (!data) return { ok: false, error: "Order not found." };
+  await logAudit(supabase, {
+    actorId,
+    action: "order.note",
+    tableName: "orders",
+    recordId: parsed.data.id,
+    diff: { fields: ["admin_note"] },
+  });
   revalidate(parsed.data.id);
   return { ok: true };
 }
@@ -246,6 +331,13 @@ export async function blockOrderPhone(
   if (error && error.code !== "23505") {
     return { ok: false, error: "Could not block this phone." };
   }
+  // Audit the block without the phone value (PII). Record the originating order.
+  await logAudit(supabase, {
+    actorId: staff.id,
+    action: "blocked_contact.create",
+    tableName: "blocked_contacts",
+    diff: { type: "phone", order_id: parsed.data.id },
+  });
   revalidate(parsed.data.id);
   return { ok: true };
 }
@@ -386,6 +478,7 @@ export async function createAdminOrder(
   }
 
   revalidatePath("/admin/orders");
+  revalidateTag(CACHE_TAGS.adminCounts, "max");
   const warning = (await phoneIsBlocked(d.customer_phone))
     ? "This phone is on the blocklist — the order was still created."
     : undefined;

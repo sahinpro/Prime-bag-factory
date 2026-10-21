@@ -10,7 +10,9 @@ import {
   Palette,
   ScrollText,
   Settings,
+  ShieldCheck,
   ShoppingCart,
+  Truck,
   UserCog,
   Users,
 } from "lucide-react";
@@ -122,6 +124,12 @@ export const NAV_GROUPS: NavGroup[] = [
         roles: ["owner", "manager", "inventory"],
         badgeKey: "inventory_low",
       },
+      {
+        label: "Shipping",
+        href: "/admin/shipping",
+        icon: Truck,
+        roles: OWNER_MANAGER,
+      },
     ],
   },
   {
@@ -135,11 +143,16 @@ export const NAV_GROUPS: NavGroup[] = [
         hidden: true, // C4 — page not built (plan §9 "Invite staff")
       },
       {
+        label: "Security",
+        href: "/admin/security",
+        icon: ShieldCheck,
+        roles: OWNER_MANAGER,
+      },
+      {
         label: "Settings",
         href: "/admin/settings",
         icon: Settings,
-        roles: ["owner"],
-        hidden: true, // C4 — page not built (plan §9 "Settings")
+        roles: OWNER_MANAGER,
       },
       {
         label: "Audit log",

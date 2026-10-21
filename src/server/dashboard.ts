@@ -37,6 +37,16 @@ export type DashboardData = {
   days: number;
   newQuotes: { count: number; deltaPct: number | null; spark: number[] };
   lowStockCount: number;
+  sales: { total: number; deltaPct: number | null; spark: number[] };
+  pendingOrders: { count: number };
+  recentOrders: {
+    id: string;
+    orderNo: string;
+    customerName: string;
+    total: number;
+    status: string;
+    createdAt: string;
+  }[];
   pipeline: { stage: string; label: string; value: number; color: string }[];
   quotesNeedingAction: {
     id: string;
@@ -243,11 +253,69 @@ export async function getDashboardData(range: Range): Promise<DashboardData> {
     };
   });
 
+  // F. Orders — sales sum + daily spark, current pending count, recent list.
+  // One windowed read (created_at >= priorStart) feeds both the current and
+  // previous period for the delta. Money is recomputed from the DB `total`
+  // column (never a client value); cancelled/returned orders are excluded from
+  // sales, matching plan 9c.7 ("status not in cancelled, returned").
+  const { data: orderRows, error: orderErr } = await supabase
+    .from("orders")
+    .select("id, order_no, status, total, customer_name, created_at")
+    .gte("created_at", priorStart.toISOString())
+    .order("created_at", { ascending: false });
+  if (orderErr && isFatalError(orderErr)) fatal = true;
+  if (orderErr && !isFatalError(orderErr)) degraded.push("orders");
+
+  const SALES_EXCLUDED = new Set(["cancelled", "returned"]);
+  const orderList = orderRows ?? [];
+  let salesTotal = 0;
+  let priorSales = 0;
+  const salesSpark = new Array(days).fill(0);
+  for (const o of orderList) {
+    if (SALES_EXCLUDED.has(o.status)) continue;
+    const amount = Number(o.total) || 0;
+    const created = new Date(o.created_at);
+    if (created >= windowStart) {
+      salesTotal += amount;
+      const ageDays = Math.min(
+        days - 1,
+        Math.max(
+          0,
+          Math.floor((Date.now() - created.getTime()) / 86_400_000),
+        ),
+      );
+      salesSpark[days - 1 - ageDays] += amount;
+    } else if (created >= priorStart) {
+      priorSales += amount;
+    }
+  }
+  const salesDeltaPct =
+    priorSales > 0 ? Math.round(((salesTotal - priorSales) / priorSales) * 100) : null;
+
+  // Current pending queue is a live state, not a windowed event count.
+  const { count: pendingCount, error: pendingErr } = await supabase
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "pending");
+  if (pendingErr && isFatalError(pendingErr)) fatal = true;
+
+  const recentOrders = orderList.slice(0, 5).map((o) => ({
+    id: o.id,
+    orderNo: o.order_no,
+    customerName: o.customer_name,
+    total: Number(o.total) || 0,
+    status: o.status,
+    createdAt: o.created_at,
+  }));
+
   return {
     range,
     days,
     newQuotes: { count, deltaPct, spark },
     lowStockCount: lowStock.length,
+    sales: { total: salesTotal, deltaPct: salesDeltaPct, spark: salesSpark },
+    pendingOrders: { count: pendingCount ?? 0 },
+    recentOrders,
     pipeline,
     quotesNeedingAction,
     lowStock,

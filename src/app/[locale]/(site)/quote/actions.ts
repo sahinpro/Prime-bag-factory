@@ -2,8 +2,10 @@
 
 import { randomUUID } from "node:crypto";
 
+import { revalidateTag } from "next/cache";
 import { z } from "zod";
 
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   builderCustomizationSchema,
@@ -260,5 +262,6 @@ export async function submitQuote(
     message: data.message ?? null,
   });
 
+  revalidateTag(CACHE_TAGS.adminCounts, "max");
   return { ok: true, ref };
 }
