@@ -17,6 +17,16 @@ export const QUOTE_STATUSES = [
   "lost",
 ] as const;
 
+// Order channels a converted bulk order may be attributed to (plan 15.2 F1).
+// The database derives `other` when the caller supplies nothing.
+export const QUOTE_CONVERT_CHANNELS = [
+  "phone",
+  "whatsapp",
+  "facebook",
+  "walk_in",
+  "other",
+] as const;
+
 const id = z.guid({ error: "Invalid quote." });
 
 export const updateQuoteStatusSchema = z.object({
@@ -57,3 +67,17 @@ export const quoteDetailsSchema = z.object({
 export type UpdateQuoteStatusInput = z.input<typeof updateQuoteStatusSchema>;
 export type AssignQuoteInput = z.input<typeof assignQuoteSchema>;
 export type QuoteDetailsInput = z.input<typeof quoteDetailsSchema>;
+
+/**
+ * Convert a won quote to a bulk order (plan 15.2 F1). The quoted amount, the
+ * quantity and the customization snapshot are all read from the quote row
+ * inside the `convert_quote_to_order` RPC — the client only names the quote and
+ * (optionally) the channel / shipping zone, so no money is ever taken from it.
+ */
+export const convertQuoteSchema = z.object({
+  id: z.guid({ error: "Invalid quote." }),
+  channel: z.enum(QUOTE_CONVERT_CHANNELS).optional(),
+  shipping_zone_id: z.guid({ error: "Invalid shipping zone." }).optional(),
+});
+
+export type ConvertQuoteInput = z.input<typeof convertQuoteSchema>;

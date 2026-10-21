@@ -294,6 +294,25 @@ export async function getAdminQuote(
 }
 
 /**
+ * Plan 15.2 F1 — the id of the order this quote was already converted into, or
+ * null. `convert_quote_to_order` is convert-once, so the detail page shows a
+ * "View order" link instead of the button when this resolves. Read under the
+ * caller's session (staff can already read `orders` through RLS).
+ */
+export async function findConvertedOrderId(
+  quoteId: string,
+): Promise<string | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("orders")
+    .select("id")
+    .eq("source_quote_id", quoteId)
+    .maybeSingle();
+  if (error) throw new Error("Failed to load the linked order.", { cause: error });
+  return data ? String(data.id) : null;
+}
+
+/**
  * Plan 15.2 B6 — a short-lived signed GET URL so staff can open a private
  * quote attachment. Generated server-side on the service-role client (the
  * bucket denies every direct anon/authenticated read), so the browser never

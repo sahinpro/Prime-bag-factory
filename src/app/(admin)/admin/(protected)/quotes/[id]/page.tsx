@@ -9,6 +9,7 @@ import {
   getAdminQuote,
   listAssignableStaff,
   createAttachmentReadUrl,
+  findConvertedOrderId,
 } from "@/server/quotes";
 
 export const instant = false;
@@ -45,9 +46,12 @@ export default async function QuoteDetailPage({
   const { id } = await params;
   if (!z.guid().safeParse(id).success) notFound();
 
-  const [quote, staff] = await Promise.all([
+  const canConvert = user.role === "owner" || user.role === "manager";
+  const [quote, staff, convertedOrderId] = await Promise.all([
     getAdminQuote(id),
     listAssignableStaff(),
+    // Only owners/managers convert, but any staff reader can see a past link.
+    findConvertedOrderId(id),
   ]);
   if (!quote) notFound();
 
@@ -60,6 +64,8 @@ export default async function QuoteDetailPage({
       quote={quote}
       staff={staff}
       attachmentUrl={attachmentUrl}
+      canConvert={canConvert}
+      convertedOrderId={convertedOrderId}
     />
   );
 }

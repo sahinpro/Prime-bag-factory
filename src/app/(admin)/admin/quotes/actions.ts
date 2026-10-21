@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/server/audit";
 import {
   assignQuoteSchema,
+  convertQuoteSchema,
   quoteDetailsSchema,
   updateQuoteStatusSchema,
 } from "@/lib/validators/quote-admin";
@@ -124,4 +125,95 @@ export async function saveQuoteDetails(
     },
     { actorId, action: "quote.details" },
   );
+}
+
+/* ------------------------------------------------------------------ * *
+ * Plan 15.2 F1 — convert a won quote into a `bulk` order.             * *
+ * ------------------------------------------------------------------ * */
+
+// Bulk conversion is management-only (the RPC re-checks owner/manager inside).
+const CONVERT_ROLES = ["owner", "manager"] as const;
+
+export type ConvertQuoteResult =
+  | { ok: true; orderId: string }
+  | { ok: false; error: string };
+
+function deniedConvert(): ConvertQuoteResult {
+  return { ok: false, error: "Only owners and managers can convert a quote." };
+}
+
+/**
+ * Translate the short, stable codes `convert_quote_to_order` / `create_order_bulk`
+ * raise into staff-facing messages; never surface raw Postgres text, and never
+ * let an unrecognised failure look like a success.
+ */
+function convertError(message: string): string {
+  const code = message.trim().split(/\s+/)[0] ?? "";
+  switch (code) {
+    case "not_allowed":
+      return "Only owners and managers can convert a quote.";
+    case "quote_not_found":
+      return "This quote no longer exists.";
+    case "quote_not_priced":
+      return "Add a quoted amount before converting this quote.";
+    case "channel_required":
+    case "channel_invalid":
+      return "Choose how the order came in.";
+    default:
+      if (
+        message.includes("convert_quote_to_order") ||
+        message.includes("create_order_bulk")
+      ) {
+        return "The quote-conversion database functions are missing. Apply supabase/migrations/202610210004_f1_quote_to_bulk_order.sql first.";
+      }
+      return "Could not convert the quote. Please try again.";
+  }
+}
+
+/**
+ * Convert a quote to a bulk order (plan 15.2 F1). The quoted amount, quantity
+ * and customization snapshot are read from the quote row inside the RPC, so the
+ * client only names the quote plus an optional channel/zone. `convert_quote_to_order`
+ * is convert-once idempotent and writes its OWN `audit_logs` row, so this action
+ * does not call `logAudit` (AGENTS rule: no double-logging through a definer RPC,
+ * mirroring `createAdminOrder`). New-order notifications fire through the C1
+ * orders trigger automatically.
+ */
+export async function convertQuoteToOrder(
+  payload: unknown,
+): Promise<ConvertQuoteResult> {
+  try {
+    await requireRole(CONVERT_ROLES);
+  } catch {
+    return deniedConvert();
+  }
+  const parsed = convertQuoteSchema.safeParse(payload);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid quote.",
+    };
+  }
+  const { id, channel, shipping_zone_id } = parsed.data;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("convert_quote_to_order", {
+    p_quote_id: id,
+    p_payload: {
+      channel: channel ?? null,
+      shipping_zone_id: shipping_zone_id ?? null,
+    },
+  });
+
+  if (error || !data) {
+    return { ok: false, error: convertError(error?.message ?? "unknown") };
+  }
+
+  const orderId = String(data);
+  revalidatePath("/admin/quotes");
+  revalidatePath(`/admin/quotes/${id}`);
+  revalidatePath("/admin/orders");
+  // The quote left the `new` bucket and a pending order may have entered it.
+  revalidateTag(CACHE_TAGS.adminCounts, "max");
+  return { ok: true, orderId };
 }

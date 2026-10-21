@@ -8,18 +8,22 @@ import {
   ExternalLink,
   FileText,
   MessageCircle,
+  Package,
   Phone,
   Printer,
   Puzzle,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import * as React from "react";
 
 import {
   assignQuote,
+  convertQuoteToOrder,
   saveQuoteDetails,
   updateQuoteStatus,
 } from "@/app/(admin)/admin/quotes/actions";
+import { ConfirmDialog } from "@/components/admin/forms/confirm-dialog";
 import { StatusBadge, ToneBadge } from "@/components/admin/data/status-badge";
 import {
   FlashLine,
@@ -103,12 +107,31 @@ export function QuoteDetail({
   quote,
   staff,
   attachmentUrl,
+  canConvert,
+  convertedOrderId,
 }: Readonly<{
   quote: AdminQuoteDetail;
   staff: AssignableStaff[];
   attachmentUrl: string | null;
+  canConvert: boolean;
+  convertedOrderId: string | null;
 }>) {
-  const { saving, flash, run } = useActionSave();
+  const router = useRouter();
+  const { saving, flash, run, setFlash } = useActionSave();
+  const [converting, setConverting] = React.useState(false);
+
+  const priced = quote.quoted_amount != null && quote.quoted_amount > 0;
+
+  async function handleConvert() {
+    setConverting(true);
+    const result = await convertQuoteToOrder({ id: quote.id });
+    setConverting(false);
+    if (result.ok) {
+      router.push(`/admin/orders/${result.orderId}`);
+      return;
+    }
+    setFlash({ kind: "error", text: result.error });
+  }
 
   const [amount, setAmount] = React.useState(
     quote.quoted_amount != null ? String(quote.quoted_amount) : "",
@@ -603,6 +626,83 @@ export function QuoteDetail({
                 {saving ? "Saving…" : "Save details"}
               </Button>
             </form>
+          </SectionCard>
+
+          <SectionCard title="Order">
+            {convertedOrderId ? (
+              <div className="space-y-3">
+                <p className="text-sm text-success">
+                  This quote was converted to an order.
+                </p>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href={`/admin/orders/${convertedOrderId}`}>
+                    <Package
+                      aria-hidden="true"
+                      strokeWidth={1.75}
+                      className="size-4"
+                    />
+                    View order
+                  </Link>
+                </Button>
+              </div>
+            ) : canConvert ? (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Creates a bulk order for{" "}
+                  <span className="tabular-nums text-foreground">
+                    {priced
+                      ? formatMoney(quote.quoted_amount ?? 0, "en")
+                      : "no price set"}
+                  </span>
+                  . The quote becomes Won and stock is not reserved.
+                </p>
+                {priced ? (
+                  <ConfirmDialog
+                    title="Convert this quote to an order?"
+                    description={`Creates a bulk order totalling ${formatMoney(
+                      quote.quoted_amount ?? 0,
+                      "en",
+                    )} from this quote. The quote will be marked Won.`}
+                    confirmLabel="Create order"
+                    onConfirm={handleConvert}
+                    trigger={
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="w-full"
+                        disabled={converting || saving}
+                      >
+                        <Package
+                          aria-hidden="true"
+                          strokeWidth={1.75}
+                          className="size-4"
+                        />
+                        {converting ? "Converting…" : "Convert to order"}
+                      </Button>
+                    }
+                  />
+                ) : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                    disabled
+                  >
+                    <Package
+                      aria-hidden="true"
+                      strokeWidth={1.75}
+                      className="size-4"
+                    />
+                    Convert to order
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Only owners and managers can convert a quote to an order.
+              </p>
+            )}
           </SectionCard>
         </div>
       </div>

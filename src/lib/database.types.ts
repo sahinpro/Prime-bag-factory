@@ -1513,6 +1513,11 @@ export type Database = {
       has_role: { Args: { roles: string[] }; Returns: boolean };
       place_order: { Args: { payload: Json }; Returns: string };
       admin_create_order: { Args: { payload: Json }; Returns: string };
+      create_order_bulk: { Args: { p_payload: Json }; Returns: string };
+      convert_quote_to_order: {
+        Args: { p_quote_id: string; p_payload?: Json };
+        Returns: string;
+      };
       admin_set_order_status: {
         Args: {
           p_order_id: string;
