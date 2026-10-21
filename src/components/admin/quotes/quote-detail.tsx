@@ -14,6 +14,7 @@ import {
   Puzzle,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 
@@ -429,13 +430,18 @@ export function QuoteDetail({
                   <>
                     {quote.attachment_path.endsWith(".pdf") ? null : (
                       /* Private artwork opened via a short-lived signed URL
-                         (plan 15.2 B6); a plain img keeps the admin bundle
-                         free of remote-pattern image config. */
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                         (plan 15.2 B6). Rendered with next/image in `unoptimized`
+                         mode: it is a Supabase Storage URL, not a Cloudinary
+                         asset, so we skip the optimizer (and the extra
+                         remote-pattern config) but still use the image
+                         component rather than a raw <img>. */
+                      <Image
                         src={attachmentUrl}
                         alt={`Artwork attachment for request ${ref}`}
-                        className="max-h-64 rounded-control border border-border object-contain"
+                        width={640}
+                        height={480}
+                        unoptimized
+                        className="max-h-64 w-auto rounded-control border border-border object-contain"
                       />
                     )}
                     <Button variant="outline" size="sm" asChild>

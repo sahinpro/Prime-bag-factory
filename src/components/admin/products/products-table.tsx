@@ -1,6 +1,7 @@
 "use client";
 
 import { Download, ImageIcon, Package, Pencil, Plus } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
@@ -93,11 +94,12 @@ const columnHelper = createColumnHelper<AdminProductSummary>();
 function Thumb({ product }: { product: AdminProductSummary }) {
   if (product.thumbnail) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
+      <Image
         src={product.thumbnail}
         alt=""
         aria-hidden="true"
+        width={40}
+        height={40}
         className="size-10 shrink-0 rounded-[6px] border border-border object-cover"
       />
     );
