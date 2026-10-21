@@ -149,7 +149,7 @@ function SidebarSearch() {
           tooltip="Search"
           aria-label="Search"
           onClick={() => setOpen(true)}
-          className="h-9 rounded-lg bg-white border-sidebar-border text-sidebar-muted"
+          className="h-9 rounded-lg bg-surface border-sidebar-border text-sidebar-muted"
         >
           <Search strokeWidth={1.75} />
           <span className="flex-1 font-normal">Search…</span>
