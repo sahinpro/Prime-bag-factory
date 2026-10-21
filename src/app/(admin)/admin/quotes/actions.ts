@@ -1,8 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import { requireRole } from "@/lib/auth";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import type { Database } from "@/lib/database.types";
 import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/server/audit";
@@ -53,6 +54,8 @@ async function updateQuote(
   });
   revalidatePath("/admin/quotes");
   revalidatePath(`/admin/quotes/${id}`);
+  // A status move can change how many quotes sit in `new` (the sidebar badge).
+  revalidateTag(CACHE_TAGS.adminCounts, "max");
   return { ok: true };
 }
 

@@ -1,8 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import { requireRole } from "@/lib/auth";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import type { Database } from "@/lib/database.types";
 import { createClient } from "@/lib/supabase/server";
 import { adminCreateOrderSchema } from "@/lib/validators/admin-order";
@@ -41,6 +42,8 @@ function denied(): OrderActionResult {
 function revalidate(orderId: string) {
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
+  // Any status/fulfilment move can change the pending-order sidebar badge.
+  revalidateTag(CACHE_TAGS.adminCounts, "max");
 }
 
 /**
@@ -435,6 +438,7 @@ export async function createAdminOrder(
   }
 
   revalidatePath("/admin/orders");
+  revalidateTag(CACHE_TAGS.adminCounts, "max");
   const warning = (await phoneIsBlocked(d.customer_phone))
     ? "This phone is on the blocklist — the order was still created."
     : undefined;

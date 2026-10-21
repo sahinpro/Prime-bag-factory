@@ -25,4 +25,13 @@ export const CACHE_TAGS = {
   category: (slug: string) => `category:${slug}`,
   /** A named content collection (faqs, legal, clients). */
   content: (key: string) => `content:${key}`,
+  /**
+   * Sidebar count badges (plan 15.2 C3). Computed once with the service-role
+   * client (no cookies, so it is cacheable) and revalidated by every writer
+   * that changes a count. Safe to share across staff because the RLS grants on
+   * `orders` / `quote_requests` / `product_variants` give every role that SEES a
+   * badge the identical full-table read, so the service count equals what that
+   * role would compute through its own session.
+   */
+  adminCounts: "admin_counts",
 } as const;

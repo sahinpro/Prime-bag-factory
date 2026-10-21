@@ -97,6 +97,7 @@ export async function adjustStock(
 
   revalidatePath("/admin/inventory");
     revalidateTag(CACHE_TAGS.catalog, "max");
+    revalidateTag(CACHE_TAGS.adminCounts, "max");
   return { ok: true };
 }
 
@@ -138,6 +139,7 @@ export async function setThreshold(
 
   revalidatePath("/admin/inventory");
     revalidateTag(CACHE_TAGS.catalog, "max");
+    revalidateTag(CACHE_TAGS.adminCounts, "max");
   return { ok: true };
 }
 
