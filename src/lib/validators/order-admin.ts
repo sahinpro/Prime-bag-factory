@@ -38,6 +38,33 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
+// Plan 15.2 F2 — production pipeline for bulk/custom orders only. The order of
+// this array is the transition order the database enforces (adjacency forward
+// or back one step); the client mirrors it for the button layout, but the RPC
+// is the source of truth.
+export const PRODUCTION_STATUSES = [
+  "awaiting_artwork",
+  "artwork_approved",
+  "in_production",
+  "qc",
+  "ready",
+] as const;
+
+export type ProductionStatus = (typeof PRODUCTION_STATUSES)[number];
+
+/** The one-step neighbours the server allows from `from` (null = not started). */
+export function allowedProductionMoves(
+  from: ProductionStatus | null,
+): ProductionStatus[] {
+  const index = from ? PRODUCTION_STATUSES.indexOf(from) : -1;
+  if (index === -1) return ["awaiting_artwork"];
+  const moves: ProductionStatus[] = [];
+  if (index > 0) moves.push(PRODUCTION_STATUSES[index - 1]);
+  if (index < PRODUCTION_STATUSES.length - 1)
+    moves.push(PRODUCTION_STATUSES[index + 1]);
+  return moves;
+}
+
 const id = z.guid({ error: "Invalid order." });
 
 /** Blank (or whitespace-only) input means "clear the column", not "" in the DB. */
@@ -78,6 +105,14 @@ export const orderNoteSchema = z.object({
   admin_note: nullableText(4000),
 });
 
+// Plan 15.2 F2 — production status move. The RPC recomputes the transition
+// legality and the notification/audit writes; the client only names the target.
+export const setProductionStatusSchema = z.object({
+  id,
+  status: z.enum(PRODUCTION_STATUSES),
+  note: nullableText(1000),
+});
+
 // Plan 15.2 B4 — "Block this phone" from the order detail. Only the order id
 // travels; the phone is read server-side so the client cannot poison the
 // blocklist with an arbitrary value.
@@ -90,3 +125,6 @@ export type SetOrderStatusInput = z.input<typeof setOrderStatusSchema>;
 export type RecordPaymentInput = z.input<typeof recordPaymentSchema>;
 export type OrderShippingInput = z.input<typeof orderShippingSchema>;
 export type OrderNoteInput = z.input<typeof orderNoteSchema>;
+export type SetProductionStatusInput = z.input<
+  typeof setProductionStatusSchema
+>;

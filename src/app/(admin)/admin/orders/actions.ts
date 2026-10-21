@@ -13,6 +13,7 @@ import {
   orderShippingSchema,
   recordPaymentSchema,
   setOrderStatusSchema,
+  setProductionStatusSchema,
 } from "@/lib/validators/order-admin";
 import { normalizePhone } from "@/server/abuse";
 import { phoneIsBlocked } from "@/server/admin-orders";
@@ -61,6 +62,10 @@ function fulfilmentError(message: string, fallback: string): string {
       return "This order has already shipped, so it can no longer be cancelled. Use Returned once the customer sends it back.";
     case "cannot_return_before_delivery":
       return "Only a delivered order can be marked as returned.";
+    case "production_not_applicable":
+      return "Production tracking is only for bulk/custom orders.";
+    case "invalid_production_transition":
+      return "That production step is not allowed from the current stage — move one step at a time.";
     case "invalid_amount":
       return "Enter a payment amount greater than zero.";
     case "payment_exceeds_balance":
@@ -71,6 +76,9 @@ function fulfilmentError(message: string, fallback: string): string {
         message.includes("admin_record_payment")
       ) {
         return "The order fulfilment database functions are missing. Apply supabase/migrations/202610180002_phase5_order_fulfilment.sql first.";
+      }
+      if (message.includes("admin_set_production_status")) {
+        return "The production status database function is missing. Apply supabase/migrations/202610210005_f2_production_status.sql first.";
       }
       return fallback;
   }
@@ -84,6 +92,10 @@ type FulfilmentRpc =
   | {
       fn: "admin_record_payment";
       args: Database["public"]["Functions"]["admin_record_payment"]["Args"];
+    }
+  | {
+      fn: "admin_set_production_status";
+      args: Database["public"]["Functions"]["admin_set_production_status"]["Args"];
     };
 
 async function callFulfilmentRpc(
@@ -131,6 +143,34 @@ export async function setOrderStatus(
     });
     revalidate(id);
   }
+  return result;
+}
+
+/**
+ * Plan 15.2 F2 — move a bulk/custom order along the production pipeline. The
+ * RPC owns the transition legality, the `audit_logs` row and the admin-bell
+ * notification (all in one transaction), so this action does NOT call
+ * `logAudit` — see server/audit.ts.
+ */
+export async function setProductionStatus(
+  payload: unknown,
+): Promise<OrderActionResult> {
+  try {
+    await requireRole(ORDER_ROLES);
+  } catch {
+    return denied();
+  }
+  const parsed = setProductionStatusSchema.safeParse(payload);
+  if (!parsed.success) return { ok: false, error: "Invalid production status." };
+  const { id, status } = parsed.data;
+  const result = await callFulfilmentRpc(
+    {
+      fn: "admin_set_production_status",
+      args: { p_order_id: id, p_to_status: status, p_note: parsed.data.note },
+    },
+    "Could not change the production status.",
+  );
+  if (result.ok) revalidate(id);
   return result;
 }
 

@@ -324,11 +324,32 @@ function toAlert(row: {
   id: string;
   status: string;
   created_at: string;
+  template: string | null;
   payload: unknown;
 }): AdminAlert {
   const p = (row.payload ?? {}) as Record<string, unknown>;
   const unread = row.status === "pending";
   const orderId = typeof p.order_id === "string" ? p.order_id : "";
+
+  // F2 production moves share the order id, so they are matched first.
+  if (row.template === "production_status" && orderId) {
+    const orderNo = typeof p.order_no === "string" ? p.order_no : "";
+    const name =
+      typeof p.customer_name === "string" ? p.customer_name : "Customer";
+    const stage =
+      typeof p.production_status === "string"
+        ? p.production_status.replace(/_/g, " ")
+        : "updated";
+    return {
+      id: row.id,
+      href: `/admin/orders/${orderId}`,
+      title: `Production: ${stage}`,
+      detail: name,
+      ref: orderNo,
+      createdAt: row.created_at,
+      unread,
+    };
+  }
 
   if (orderId) {
     const orderNo = typeof p.order_no === "string" ? p.order_no : "";
@@ -368,7 +389,7 @@ export async function listAdminAlerts(limit = 8): Promise<AdminAlert[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("notifications")
-    .select("id, status, created_at, payload")
+    .select("id, status, created_at, template, payload")
     .eq("channel", "admin_alert")
     .order("created_at", { ascending: false })
     .limit(limit);

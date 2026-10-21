@@ -5,6 +5,7 @@ import {
   BadgeCheck,
   Ban,
   CircleDot,
+  ClipboardList,
   MessageCircle,
   Phone,
   Printer,
@@ -19,9 +20,11 @@ import {
   saveOrderNote,
   saveShippingDetails,
   setOrderStatus,
+  setProductionStatus,
 } from "@/app/(admin)/admin/orders/actions";
 import {
   ORDER_STATUS_META,
+  PRODUCTION_STATUS_META,
   StatusBadge,
 } from "@/components/admin/data/status-badge";
 import { ConfirmDialog } from "@/components/admin/forms/confirm-dialog";
@@ -46,8 +49,10 @@ import { formatDate, formatMoney, formatNumber } from "@/lib/format";
 import {
   PAYMENT_METHOD_LABELS,
   PAYMENT_METHODS,
+  allowedProductionMoves,
   type OrderStatus,
   type PaymentMethod,
+  type ProductionStatus,
 } from "@/lib/validators/order-admin";
 import type { AdminOrder } from "@/server/orders";
 
@@ -143,6 +148,7 @@ export function OrderDetail({ order }: Readonly<{ order: AdminOrder }>) {
   const [courier, setCourier] = React.useState(order.courier_name ?? "");
   const [tracking, setTracking] = React.useState(order.tracking_code ?? "");
   const [adminNote, setAdminNote] = React.useState(order.admin_note ?? "");
+  const [prodNote, setProdNote] = React.useState("");
 
   const paymentError =
     amount.trim() === "" || Number.isNaN(Number(amount))
@@ -169,6 +175,23 @@ export function OrderDetail({ order }: Readonly<{ order: AdminOrder }>) {
       `Marked as ${successLabel}.`,
     ).then((ok) => {
       if (ok) setNote("");
+      return ok;
+    });
+  }
+
+  const isBulk = order.type === "bulk";
+  const productionStatus = order.production_status as ProductionStatus | null;
+  const productionMoves = isBulk
+    ? allowedProductionMoves(productionStatus)
+    : [];
+
+  function changeProduction(next: ProductionStatus) {
+    const label = PRODUCTION_STATUS_META[next]?.label ?? next;
+    return run(
+      () => setProductionStatus({ id: order.id, status: next, note: prodNote }),
+      `Production marked ${label}.`,
+    ).then((ok) => {
+      if (ok) setProdNote("");
       return ok;
     });
   }
@@ -603,6 +626,76 @@ export function OrderDetail({ order }: Readonly<{ order: AdminOrder }>) {
               />
             ) : null}
           </SectionCard>
+
+          {isBulk ? (
+            <SectionCard
+              title="Production"
+              action={
+                productionStatus ? (
+                  <StatusBadge domain="production" value={productionStatus} />
+                ) : (
+                  <span className="text-xs text-muted-foreground">
+                    Not started
+                  </span>
+                )
+              }
+            >
+              {order.source_quote_id ? (
+                <Button variant="outline" size="sm" asChild className="w-full">
+                  <Link
+                    href={`/admin/print/quotes/${order.source_quote_id}/spec`}
+                  >
+                    <ClipboardList
+                      aria-hidden="true"
+                      strokeWidth={1.75}
+                      className="size-4"
+                    />
+                    Production spec sheet
+                  </Link>
+                </Button>
+              ) : (
+                <p className="rounded-control bg-surface-2 px-3 py-2 text-sm text-muted-foreground">
+                  No linked quote — this bulk order has no production spec
+                  sheet.
+                </p>
+              )}
+              <ol
+                className="space-y-1.5"
+                aria-label="Production pipeline"
+              >
+                {productionMoves.map((value) => (
+                  <li key={value}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start"
+                      disabled={saving}
+                      onClick={() => void changeProduction(value)}
+                    >
+                      {productionStatus ? "Move to " : "Start: "}
+                      {PRODUCTION_STATUS_META[value]?.label ?? value}
+                    </Button>
+                  </li>
+                ))}
+              </ol>
+              <div className="space-y-1.5 pt-1">
+                <Label htmlFor="production-note">
+                  Note for the audit trail{" "}
+                  <span className="text-muted-foreground">(optional)</span>
+                </Label>
+                <Textarea
+                  id="production-note"
+                  name="production_note"
+                  rows={2}
+                  maxLength={1000}
+                  placeholder="Artwork approved by the customer on WhatsApp…"
+                  value={prodNote}
+                  onChange={(event) => setProdNote(event.target.value)}
+                />
+              </div>
+            </SectionCard>
+          ) : null}
 
           <SectionCard title="Customer and delivery">
             <dl className="space-y-2">
