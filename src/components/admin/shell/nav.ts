@@ -11,6 +11,7 @@ import {
   ScrollText,
   Settings,
   ShoppingCart,
+  Truck,
   UserCog,
   Users,
 } from "lucide-react";
@@ -121,6 +122,12 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: Boxes,
         roles: ["owner", "manager", "inventory"],
         badgeKey: "inventory_low",
+      },
+      {
+        label: "Shipping",
+        href: "/admin/shipping",
+        icon: Truck,
+        roles: OWNER_MANAGER,
       },
     ],
   },

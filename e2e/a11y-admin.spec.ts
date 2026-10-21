@@ -23,6 +23,7 @@ const pages = [
   { path: "/admin/orders/new", heading: "New order" },
   { path: "/admin/customers", heading: "Customers" },
   { path: "/admin/inventory", heading: "Inventory" },
+  { path: "/admin/shipping", heading: "Shipping zones" },
   { path: "/admin/blocked-contacts", heading: "Blocked contacts" },
 ] as const;
 
