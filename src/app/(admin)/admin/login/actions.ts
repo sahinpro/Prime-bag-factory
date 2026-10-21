@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { staffLoginSchema } from "@/lib/validators/staff-login";
 import { createClient } from "@/lib/supabase/server";
 import { getSafeAdminRedirectPath } from "@/lib/auth-redirect";
+import { hasVerifiedTotp } from "@/lib/mfa";
 
 export type StaffLoginState = {
   error: string | null;
@@ -58,6 +59,16 @@ export async function signIn(
       });
     }
     return { error: "This account is not authorized for admin access." };
+  }
+
+  // D2: a staff member who has enrolled a TOTP factor must clear the second
+  // factor before reaching the panel — prompted at the door even when the
+  // enforcement flag is off. Accounts with no factor (incl. the seeded CI/e2e
+  // owner) sign straight in, so the existing admin harness is unaffected.
+  if (await hasVerifiedTotp()) {
+    redirect(
+      `/admin/mfa?next=${encodeURIComponent(getSafeAdminRedirectPath(parsed.data.next))}`,
+    );
   }
 
   redirect(getSafeAdminRedirectPath(parsed.data.next));

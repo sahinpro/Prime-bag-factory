@@ -10,6 +10,7 @@ import {
   Palette,
   ScrollText,
   Settings,
+  ShieldCheck,
   ShoppingCart,
   Truck,
   UserCog,
@@ -140,6 +141,12 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: UserCog,
         roles: ["owner"],
         hidden: true, // C4 — page not built (plan §9 "Invite staff")
+      },
+      {
+        label: "Security",
+        href: "/admin/security",
+        icon: ShieldCheck,
+        roles: OWNER_MANAGER,
       },
       {
         label: "Settings",

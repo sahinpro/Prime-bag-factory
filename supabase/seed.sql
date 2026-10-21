@@ -96,7 +96,8 @@ on conflict do nothing;
 insert into public.settings (id, key, value)
 values
   ('4bb7d420-5342-4364-b4bd-e354c5237b07', 'company', '{"name":"Prime Bag Factory","phone":"+8801700000000","email":"info@primebagfactorybd.com","whatsapp":"8801700000000"}'),
-  ('a9dbf4cb-7fc5-4b31-adf2-34b7ab17ce3d', 'checkout', '{"cod_enabled": true, "checkout_enabled": true, "custom_order_mode": "quote"}')
+  ('a9dbf4cb-7fc5-4b31-adf2-34b7ab17ce3d', 'checkout', '{"cod_enabled": true, "checkout_enabled": true, "custom_order_mode": "quote"}'),
+  ('5ec0ffee-0000-4000-8000-000000000001', 'security', '{"require_mfa": false}')
 on conflict do nothing;
 
 -- Demo quote requests for local dev (plan §10: seed/demo data allowed only in
