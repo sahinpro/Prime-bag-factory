@@ -17,6 +17,7 @@ import { ChartCard } from "@/components/admin/dashboard/chart-card";
 import { ChartRangeMenu } from "@/components/admin/dashboard/chart-range-menu";
 import { SegmentBar } from "@/components/admin/dashboard/segment-bar";
 import { StatCard } from "@/components/admin/dashboard/stat-card";
+import { TrendChart } from "@/components/admin/dashboard/trend-chart";
 import { EmptyState } from "@/components/admin/data/empty-state";
 import { ErrorState } from "@/components/admin/data/error-state";
 import { StatusBadge } from "@/components/admin/data/status-badge";
@@ -24,6 +25,7 @@ import { PageHeader } from "@/components/admin/shell/page-header";
 import { TabsBar } from "@/components/admin/shell/tabs-bar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatDate, formatMoney } from "@/lib/format";
 import {
   getDashboardData,
   type DashboardData,
@@ -97,6 +99,9 @@ function DashboardBody({
 }: Readonly<{ data: DashboardData; baseQuery: string }>) {
   const rangeLabel = `last ${data.days} days`;
   const totalPipeline = data.pipeline.reduce((sum, s) => sum + s.value, 0);
+  const salesDaysAgo = (daysAgo: number) =>
+    daysAgo === 0 ? "Today" : daysAgo === 1 ? "Yesterday" : `${daysAgo} days ago`;
+  const money = (n: number) => formatMoney(n, "en");
 
   return (
     <>
@@ -104,9 +109,20 @@ function DashboardBody({
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Sales"
-          value="—"
+          value={money(data.sales.total)}
           icon={TrendingUp}
-          caption="Order data arrives in Phase 5"
+          href="/admin/orders"
+          sparkline={data.sales.spark}
+          delta={
+            data.sales.deltaPct !== null
+              ? {
+                  value: data.sales.deltaPct,
+                  display: `${data.sales.deltaPct >= 0 ? "+" : ""}${data.sales.deltaPct}%`,
+                  label: `vs previous ${data.days} days`,
+                }
+              : undefined
+          }
+          caption={data.sales.deltaPct === null ? rangeLabel : undefined}
         />
         <StatCard
           label="New quotes"
@@ -128,9 +144,14 @@ function DashboardBody({
         />
         <StatCard
           label="Pending orders"
-          value="—"
+          value={String(data.pendingOrders.count)}
           icon={ClipboardList}
-          caption="Order data arrives in Phase 5"
+          href="/admin/orders?status=pending"
+          caption={
+            data.pendingOrders.count > 0
+              ? "awaiting confirmation"
+              : "nothing waiting"
+          }
         />
         <StatCard
           label="Low stock"
@@ -149,13 +170,22 @@ function DashboardBody({
         <ChartCard
           title="Sales trend"
           subtitle={rangeLabel}
+          info="Order totals per day (cancelled and returned orders excluded)."
           menu={<ChartRangeMenu value={data.range} baseQuery={baseQuery} />}
         >
-          <EmptyState
-            icon={TrendingUp}
-            title="No sales data yet"
-            description="Order data arrives in Phase 5."
-          />
+          {data.sales.total <= 0 ? (
+            <EmptyState
+              icon={TrendingUp}
+              title="No sales in this range"
+              description={`Confirmed order totals for the ${rangeLabel} will appear here.`}
+            />
+          ) : (
+            <TrendChart
+              values={data.sales.spark}
+              formatValue={money}
+              daysAgoLabel={salesDaysAgo}
+            />
+          )}
         </ChartCard>
 
         <ChartCard
@@ -232,15 +262,55 @@ function DashboardBody({
           </Card>
 
           <Card className="rounded-card py-0">
-            <CardHeader className="px-5 py-4">
+            <CardHeader className="flex-row items-center gap-2 px-5 py-4">
               <CardTitle className="text-base">Recent orders</CardTitle>
+              {data.recentOrders.length > 0 ? (
+                <Link
+                  href="/admin/orders"
+                  className="ml-auto flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  View all
+                  <ArrowRight
+                    aria-hidden="true"
+                    strokeWidth={1.75}
+                    className="size-3.5"
+                  />
+                </Link>
+              ) : null}
             </CardHeader>
             <CardContent className="px-5 pb-2">
-              <EmptyState
-                icon={ShoppingCart}
-                title="No orders yet"
-                description="Order data arrives in Phase 5."
-              />
+              {data.recentOrders.length === 0 ? (
+                <EmptyState
+                  icon={ShoppingCart}
+                  title="No orders yet"
+                  description="Customer and admin orders will appear here."
+                />
+              ) : (
+                <ul className="divide-y divide-sidebar-border">
+                  {data.recentOrders.map((o) => (
+                    <li key={o.id}>
+                      <Link
+                        href={`/admin/orders/${o.id}`}
+                        className="flex flex-wrap items-center gap-x-3 gap-y-1 py-3 text-sm hover:bg-surface-2"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-medium">
+                            {o.customerName}
+                          </p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {o.orderNo} ·{" "}
+                            {formatDate(new Date(o.createdAt), "en")}
+                          </p>
+                        </div>
+                        <span className="shrink-0 text-sm tabular-nums">
+                          {money(o.total)}
+                        </span>
+                        <StatusBadge domain="order" value={o.status} />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </CardContent>
           </Card>
         </div>
