@@ -154,8 +154,8 @@ function SidebarSearch() {
           <Search strokeWidth={1.75} />
           <span className="flex-1 font-normal">Search…</span>
           {state === "expanded" ? (
-            <kbd className="pointer-events-none inline-flex h-5 items-center justify-center rounded border border-sidebar-border bg-sidebar px-1.5 text-[12px] font-medium text-sidebar-muted">
-              ⌘K
+            <kbd className="pointer-events-none inline-flex h-5 items-center justify-center rounded border border-sidebar-border bg-sidebar px-1.5 leading-1.5 text-[12px] uppercase font-medium text-sidebar-muted">
+              ⌘ K
             </kbd>
           ) : null}
         </SidebarMenuButton>
