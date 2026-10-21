@@ -1,5 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
 import { expect, test, type Page } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
 
 /**
  * Admin-created orders (plan 15.2 E3): staff key a phone / WhatsApp / walk-in
@@ -71,7 +71,15 @@ async function seedOrderable() {
     unit_price: 100,
   });
 
-  return { db, slug, sku, title, zoneName, zoneId: zone!.id, variantId: variant!.id };
+  return {
+    db,
+    slug,
+    sku,
+    title,
+    zoneName,
+    zoneId: zone!.id,
+    variantId: variant!.id,
+  };
 }
 
 async function openNewOrder(page: Page): Promise<boolean> {
@@ -103,18 +111,14 @@ test("a staff-created order prices, reserves stock and writes the source + audit
 
     // Search the picker, add the seeded product (defaults to one line at MOQ 5).
     await page.getByLabel("Add a product").fill(seed.title);
-    await page
-      .getByRole("button", { name: new RegExp(seed.sku) })
-      .click();
+    await page.getByRole("button", { name: new RegExp(seed.sku) }).click();
 
     // Raise the quantity to 10 for a predictable subtotal.
     await page.getByLabel("Qty").fill("10");
 
     // Pin the deterministic shipping zone so the fee is exactly 50.
     await page.getByLabel("Shipping zone").click();
-    await page
-      .getByRole("option", { name: new RegExp(seed.zoneName) })
-      .click();
+    await page.getByRole("option", { name: new RegExp(seed.zoneName) }).click();
 
     await page.getByRole("button", { name: "Create order" }).click();
 

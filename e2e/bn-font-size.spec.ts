@@ -109,14 +109,18 @@ for (const path of bnPages) {
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
       expect(await collectTooSmall(page)).toEqual([]);
 
-      // Plan §3c: on :lang(bn) Noto Serif Bengali is applied with Inter as the
-      // fallback. getComputedStyle().fontFamily returns the whole declared stack,
-      // so a Bengali heading must list both faces (Noto first, Inter present).
+      // Plan §3c: on :lang(bn) the Noto Serif Bengali face is applied with Inter
+      // as the fallback. getComputedStyle().fontFamily returns the whole declared
+      // stack, so a Bengali heading must list both faces (Bengali serif first,
+      // Inter present). The faces are self-hosted via next/font/local, which
+      // derives the CSS family name from the file ("notoserifbengali", no spaces)
+      // rather than the Google name ("Noto Serif Bengali"), so match on the
+      // "bengali" stem to stay name-agnostic across either loading strategy.
       const headingFont = await page
         .getByRole("heading", { level: 1 })
         .evaluate((el) => getComputedStyle(el).fontFamily);
       const headingFontLower = headingFont.toLowerCase();
-      expect(headingFontLower).toContain("noto serif bengali");
+      expect(headingFontLower).toContain("bengali");
       expect(headingFontLower).toContain("inter");
     });
   }

@@ -1,12 +1,20 @@
 "use client";
 
 import { useTheme } from "@/components/site/theme-provider";
-import { LogOut, MonitorSmartphone, Moon, Sun, UserRound } from "lucide-react";
+import {
+  LogOut,
+  MonitorSmartphone,
+  Moon,
+  Search,
+  Sun,
+  UserRound,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { signOut } from "@/app/(admin)/admin/actions";
 import { filterNav, type BadgeKey } from "@/components/admin/shell/nav";
+import { useSearchPalette } from "@/components/admin/shell/search-palette";
 import { initials } from "@/components/admin/shell/user-initials";
 import { Logo } from "@/components/site/logo";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -126,6 +134,36 @@ function NavUser({ user }: { user: AdminUser }) {
   );
 }
 
+// Search box (plan 9c.4, moved into the sidebar above the nav): opens the shared
+// command palette. Collapsed to icons it shows just the search glyph; expanded it
+// reads like an input with a ⌘K hint, matching the reference layout.
+function SidebarSearch() {
+  const { setOpen } = useSearchPalette();
+  const { state } = useSidebar();
+
+  return (
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          variant="outline"
+          tooltip="Search"
+          aria-label="Search"
+          onClick={() => setOpen(true)}
+          className="h-9 rounded-lg bg-surface border-sidebar-border text-sidebar-muted"
+        >
+          <Search strokeWidth={1.75} />
+          <span className="flex-1 font-normal">Search…</span>
+          {state === "expanded" ? (
+            <kbd className="pointer-events-none inline-flex h-5 items-center justify-center rounded border border-sidebar-border bg-sidebar px-1.5 text-[12px] font-medium text-sidebar-muted">
+              ⌘K
+            </kbd>
+          ) : null}
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </SidebarMenu>
+  );
+}
+
 export function AppSidebar({
   user,
   counts,
@@ -156,6 +194,7 @@ export function AppSidebar({
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+        <SidebarSearch />
       </SidebarHeader>
 
       <SidebarContent>

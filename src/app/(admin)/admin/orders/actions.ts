@@ -5,8 +5,6 @@ import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth";
 import type { Database } from "@/lib/database.types";
 import { createClient } from "@/lib/supabase/server";
-import { normalizePhone } from "@/server/abuse";
-import { phoneIsBlocked } from "@/server/admin-orders";
 import { adminCreateOrderSchema } from "@/lib/validators/admin-order";
 import {
   orderBlockSchema,
@@ -15,6 +13,8 @@ import {
   recordPaymentSchema,
   setOrderStatusSchema,
 } from "@/lib/validators/order-admin";
+import { normalizePhone } from "@/server/abuse";
+import { phoneIsBlocked } from "@/server/admin-orders";
 
 /**
  * Admin order fulfilment (plan §9 Orders, Phase 5 task 3). Same shape as the
@@ -234,13 +234,13 @@ export async function blockOrderPhone(
   if (!order) return { ok: false, error: "Order not found." };
 
   const value = normalizePhone(order.customer_phone);
-  if (value === "") return { ok: false, error: "The order has no usable phone." };
+  if (value === "")
+    return { ok: false, error: "The order has no usable phone." };
 
   const { error } = await supabase.from("blocked_contacts").insert({
     type: "phone",
     value,
-    reason:
-      parsed.data.reason ?? `Blocked from order ${order.order_no}`,
+    reason: parsed.data.reason ?? `Blocked from order ${order.order_no}`,
     created_by: staff.id,
   });
   if (error && error.code !== "23505") {
@@ -331,8 +331,7 @@ export async function createAdminOrder(
     return {
       ok: false,
       error:
-        parsed.error.issues[0]?.message ??
-        "Some of the details are not valid.",
+        parsed.error.issues[0]?.message ?? "Some of the details are not valid.",
     };
   }
   const d = parsed.data;
@@ -379,7 +378,11 @@ export async function createAdminOrder(
     .eq("order_no", String(orderNo))
     .maybeSingle();
   if (!order) {
-    return { ok: false, error: "The order was created but could not be loaded. Open the orders list to find it." };
+    return {
+      ok: false,
+      error:
+        "The order was created but could not be loaded. Open the orders list to find it.",
+    };
   }
 
   revalidatePath("/admin/orders");

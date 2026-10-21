@@ -1548,6 +1548,10 @@ export type Database = {
         };
         Returns: number;
       };
+      claim_pending_emails: {
+        Args: { p_limit?: number };
+        Returns: Database["public"]["Tables"]["notifications"]["Row"][];
+      };
     };
     Enums: {
       blocked_contact_type: "phone" | "ip_hash";

@@ -5,7 +5,7 @@ import {
   getTranslations,
   setRequestLocale,
 } from "next-intl/server";
-import { Inter, Noto_Serif_Bengali } from "next/font/google";
+import localFont from "next/font/local";
 import { notFound } from "next/navigation";
 
 import { ThemeProvider } from "@/components/site/theme-provider";
@@ -16,9 +16,17 @@ import { jsonLd, siteUrl } from "@/lib/seo";
 
 import "../globals.css";
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "600", "700"],
+// Inter and Noto Serif Bengali are self-hosted (plan Decision Log 2026-10-21):
+// next/font/google's build-time download of fonts.googleapis.com intermittently
+// fails under Turbopack on CI runners, breaking the build. The woff2 files live
+// in src/app/fonts (sourced from @fontsource/inter and
+// @fontsource/noto-serif-bengali).
+const inter = localFont({
+  src: [
+    { path: "../fonts/inter-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/inter-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../fonts/inter-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-inter",
   // Plan §8 performance pass (line 947 lever): LCP on these pages is text,
   // and "swap" made it wait for the font under Lighthouse's 4x CPU throttle.
@@ -28,8 +36,11 @@ const inter = Inter({
   display: "optional",
 });
 
-const notoSerifBengali = Noto_Serif_Bengali({
-  subsets: ["bengali"],
+const notoSerifBengali = localFont({
+  src: [
+    { path: "../fonts/noto-serif-bengali-bengali-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/noto-serif-bengali-bengali-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-bn",
   display: "optional",
 });

@@ -3,12 +3,15 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 
-import { NewOrderForm } from "@/components/admin/orders/new-order-form";
 import { ErrorState } from "@/components/admin/data/error-state";
+import { NewOrderForm } from "@/components/admin/orders/new-order-form";
 import { PageHeader } from "@/components/admin/shell/page-header";
 import { Button } from "@/components/ui/button";
 import { getAdminUser } from "@/lib/auth";
-import { listAdminOrderZones, listOrderableVariants } from "@/server/admin-orders";
+import {
+  listAdminOrderZones,
+  listOrderableVariants,
+} from "@/server/admin-orders";
 
 export const instant = false;
 
@@ -56,7 +59,11 @@ export default async function NewOrderPage() {
           action={
             <Button variant="outline" size="sm" asChild>
               <Link href="/admin/orders/new">
-                <RefreshCw aria-hidden="true" strokeWidth={1.75} className="size-4" />
+                <RefreshCw
+                  aria-hidden="true"
+                  strokeWidth={1.75}
+                  className="size-4"
+                />
                 Retry
               </Link>
             </Button>
