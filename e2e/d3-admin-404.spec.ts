@@ -17,7 +17,12 @@ async function gotoAdmin404(
   }, theme);
   await page.emulateMedia({ colorScheme: theme });
   await page.setViewportSize({ width, height: 900 });
-  await page.goto("/admin/this-route-does-not-exist");
+  // An unknown top-level path is served by the GLOBAL root not-found (Next docs:
+  // root app/not-found handles all unmatched URLs), which sits above the parallel
+  // admin layout and therefore has no theme class. To exercise the themed admin
+  // 404 boundary we hit a real /admin route whose page calls notFound() — an
+  // order id that parses as a guid but does not exist.
+  await page.goto("/admin/orders/00000000-0000-0000-0000-000000000000");
   if (page.url().includes("/admin/login")) return false;
   await expect(page.locator("html")).toHaveClass(new RegExp(`\\b${theme}\\b`));
   return true;
