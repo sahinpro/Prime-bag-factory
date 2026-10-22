@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { z } from "zod";
 
 import { OrderDetail } from "@/components/admin/orders/order-detail";
+import { MarkSeen } from "@/components/admin/shell/mark-seen";
 import { PageHeader } from "@/components/admin/shell/page-header";
 import { getAdminUser } from "@/lib/auth";
 import { getAdminOrder } from "@/server/orders";
@@ -45,5 +46,15 @@ export default async function OrderDetailPage({
   const order = await getAdminOrder(id);
   if (!order) notFound();
 
-  return <OrderDetail order={order} />;
+  return (
+    <>
+      {/* Unseen badge: opening the detail marks the order seen (client effect,
+          never a mutation during render). Admin-created orders arrive already
+          seen, so they never mount this. */}
+      {order.first_viewed_at === null ? (
+        <MarkSeen kind="order" id={order.id} />
+      ) : null}
+      <OrderDetail order={order} />
+    </>
+  );
 }

@@ -74,6 +74,8 @@ export type AdminQuote = {
   assigned_to: string | null;
   assigned_name: string | null;
   internal_notes: string | null;
+  /** NULL until a staff member first opens the detail (unseen badge). */
+  first_viewed_at: string | null;
   created_at: string;
   updated_at: string;
   urgency: QuoteUrgency | null;
@@ -91,11 +93,11 @@ export type AssignableStaff = {
 };
 
 const LIST_SELECT =
-  "id, source, company_name, contact_name, phone, email, product_id, category_id, quantity, custom_size, custom_color, needs_logo_print, needed_by, message, attachment_path, estimated_unit_price, estimated_total, status, quoted_amount, valid_until, assigned_to, internal_notes, created_at, updated_at, product:products(title_en), category:categories(name_en), assignee:profiles(full_name)";
+  "id, source, company_name, contact_name, phone, email, product_id, category_id, quantity, custom_size, custom_color, needs_logo_print, needed_by, message, attachment_path, estimated_unit_price, estimated_total, status, quoted_amount, valid_until, assigned_to, internal_notes, first_viewed_at, created_at, updated_at, product:products(title_en), category:categories(name_en), assignee:profiles(full_name)";
 
 // Full literal (not a template) so the generated Supabase types can parse it.
 const DETAIL_SELECT =
-  "id, source, company_name, contact_name, phone, email, product_id, category_id, quantity, custom_size, custom_color, needs_logo_print, needed_by, message, attachment_path, estimated_unit_price, estimated_total, status, quoted_amount, valid_until, assigned_to, internal_notes, created_at, updated_at, customization, product:products(title_en), category:categories(name_en), assignee:profiles(full_name)";
+  "id, source, company_name, contact_name, phone, email, product_id, category_id, quantity, custom_size, custom_color, needs_logo_print, needed_by, message, attachment_path, estimated_unit_price, estimated_total, status, quoted_amount, valid_until, assigned_to, internal_notes, first_viewed_at, created_at, updated_at, customization, product:products(title_en), category:categories(name_en), assignee:profiles(full_name)";
 
 type Joined = {
   product: { title_en: string | null } | null;
@@ -226,6 +228,7 @@ function toAdminQuote(row: QuoteRow, nowMs: number): AdminQuote {
     assigned_to: (row.assigned_to as string | null) ?? null,
     assigned_name: unwrap(row.assignee)?.full_name ?? null,
     internal_notes: (row.internal_notes as string | null) ?? null,
+    first_viewed_at: (row.first_viewed_at as string | null) ?? null,
     created_at: row.created_at as string,
     updated_at: row.updated_at as string,
     urgency: computeUrgency(row, nowMs),

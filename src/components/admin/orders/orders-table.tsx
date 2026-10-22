@@ -91,6 +91,20 @@ function Money({ value }: Readonly<{ value: number }>) {
   return <span className="tabular-nums">{formatMoney(value, "en")}</span>;
 }
 
+/** Unseen marker (badges = unseen pending orders): dot + sr-only text, so
+ *  state is never carried by color alone (plan 9c.6). */
+function UnseenFlag() {
+  return (
+    <span className="ml-1.5 inline-flex items-center align-middle">
+      <span
+        aria-hidden="true"
+        className="inline-block size-1.5 rounded-full bg-primary"
+      />
+      <span className="sr-only">Unseen</span>
+    </span>
+  );
+}
+
 export function OrdersTable({
   orders,
   counts,
@@ -149,6 +163,7 @@ export function OrdersTable({
           <div className="min-w-0">
             <p className="truncate font-medium text-foreground tabular-nums">
               {row.original.order_no}
+              {row.original.first_viewed_at === null ? <UnseenFlag /> : null}
             </p>
             <p className="text-xs text-muted-foreground tabular-nums">
               {formatDate(new Date(row.original.created_at), "en")}
@@ -248,6 +263,7 @@ export function OrdersTable({
         <div className="min-w-0 space-y-1">
           <p className="truncate font-medium text-foreground tabular-nums">
             {row.order_no}
+            {row.first_viewed_at === null ? <UnseenFlag /> : null}
           </p>
           <p className="truncate text-sm">
             {row.customer_name}

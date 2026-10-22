@@ -172,6 +172,8 @@ export type AdminOrderRow = {
   customer_note: string | null;
   admin_note: string | null;
   source_quote_id: string | null;
+  /** NULL until a staff member first opens the detail (unseen badge). */
+  first_viewed_at: string | null;
 };
 
 export type AdminOrderLine = {
@@ -218,10 +220,10 @@ export type AdminOrderListItem = AdminOrderRow & {
 };
 
 const LIST_SELECT =
-  "id, order_no, created_at, updated_at, type, status, payment_status, payment_method, customer_name, customer_phone, total, shipping_zone_id, order_items ( qty ), zone:shipping_zones ( name_en )";
+  "id, order_no, created_at, updated_at, type, status, payment_status, payment_method, first_viewed_at, customer_name, customer_phone, total, shipping_zone_id, order_items ( qty ), zone:shipping_zones ( name_en )";
 
 const DETAIL_SELECT =
-  "id, order_no, created_at, updated_at, type, status, payment_status, payment_method, production_status, customer_name, customer_phone, customer_email, division, district, area, address_line, subtotal, shipping_fee, discount, vat_amount, total, courier_name, tracking_code, shipped_at, delivered_at, customer_note, admin_note, source_quote_id, zone:shipping_zones ( name_en ), order_items ( id, variant_id, title_snapshot, sku_snapshot, color_snapshot, size_snapshot, unit_price, qty, line_total ), payments ( id, amount, method, reference, note, received_at, recorded_by ), order_status_history ( id, from_status, to_status, note, created_at, changed_by )";
+  "id, order_no, created_at, updated_at, type, status, payment_status, payment_method, production_status, first_viewed_at, customer_name, customer_phone, customer_email, division, district, area, address_line, subtotal, shipping_fee, discount, vat_amount, total, courier_name, tracking_code, shipped_at, delivered_at, customer_note, admin_note, source_quote_id, zone:shipping_zones ( name_en ), order_items ( id, variant_id, title_snapshot, sku_snapshot, color_snapshot, size_snapshot, unit_price, qty, line_total ), payments ( id, amount, method, reference, note, received_at, recorded_by ), order_status_history ( id, from_status, to_status, note, created_at, changed_by )";
 
 function rows(value: unknown): Record<string, unknown>[] {
   return Array.isArray(value) ? (value as Record<string, unknown>[]) : [];
@@ -278,6 +280,7 @@ function toListItem(
     customer_note: text(row.customer_note),
     admin_note: text(row.admin_note),
     source_quote_id: text(row.source_quote_id),
+    first_viewed_at: row.first_viewed_at ? String(row.first_viewed_at) : null,
     item_count: items.length,
     unit_count: items.reduce((sum, item) => sum + num(item.qty), 0),
   };

@@ -10,6 +10,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * shows on Quotes / Orders / Inventory. Cached briefly and invalidated by every
  * writer (tag `admin_counts`), never by session.
  *
+ * Quotes and Orders count UNSEEN rows only: `first_viewed_at IS NULL` joins the
+ * status filter, so opening a detail page (which calls the `mark_seen` RPC and
+ * `updateTag`s this cache) drops the badge without touching the status
+ * workflow. Inventory low stock is a plain derived count.
+ *
  * It reads through the **service-role** client, not the cookie session, for two
  * reasons: a `"use cache"` function may not touch request cookies, and the value
  * is safe to share — the RLS grants on `orders`, `quote_requests` and
@@ -36,11 +41,13 @@ export async function getAdminNavCounts(): Promise<AdminNavCounts> {
     supabase
       .from("quote_requests")
       .select("id", { count: "exact", head: true })
-      .eq("status", "new"),
+      .eq("status", "new")
+      .is("first_viewed_at", null),
     supabase
       .from("orders")
       .select("id", { count: "exact", head: true })
-      .eq("status", "pending"),
+      .eq("status", "pending")
+      .is("first_viewed_at", null),
     // Low stock mirrors the dashboard widget: active variants whose derived
     // available (stock - reserved) sits below the threshold. The count is a
     // plain read; no stock is ever written here.

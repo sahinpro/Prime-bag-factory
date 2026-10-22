@@ -26,11 +26,13 @@ async function expectedCounts() {
     db
       .from("quote_requests")
       .select("id", { count: "exact", head: true })
-      .eq("status", "new"),
+      .eq("status", "new")
+      .is("first_viewed_at", null),
     db
       .from("orders")
       .select("id", { count: "exact", head: true })
-      .eq("status", "pending"),
+      .eq("status", "pending")
+      .is("first_viewed_at", null),
     db
       .from("product_variants")
       .select("stock_qty, reserved_qty, low_stock_threshold")

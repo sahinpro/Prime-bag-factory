@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { z } from "zod";
 
 import { QuoteDetail } from "@/components/admin/quotes/quote-detail";
+import { MarkSeen } from "@/components/admin/shell/mark-seen";
 import { PageHeader } from "@/components/admin/shell/page-header";
 import { getAdminUser } from "@/lib/auth";
 import {
@@ -60,12 +61,20 @@ export default async function QuoteDetailPage({
   const attachmentUrl = await createAttachmentReadUrl(quote.attachment_path);
 
   return (
-    <QuoteDetail
-      quote={quote}
-      staff={staff}
-      attachmentUrl={attachmentUrl}
-      canConvert={canConvert}
-      convertedOrderId={convertedOrderId}
-    />
+    <>
+      {/* Unseen badge: opening the detail marks the quote seen (client effect,
+          never a mutation during render). Mounted only while first_viewed_at
+          is NULL, so a revisit adds no call. */}
+      {quote.first_viewed_at === null ? (
+        <MarkSeen kind="quote" id={quote.id} />
+      ) : null}
+      <QuoteDetail
+        quote={quote}
+        staff={staff}
+        attachmentUrl={attachmentUrl}
+        canConvert={canConvert}
+        convertedOrderId={convertedOrderId}
+      />
+    </>
   );
 }

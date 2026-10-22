@@ -540,6 +540,7 @@ export type Database = {
           source_quote_id: string | null;
           source: Database["public"]["Enums"]["order_source"];
           channel: Database["public"]["Enums"]["order_channel"] | null;
+          first_viewed_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -576,6 +577,7 @@ export type Database = {
           source_quote_id?: string | null;
           source?: Database["public"]["Enums"]["order_source"];
           channel?: Database["public"]["Enums"]["order_channel"] | null;
+          first_viewed_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -612,6 +614,7 @@ export type Database = {
           source_quote_id?: string | null;
           source?: Database["public"]["Enums"]["order_source"];
           channel?: Database["public"]["Enums"]["order_channel"] | null;
+          first_viewed_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -1178,6 +1181,7 @@ export type Database = {
           valid_until: string | null;
           assigned_to: string | null;
           internal_notes: string | null;
+          first_viewed_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -1205,6 +1209,7 @@ export type Database = {
           valid_until?: string | null;
           assigned_to?: string | null;
           internal_notes?: string | null;
+          first_viewed_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -1232,6 +1237,7 @@ export type Database = {
           valid_until?: string | null;
           assigned_to?: string | null;
           internal_notes?: string | null;
+          first_viewed_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -1556,6 +1562,10 @@ export type Database = {
       };
       admin_unblock_contact: {
         Args: { p_id: string };
+        Returns: void;
+      };
+      mark_seen: {
+        Args: { p_id: string; p_kind: string };
         Returns: void;
       };
       admin_adjust_stock: {

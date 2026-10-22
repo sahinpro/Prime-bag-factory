@@ -102,6 +102,20 @@ function SourceBadge({ source }: { source: AdminQuote["source"] }) {
   );
 }
 
+/** Unseen marker (plan: badges = unseen new quotes): dot + sr-only text, so
+ *  state is never carried by color alone (plan 9c.6). */
+function UnseenFlag() {
+  return (
+    <span className="ml-1.5 inline-flex items-center align-middle">
+      <span
+        aria-hidden="true"
+        className="inline-block size-1.5 rounded-full bg-primary"
+      />
+      <span className="sr-only">Unseen</span>
+    </span>
+  );
+}
+
 export function QuotesTable({
   quotes,
   counts,
@@ -169,8 +183,16 @@ export function QuotesTable({
         header: "Company / Contact",
         cell: ({ row }) => (
           <div className="min-w-0">
-            <p className="truncate font-medium text-foreground">
+            <p
+              className={cn(
+                "truncate text-foreground",
+                row.original.first_viewed_at === null
+                  ? "font-semibold"
+                  : "font-medium",
+              )}
+            >
               {row.original.company_name ?? row.original.contact_name}
+              {row.original.first_viewed_at === null ? <UnseenFlag /> : null}
             </p>
             <p className="truncate text-xs text-muted-foreground">
               {row.original.contact_name} · {row.original.phone}
@@ -261,8 +283,14 @@ export function QuotesTable({
     return (
       <div className="flex items-start justify-between gap-3 p-4">
         <div className="min-w-0 space-y-1">
-          <p className="truncate font-medium text-foreground">
+          <p
+            className={cn(
+              "truncate text-foreground",
+              row.first_viewed_at === null ? "font-semibold" : "font-medium",
+            )}
+          >
             {row.company_name ?? row.contact_name}
+            {row.first_viewed_at === null ? <UnseenFlag /> : null}
           </p>
           <p className="truncate text-xs text-muted-foreground">
             {row.contact_name} · {row.phone}
