@@ -27,6 +27,11 @@ import {
   PRODUCTION_STATUS_META,
   StatusBadge,
 } from "@/components/admin/data/status-badge";
+import {
+  ORDER_PROGRESS_STEPS,
+  OrderProgress,
+  PRODUCTION_PROGRESS_STEPS,
+} from "@/components/admin/orders/order-progress";
 import { ConfirmDialog } from "@/components/admin/forms/confirm-dialog";
 import {
   FlashLine,
@@ -164,6 +169,22 @@ export function OrderDetail({ order }: Readonly<{ order: AdminOrder }>) {
   const closed = order.status === "cancelled" || order.status === "returned";
   const unitCount = order.lines.reduce((sum, line) => sum + line.qty, 0);
 
+  // The next pipeline step drives the primary "Mark …" action; the date of the
+  // last move to the current status is shown under the active progress step.
+  const pipelineIndex = PIPELINE.indexOf(order.status);
+  const nextStatus:
+    | OrderStatus
+    | null =
+    pipelineIndex >= 0 && pipelineIndex < PIPELINE.length - 1
+      ? PIPELINE[pipelineIndex + 1]
+      : null;
+  const currentStatusEvent = order.history
+    .filter((event) => event.to_status === order.status)
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
+  const currentStatusDate = currentStatusEvent
+    ? formatDate(new Date(currentStatusEvent.created_at), "en")
+    : undefined;
+
   const phoneDigits = order.customer_phone.replace(/\D/g, "");
   const waText = encodeURIComponent(
     `Hello${order.customer_name ? ` ${order.customer_name}` : ""}, this is Prime Bag Factory about your order ${order.order_no}.`,
@@ -262,6 +283,22 @@ export function OrderDetail({ order }: Readonly<{ order: AdminOrder }>) {
       />
 
       <FlashLine flash={flash} />
+
+      <Card>
+        <CardContent>
+          <OrderProgress
+            steps={ORDER_PROGRESS_STEPS}
+            current={order.status}
+            terminal={
+              order.status === "cancelled" || order.status === "returned"
+                ? order.status
+                : null
+            }
+            label="Order fulfilment pipeline"
+            currentMeta={currentStatusDate}
+          />
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
@@ -545,29 +582,44 @@ export function OrderDetail({ order }: Readonly<{ order: AdminOrder }>) {
             title="Status"
             action={<StatusBadge domain="order" value={order.status} />}
           >
-            <ol className="space-y-1.5" aria-label="Order fulfilment pipeline">
-              {PIPELINE.map((value) => {
-                const current = order.status === value;
-                return (
-                  <li key={value}>
-                    <Button
-                      type="button"
-                      variant={current ? "default" : "outline"}
-                      size="sm"
-                      className="w-full justify-start"
-                      aria-current={current ? "step" : undefined}
-                      disabled={saving || current || closed}
-                      onClick={() =>
-                        void changeStatus(value, statusLabel(value))
-                      }
-                    >
-                      {current ? "Current: " : "Mark "}
-                      {statusLabel(value)}
-                    </Button>
-                  </li>
-                );
-              })}
-            </ol>
+            {!closed && nextStatus ? (
+              <Button
+                type="button"
+                size="sm"
+                className="w-full"
+                disabled={saving}
+                onClick={() =>
+                  void changeStatus(nextStatus, statusLabel(nextStatus))
+                }
+              >
+                Mark {statusLabel(nextStatus)}
+              </Button>
+            ) : null}
+            {!closed ? (
+              <div className="space-y-1.5">
+                <Label htmlFor="move-status">Move to another status</Label>
+                <Select
+                  value=""
+                  onValueChange={(value) => {
+                    const next = value as OrderStatus;
+                    void changeStatus(next, statusLabel(next));
+                  }}
+                >
+                  <SelectTrigger id="move-status" size="sm" disabled={saving}>
+                    <SelectValue placeholder="Choose a status…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PIPELINE.filter((value) => value !== order.status).map(
+                      (value) => (
+                        <SelectItem key={value} value={value}>
+                          {statusLabel(value)}
+                        </SelectItem>
+                      ),
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : null}
             <div className="space-y-1.5 pt-1">
               <Label htmlFor="status-note">
                 Note for the history{" "}
@@ -659,7 +711,13 @@ export function OrderDetail({ order }: Readonly<{ order: AdminOrder }>) {
                   sheet.
                 </p>
               )}
-              <ol className="space-y-1.5" aria-label="Production pipeline">
+              <OrderProgress
+                steps={PRODUCTION_PROGRESS_STEPS}
+                current={productionStatus ?? ""}
+                label="Production pipeline"
+                orientation="vertical"
+              />
+              <ol className="space-y-1.5" aria-label="Production actions">
                 {productionMoves.map((value) => (
                   <li key={value}>
                     <Button

@@ -113,8 +113,10 @@ test("a production move stores the status, writes audit and notifies", async ({
       page.getByRole("button", { name: "Move to Artwork approved" }),
     ).toBeVisible({ timeout: 15_000 });
     await expect(
-      page.getByText("Awaiting artwork", { exact: true }),
-    ).toBeVisible();
+      page
+        .getByRole("list", { name: "Production pipeline" })
+        .locator('[aria-current="step"]'),
+    ).toContainText("Awaiting artwork");
 
     const { data: order } = await db
       .from("orders")

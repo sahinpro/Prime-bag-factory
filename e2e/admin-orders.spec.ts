@@ -145,6 +145,121 @@ function adminDb() {
   );
 }
 
+/**
+ * Seed a line-less order of a given status so a status move touches no stock,
+ * and tear it down (plus its history/audit/notification rows) afterwards. The
+ * orders table cascades its children, so deleting the order clears the rest.
+ */
+async function seedOrder(
+  db: ReturnType<typeof adminDb>,
+  status: string,
+): Promise<string> {
+  const suffix = String(Math.floor(100000 + Math.random() * 900000));
+  const { data, error } = await db
+    .from("orders")
+    .insert({
+      order_no: `PBF-E2E-${suffix}`,
+      type: "retail",
+      status,
+      customer_name: `E2E Stepper ${suffix}`,
+      customer_phone: `017${suffix}00`,
+      total: 1000,
+      subtotal: 1000,
+    })
+    .select("id")
+    .single();
+  expect(error).toBeNull();
+  if (!data) throw new Error("order seed failed");
+  return data.id;
+}
+
+async function cleanupOrder(
+  db: ReturnType<typeof adminDb>,
+  orderId: string,
+) {
+  await db
+    .from("notifications")
+    .delete()
+    .contains("payload", { order_id: orderId });
+  await db.from("audit_logs").delete().eq("record_id", orderId);
+  await db.from("orders").delete().eq("id", orderId);
+}
+
+test("the order detail shows a read-only progress stepper and Mark next advances it", async ({
+  page,
+}) => {
+  const db = adminDb();
+  const orderId = await seedOrder(db, "pending");
+  try {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(`/admin/orders/${orderId}`);
+    test.skip(
+      page.url().includes("/admin/login"),
+      "Set E2E_STAFF_EMAIL / E2E_STAFF_PASSWORD with a provisioned staff account.",
+    );
+
+    const pipeline = page.getByRole("list", {
+      name: "Order fulfilment pipeline",
+    });
+    await expect(pipeline).toBeVisible();
+    // The stepper is read-only: no tab widgets, and Pending is the current step.
+    await expect(pipeline.getByRole("tab")).toHaveCount(0);
+    await expect(
+      pipeline.locator('[aria-current="step"]'),
+    ).toContainText("Pending");
+
+    // The single primary action advances to the next pipeline step.
+    await page.getByRole("button", { name: "Mark Confirmed" }).click();
+    await expect(page.getByText("Marked as Confirmed.")).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(
+      pipeline.locator('[aria-current="step"]'),
+    ).toContainText("Confirmed");
+
+    const { data } = await db
+      .from("orders")
+      .select("status")
+      .eq("id", orderId)
+      .single();
+    expect(data?.status).toBe("confirmed");
+
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(results.violations).toEqual([]);
+  } finally {
+    await cleanupOrder(db, orderId);
+  }
+});
+
+test("a cancelled order shows the terminal banner and no forward action", async ({
+  page,
+}) => {
+  const db = adminDb();
+  const orderId = await seedOrder(db, "cancelled");
+  try {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(`/admin/orders/${orderId}`);
+    test.skip(
+      page.url().includes("/admin/login"),
+      "Set E2E_STAFF_EMAIL / E2E_STAFF_PASSWORD with a provisioned staff account.",
+    );
+
+    await expect(
+      page.getByRole("status").filter({ hasText: "Order cancelled" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("list", { name: "Order fulfilment pipeline" }),
+    ).toBeVisible();
+    // A closed order exposes no "Mark …" forward move.
+    await expect(
+      page.getByRole("button", { name: /^Mark / }),
+    ).toHaveCount(0);
+  } finally {
+    await cleanupOrder(db, orderId);
+  }
+});
+
+
 test("the blocklist page lists a blocked phone and unblocks it with an audit note",
   async ({ page }) => {
     const db = adminDb();
