@@ -1,7 +1,6 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
-import { assertMfaIfRequired } from "@/lib/mfa";
 
 export const roles = [
   "owner",
@@ -79,10 +78,6 @@ export async function requireRole(
         `Current role: ${profile.role}.`,
     );
   }
-
-  // D2: owner/manager must clear AAL2 when `settings.security.require_mfa` is on
-  // (no-op while the flag is off, so existing behaviour is unchanged).
-  await assertMfaIfRequired(profile);
 
   return profile;
 }
