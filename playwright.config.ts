@@ -62,6 +62,7 @@ export default defineConfig({
         /admin-settings\.spec\.ts/,
         /quote-attachment\.spec\.ts/,
         /d3-admin-404\.spec\.ts/,
+        /admin-change-password\.spec\.ts/,
       ],
     },
     {
@@ -88,6 +89,7 @@ export default defineConfig({
         /admin-settings\.spec\.ts/,
         /quote-attachment\.spec\.ts/,
         /d3-admin-404\.spec\.ts/,
+        /admin-change-password\.spec\.ts/,
       ],
       // Supabase SSR refreshes the session cookie on each authed request; many
       // parallel workers sharing one storageState race that refresh and abort

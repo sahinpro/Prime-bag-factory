@@ -162,6 +162,10 @@ describe("RATE_LIMIT_DEFAULTS", () => {
       lookup_order: { limit: 5, windowSeconds: 3600 },
       quote_ip: { limit: 5, windowSeconds: 3600 },
       upload_ip: { limit: 20, windowSeconds: 3600 },
+      // Password-recovery track (2026-10-22): plan is silent on these two,
+      // chosen simple defaults, noted in the Decision Log.
+      admin_reset_ip: { limit: 10, windowSeconds: 3600 },
+      admin_reset_email: { limit: 5, windowSeconds: 3600 },
     });
   });
 });

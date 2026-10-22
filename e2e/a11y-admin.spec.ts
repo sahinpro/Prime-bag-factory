@@ -26,6 +26,11 @@ const pages = [
   { path: "/admin/shipping", heading: "Shipping zones" },
   { path: "/admin/settings", heading: "Settings" },
   { path: "/admin/blocked-contacts", heading: "Blocked contacts" },
+  { path: "/admin/change-password", heading: "Change password" },
+  // Password-recovery pages (2026-10-22). Forgot/reset live outside the
+  // session guard, so they are axe-checked even without staff credentials.
+  { path: "/admin/forgot-password", heading: "Reset your password" },
+  { path: "/admin/reset-password", heading: "Choose a new password" },
 ] as const;
 
 async function gotoAdminWithTheme(

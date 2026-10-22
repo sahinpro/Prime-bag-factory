@@ -14,9 +14,9 @@ export const instant = false;
 export default async function AdminLoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; reset?: string }>;
 }) {
-  const { next } = await searchParams;
+  const { next, reset } = await searchParams;
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-6 px-4 py-12">
@@ -35,7 +35,23 @@ export default async function AdminLoginPage({
             Sign in with your authorized staff account.
           </p>
         </header>
+        {reset === "1" ? (
+          <p
+            role="status"
+            className="rounded-lg border border-success/40 bg-success/10 p-3 text-sm text-success"
+          >
+            Password updated. Sign in with your new password.
+          </p>
+        ) : null}
         <LoginForm nextPath={getSafeAdminRedirectPath(next)} />
+        <p className="text-sm text-muted-foreground">
+          <Link
+            href="/admin/forgot-password"
+            className="underline underline-offset-4 hover:text-foreground"
+          >
+            Forgot password?
+          </Link>
+        </p>
       </section>
       <p className="text-sm text-muted-foreground">
         <Link

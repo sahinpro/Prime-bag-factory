@@ -59,7 +59,19 @@ export default async function proxy(request: NextRequest) {
     return response;
   };
 
-  if (pathname === "/admin/login" || pathname.startsWith("/admin/login/")) {
+  // Password-recovery entry points must render WITHOUT a session, like the
+  // login page itself (the reset page guards its own recovery session).
+  const publicAdminPaths = [
+    "/admin/login",
+    "/admin/forgot-password",
+    "/admin/reset-password",
+    "/admin/auth/confirm",
+  ];
+  if (
+    publicAdminPaths.some(
+      (path) => pathname === path || pathname.startsWith(`${path}/`),
+    )
+  ) {
     return withReportOnly(NextResponse.next({ request }));
   }
 

@@ -2,6 +2,7 @@
 
 import { useTheme } from "@/components/site/theme-provider";
 import {
+  KeyRound,
   LogOut,
   MonitorSmartphone,
   Moon,
@@ -97,6 +98,12 @@ function NavUser({ user }: { user: AdminUser }) {
               <Link href="/admin/settings">
                 <UserRound />
                 Profile
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/admin/change-password">
+                <KeyRound />
+                Change password
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />

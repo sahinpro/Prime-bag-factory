@@ -1,7 +1,14 @@
 "use client";
 
 import { useTheme } from "@/components/site/theme-provider";
-import { LogOut, MonitorSmartphone, Moon, Sun, UserRound } from "lucide-react";
+import {
+  KeyRound,
+  LogOut,
+  MonitorSmartphone,
+  Moon,
+  Sun,
+  UserRound,
+} from "lucide-react";
 import Link from "next/link";
 
 import { signOut } from "@/app/(admin)/admin/actions";
@@ -54,6 +61,12 @@ export function MobileUserMenu({ user }: { user: AdminUser }) {
             <Link href="/admin/settings">
               <UserRound />
               Profile
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/admin/change-password">
+              <KeyRound />
+              Change password
             </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />

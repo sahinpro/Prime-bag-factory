@@ -36,9 +36,14 @@ export type RateLimitKind =
   | "lookup_ip"
   | "lookup_order"
   | "quote_ip"
-  | "upload_ip";
+  | "upload_ip"
+  | "admin_reset_ip"
+  | "admin_reset_email";
 
-/** Defaults from plan 15.2 B2, approved verbatim by the owner. */
+/** Defaults from plan 15.2 B2, approved verbatim by the owner. The
+ * `admin_reset_*` rules (password-recovery track, 2026-10-22) cap how often one
+ * IP — or one address — may ask for a reset mail; generous enough that an
+ * operator retyping an address is never locked out. */
 export const RATE_LIMIT_DEFAULTS: Record<RateLimitKind, RateLimitRule> = {
   checkout_phone: { limit: 3, windowSeconds: 3600 },
   checkout_ip: { limit: 10, windowSeconds: 3600 },
@@ -46,6 +51,8 @@ export const RATE_LIMIT_DEFAULTS: Record<RateLimitKind, RateLimitRule> = {
   lookup_order: { limit: 5, windowSeconds: 3600 },
   quote_ip: { limit: 5, windowSeconds: 3600 },
   upload_ip: { limit: 20, windowSeconds: 3600 },
+  admin_reset_ip: { limit: 10, windowSeconds: 3600 },
+  admin_reset_email: { limit: 5, windowSeconds: 3600 },
 };
 
 /**
@@ -129,6 +136,15 @@ export function normalizePhone(raw: string): string {
  */
 export function hashPhone(raw: string, salt = rateLimitSalt()): string {
   return saltedHash(normalizePhone(raw), salt);
+}
+
+/**
+ * Salted SHA-256 of a normalized (trimmed, lowercased) email for
+ * `admin_reset_email` limit keys — same recipe as the IP/phone hashes, so
+ * `rate_limits` never stores a readable address (no PII in logs, plan D1).
+ */
+export function hashEmail(raw: string, salt = rateLimitSalt()): string {
+  return saltedHash(raw.trim().toLowerCase(), salt);
 }
 
 /**
