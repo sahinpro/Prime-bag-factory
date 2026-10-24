@@ -1,18 +1,15 @@
 import { MessageCircle } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
-import { publicEnv } from "@/lib/env";
-
 /**
  * Floating WhatsApp launcher shown on every public page (plan §8). Only WhatsApp
  * for now — the Messenger button needs a page handle that has no env/settings
  * source yet, so it is deferred (see Decision Log) rather than shipping a dead
  * control.
  */
-export async function StickyContact() {
+export async function StickyContact({ href }: { href: string | null }) {
   const t = await getTranslations("contact");
-  const digits = publicEnv.NEXT_PUBLIC_WHATSAPP_NUMBER.replace(/[^\d]/g, "");
-  const href = `https://wa.me/${digits}`;
+  if (!href) return null;
 
   return (
     // A named complementary landmark so the floating launcher is contained by a

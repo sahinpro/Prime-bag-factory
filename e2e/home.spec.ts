@@ -47,3 +47,45 @@ test("header height does not change between en and bn", async ({ page }) => {
     .evaluate((el) => el.getBoundingClientRect().height);
   expect(bnHeight).toBe(enHeight);
 });
+
+test("header Get a quote reaches /quote on desktop and mobile; language switch keeps the path", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/en/about");
+  await page
+    .getByRole("banner")
+    .getByRole("link", { name: "Get a quote" })
+    .click();
+  await expect(page).toHaveURL(/\/en\/quote$/);
+
+  await page.setViewportSize({ width: 375, height: 800 });
+  await page.goto("/en/about");
+  await page.getByRole("button", { name: "Open menu" }).click();
+  await page.getByRole("dialog").getByRole("link", { name: "Get a quote" }).click();
+  await expect(page).toHaveURL(/\/en\/quote$/);
+
+  await page.getByRole("link", { name: /বাং/ }).click();
+  await expect(page).toHaveURL(/\/bn\/quote$/);
+  await expect(page.locator("html")).toHaveAttribute("lang", "bn");
+});
+
+test("G3 policy slugs redirect to /legal", async ({ page }) => {
+  await page.goto("/en/privacy");
+  await expect(page).toHaveURL(/\/en\/legal$/);
+});
+
+test("site shell screenshots", async ({ page }) => {
+  await page.goto("/en");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.screenshot({
+    path: "e2e/screenshots/header-footer-desktop.png",
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 375, height: 800 });
+  await page.screenshot({
+    path: "e2e/screenshots/header-footer-mobile-375.png",
+    fullPage: true,
+  });
+});

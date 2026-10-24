@@ -1179,6 +1179,8 @@ A, then B, then C (C1 to C3), then D1, D3, D4, D5, then E, F, then D2, D6, then 
 
 _(Agents: append dated notes here when you make a choice the plan did not specify.)_
 
+- 2026-10-24: **Public header/footer redesign.** Visual reference: shadcn-space navbar-12 (CLI is license-gated; not vendored) and footer-01 (structure only, then deleted). G3 policy slugs `/terms` `/privacy` `/returns` `/shipping` `/custom-order` **permanent-redirect to `/legal`** until G3 is written. Contact comes from a new cookie-free `getPublicCompany()` (`"use cache"` + `CACHE_TAGS.settings`); extra social/address/hours keys render only when present in `settings.company`. Language/theme stay in the header, not the footer.
+
 - 2026-10-15: Plan refactored: quantity-range pricing (2a), swatch library (2b), Custom Bag Builder (2c). Owner answered items 11, 12 and 17 in section 14; they are now locked decisions in section 1.
 - 2026-10-15: Brand color changed from orange to a golden palette (section 4); added logo/favicon asset spec (4b).
 - 2026-10-15: Logo v1 received (4 SVGs); usage rules in 4c, known issues in 4d. Owner will fix the logo himself.

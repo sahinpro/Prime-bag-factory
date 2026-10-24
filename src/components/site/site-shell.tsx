@@ -3,7 +3,13 @@ import { getTranslations } from "next-intl/server";
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader, type HeaderCategory } from "@/components/site/site-header";
 import { StickyContact } from "@/components/site/sticky-contact";
+import { publicEnv } from "@/lib/env";
 import { getNavCategories } from "@/server/catalog";
+import {
+  getPublicCompany,
+  PUBLIC_COMPANY_FALLBACK,
+  whatsappHref,
+} from "@/server/public-settings";
 
 /**
  * Public site chrome (plan §8): skip link, sticky header with a category
@@ -28,6 +34,17 @@ export async function SiteShell({
     categories = [];
   }
 
+  let company = PUBLIC_COMPANY_FALLBACK;
+  try {
+    company = await getPublicCompany();
+  } catch {
+    company = PUBLIC_COMPANY_FALLBACK;
+  }
+
+  const headerWhatsapp =
+    whatsappHref(company.whatsapp) ??
+    whatsappHref(publicEnv.NEXT_PUBLIC_WHATSAPP_NUMBER);
+
   return (
     <>
       <a
@@ -36,10 +53,10 @@ export async function SiteShell({
       >
         {a11y("skipToContent")}
       </a>
-      <SiteHeader categories={categories} />
+      <SiteHeader categories={categories} whatsappHref={headerWhatsapp} />
       {children}
-      <SiteFooter locale={locale} />
-      <StickyContact />
+      <SiteFooter locale={locale} categories={categories} company={company} />
+      <StickyContact href={headerWhatsapp} />
     </>
   );
 }

@@ -20,6 +20,7 @@ const PAGES = [
   "/faq",
   "/legal",
   "/clients",
+  "/order/lookup",
 ] as const;
 
 async function gotoWithTheme(
