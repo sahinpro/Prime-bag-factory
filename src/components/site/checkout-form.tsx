@@ -1,6 +1,7 @@
 "use client";
 
-import { ShieldCheck, ShoppingBag } from "lucide-react";
+import { ShieldCheckIcon, ShoppingBag01Icon } from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/site/icon";
 import { useLocale, useTranslations } from "next-intl";
 import * as React from "react";
 
@@ -240,10 +241,11 @@ export function CheckoutForm({ zones }: { zones: ShippingZone[] }) {
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-card border border-dashed px-6 py-16 text-center">
-        <ShoppingBag
+        <Icon
+          icon={ShoppingBag01Icon}
+          size={32}
           aria-hidden="true"
-          strokeWidth={1.75}
-          className="size-8 text-muted-foreground"
+          className="text-muted-foreground"
         />
         <p className="font-medium">{t("emptyCart")}</p>
         <Button asChild>
@@ -579,10 +581,11 @@ export function CheckoutForm({ zones }: { zones: ShippingZone[] }) {
           {pending ? t("placing") : t("placeOrder")}
         </Button>
         <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
-          <ShieldCheck
+          <Icon
+            icon={ShieldCheckIcon}
+            size={16}
             aria-hidden="true"
-            strokeWidth={1.75}
-            className="size-4 shrink-0"
+            className="shrink-0"
           />
           {t("callNote")}
         </p>

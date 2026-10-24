@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
+import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/site/icon";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
@@ -79,10 +80,11 @@ export function HeaderNav({ categories }: { categories: HeaderCategory[] }) {
           className={navLinkClass(categoryActive)}
         >
           {t("categories")}
-          <ChevronDown
+          <Icon
+            icon={ArrowDown01Icon}
+            size={16}
             aria-hidden="true"
-            strokeWidth={1.75}
-            className={`ml-1 size-4 transition-transform duration-150 motion-reduce:transition-none ${
+            className={`ml-1 transition-transform duration-150 motion-reduce:transition-none ${
               megaOpen ? "rotate-180" : ""
             }`}
           />

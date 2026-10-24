@@ -1,7 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { TriangleAlert } from "lucide-react";
+import { Alert02Icon } from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/site/icon";
 
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,7 @@ export default function LocaleError({
   return (
     <main className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-6 py-20 text-center">
       <span className="flex size-12 items-center justify-center rounded-full bg-destructive-soft text-destructive">
-        <TriangleAlert aria-hidden="true" strokeWidth={1.75} className="size-6" />
+        <Icon icon={Alert02Icon} size={24} aria-hidden="true" />
       </span>
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold text-foreground">{t("title")}</h1>

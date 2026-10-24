@@ -1,6 +1,12 @@
 "use client";
 
-import { FileText, Loader2, Upload, X } from "lucide-react";
+import {
+  Cancel01Icon,
+  CloudUploadIcon,
+  File01Icon,
+  Loading03Icon,
+} from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/site/icon";
 import { useTranslations } from "next-intl";
 import { useId, useRef, useState } from "react";
 
@@ -101,7 +107,11 @@ export function ArtworkUpload({
 
       {status === "done" && value ? (
         <div className="flex items-center gap-3 rounded-control border bg-surface p-2">
-          <FileText className="size-5 shrink-0 text-muted-foreground" />
+          <Icon
+            icon={File01Icon}
+            size={20}
+            className="shrink-0 text-muted-foreground"
+          />
           <span className="min-w-0 flex-1 truncate text-sm" title={fileName}>
             {fileName || t("uploaded")}
           </span>
@@ -112,7 +122,7 @@ export function ArtworkUpload({
             aria-label={t("remove")}
             onClick={reset}
           >
-            <X aria-hidden />
+            <Icon icon={Cancel01Icon} size={16} aria-hidden="true" />
           </Button>
         </div>
       ) : (
@@ -121,12 +131,14 @@ export function ArtworkUpload({
           className="flex cursor-pointer items-center gap-2 rounded-control border border-dashed bg-surface px-3 py-2.5 text-sm hover:bg-muted"
         >
           {status === "uploading" ? (
-            <Loader2
-              className="size-4 animate-spin motion-reduce:animate-none"
-              aria-hidden
+            <Icon
+              icon={Loading03Icon}
+              size={16}
+              className="animate-spin motion-reduce:animate-none"
+              aria-hidden="true"
             />
           ) : (
-            <Upload className="size-4" aria-hidden />
+            <Icon icon={CloudUploadIcon} size={16} aria-hidden="true" />
           )}
           <span>
             {status === "uploading"
@@ -143,7 +155,7 @@ export function ArtworkUpload({
           role="alert"
           className="flex items-center gap-1.5 text-sm text-destructive"
         >
-          <FileText className="size-4" aria-hidden />
+          <Icon icon={File01Icon} size={16} aria-hidden="true" />
           {error}
         </p>
       ) : null}

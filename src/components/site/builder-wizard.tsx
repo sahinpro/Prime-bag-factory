@@ -1,7 +1,12 @@
 "use client";
 
 import { cn } from "cn";
-import { Check, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
+  Tick02Icon,
+} from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/site/icon";
 import { useTranslations } from "next-intl";
 import { useMemo, useState, useSyncExternalStore } from "react";
 
@@ -274,7 +279,7 @@ function Wizard({
                 )}
               >
                 {done ? (
-                  <Check className="size-3.5" aria-hidden />
+                  <Icon icon={Tick02Icon} size={14} aria-hidden="true" />
                 ) : (
                   <span>{i + 1}</span>
                 )}
@@ -321,7 +326,7 @@ function Wizard({
           onClick={() => setStep((s) => Math.max(0, s - 1))}
           disabled={step === 0}
         >
-          <ChevronLeft className="size-4" aria-hidden />
+          <Icon icon={ArrowLeft01Icon} size={16} aria-hidden="true" />
           {common("back")}
         </Button>
 
@@ -334,7 +339,7 @@ function Wizard({
             disabled={!canAdvance}
           >
             {t("continue")}
-            <ChevronRight className="size-4" aria-hidden />
+            <Icon icon={ArrowRight01Icon} size={16} aria-hidden="true" />
           </Button>
         ) : (
           <Button type="button" onClick={() => setSubmitted(true)}>

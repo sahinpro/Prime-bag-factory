@@ -1,7 +1,8 @@
 "use client";
 
 import { cn } from "cn";
-import { Check, ShoppingBag } from "lucide-react";
+import { ShoppingBag01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/site/icon";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
@@ -263,20 +264,21 @@ export function ProductConfigurator({
                     (variant?.available != null && qty > variant.available)
                   }
                 >
-                  <ShoppingBag
+                  <Icon
+                    icon={ShoppingBag01Icon}
+                    size={16}
                     aria-hidden="true"
-                    strokeWidth={1.75}
-                    className="size-4"
                   />
                   {t("addToCart")}
                 </Button>
                 {added ? (
                   <Button variant="outline" asChild>
                     <Link href="/cart">
-                      <Check
+                      <Icon
+                        icon={Tick02Icon}
+                        size={16}
                         aria-hidden="true"
-                        strokeWidth={1.75}
-                        className="size-4 text-success"
+                        className="text-success"
                       />
                       {t("addedViewCart")}
                     </Link>

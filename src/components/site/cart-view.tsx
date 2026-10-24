@@ -1,6 +1,12 @@
 "use client";
 
-import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
+import {
+  Delete02Icon,
+  MinusSignIcon,
+  PlusSignIcon,
+  ShoppingBag01Icon,
+} from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/site/icon";
 import { useLocale, useTranslations } from "next-intl";
 import * as React from "react";
 
@@ -97,10 +103,11 @@ export function CartView() {
   if (items.length === 0 && (!data || data.status === "ready")) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-card border border-dashed px-6 py-16 text-center">
-        <ShoppingBag
+        <Icon
+          icon={ShoppingBag01Icon}
+          size={32}
           aria-hidden="true"
-          strokeWidth={1.75}
-          className="size-8 text-muted-foreground"
+          className="text-muted-foreground"
         />
         <p className="font-medium">{t("empty")}</p>
         <p className="text-sm text-muted-foreground">{t("emptyHint")}</p>
@@ -241,10 +248,10 @@ export function CartView() {
                       aria-label={t("removeAria", { title })}
                       onClick={() => removeFromCart(line.variantId)}
                     >
-                      <Trash2
+                      <Icon
+                        icon={Delete02Icon}
+                        size={16}
                         aria-hidden="true"
-                        strokeWidth={1.75}
-                        className="size-4"
                       />
                     </Button>
                   </div>
@@ -259,10 +266,10 @@ export function CartView() {
                         disabled={qty <= 1}
                         onClick={() => setCartQty(line.variantId, qty - 1)}
                       >
-                        <Minus
+                        <Icon
+                          icon={MinusSignIcon}
+                          size={14}
                           aria-hidden="true"
-                          strokeWidth={1.75}
-                          className="size-3.5"
                         />
                       </Button>
                       <label
@@ -292,10 +299,10 @@ export function CartView() {
                         aria-label={t("increaseAria")}
                         onClick={() => setCartQty(line.variantId, qty + 1)}
                       >
-                        <Plus
+                        <Icon
+                          icon={PlusSignIcon}
+                          size={14}
                           aria-hidden="true"
-                          strokeWidth={1.75}
-                          className="size-3.5"
                         />
                       </Button>
                     </div>

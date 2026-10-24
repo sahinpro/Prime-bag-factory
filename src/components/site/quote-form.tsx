@@ -1,6 +1,7 @@
 "use client";
 
-import { MessageCircle, PhoneCall } from "lucide-react";
+import { Call02Icon, WhatsappIcon } from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/site/icon";
 import { useTranslations } from "next-intl";
 import { useActionState, useState } from "react";
 
@@ -89,7 +90,7 @@ export function QuoteForm({
           {state.ref ? (
             <Button asChild>
               <a href={waHref} target="_blank" rel="noopener noreferrer">
-                <MessageCircle className="size-4" aria-hidden="true" />
+                <Icon icon={WhatsappIcon} size={16} aria-hidden="true" />
                 {t("whatsappContinue")}
               </a>
             </Button>
@@ -102,7 +103,7 @@ export function QuoteForm({
         </div>
         {state.ref ? (
           <p className="mt-4 flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
-            <PhoneCall className="size-4" aria-hidden="true" />
+            <Icon icon={Call02Icon} size={16} aria-hidden="true" />
             {t("successCall")} {publicEnv.NEXT_PUBLIC_WHATSAPP_NUMBER}
           </p>
         ) : null}

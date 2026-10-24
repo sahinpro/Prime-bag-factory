@@ -1,7 +1,8 @@
 import { getTranslations } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
-import { Compass, Home } from "lucide-react";
+import { Compass01Icon, Home01Icon } from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/site/icon";
 
 // Localized public 404 (plan §15 D3 / R8). Renders inside the [locale] layout,
 // so the Bangla font + 18px floor apply. The content sits in <main> so the
@@ -14,7 +15,7 @@ export default async function LocaleNotFound() {
   return (
     <main className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-6 py-20 text-center">
       <span className="flex size-12 items-center justify-center rounded-full bg-surface-2 text-muted-foreground">
-        <Compass aria-hidden="true" strokeWidth={1.75} className="size-6" />
+        <Icon icon={Compass01Icon} size={24} aria-hidden="true" />
       </span>
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold text-foreground">{t("title")}</h1>
@@ -27,7 +28,7 @@ export default async function LocaleNotFound() {
           href="/"
           className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-base font-medium text-primary-foreground hover:bg-brand-hover"
         >
-          <Home aria-hidden="true" strokeWidth={1.75} className="size-4" />
+          <Icon icon={Home01Icon} size={16} aria-hidden="true" />
           {t("home")}
         </Link>
         <Link

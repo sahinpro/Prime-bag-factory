@@ -1,6 +1,12 @@
 "use client";
 
-import { Menu, MessageCircle, Search, X } from "lucide-react";
+import {
+  Cancel01Icon,
+  Menu01Icon,
+  Search01Icon,
+  WhatsappIcon,
+} from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/site/icon";
 import { useLocale, useTranslations } from "next-intl";
 import { Suspense } from "react";
 
@@ -49,7 +55,7 @@ export function HeaderActions({
     <div className="ml-auto flex items-center gap-1">
       <Button variant="ghost" size="icon" asChild>
         <Link href="/search" aria-label={t("search")}>
-          <Search aria-hidden="true" strokeWidth={1.75} className="size-5" />
+          <Icon icon={Search01Icon} size={20} aria-hidden="true" />
         </Link>
       </Button>
 
@@ -63,11 +69,7 @@ export function HeaderActions({
             rel="noopener noreferrer"
             aria-label={contact("whatsapp")}
           >
-            <MessageCircle
-              aria-hidden="true"
-              strokeWidth={1.75}
-              className="size-5"
-            />
+            <Icon icon={WhatsappIcon} size={20} aria-hidden="true" />
           </a>
         </Button>
       ) : null}
@@ -100,7 +102,7 @@ export function HeaderActions({
             className="md:hidden"
             aria-label={t("openMenu")}
           >
-            <Menu aria-hidden="true" strokeWidth={1.75} className="size-5" />
+            <Icon icon={Menu01Icon} size={20} aria-hidden="true" />
           </Button>
         </SheetTrigger>
         <SheetContent
@@ -116,7 +118,7 @@ export function HeaderActions({
                 size="icon"
                 aria-label={t("closeMenu")}
               >
-                <X aria-hidden="true" strokeWidth={1.75} className="size-5" />
+                <Icon icon={Cancel01Icon} size={20} aria-hidden="true" />
               </Button>
             </SheetClose>
           </SheetHeader>
@@ -195,11 +197,7 @@ export function HeaderActions({
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <MessageCircle
-                      aria-hidden="true"
-                      strokeWidth={1.75}
-                      className="size-4"
-                    />
+                    <Icon icon={WhatsappIcon} size={16} aria-hidden="true" />
                     {contact("whatsapp")}
                   </a>
                 </Button>

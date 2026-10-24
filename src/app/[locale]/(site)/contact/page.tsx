@@ -1,4 +1,5 @@
-import { MessageCircle } from "lucide-react";
+import { WhatsappIcon } from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/site/icon";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 
@@ -59,7 +60,7 @@ export default async function ContactPage({
               target="_blank"
               rel="noopener noreferrer"
             >
-              <MessageCircle className="size-4" aria-hidden />
+              <Icon icon={WhatsappIcon} size={16} aria-hidden="true" />
               {t("whatsappLabel")}
             </a>
           </Button>

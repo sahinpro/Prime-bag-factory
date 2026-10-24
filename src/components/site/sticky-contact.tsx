@@ -1,4 +1,5 @@
-import { MessageCircle } from "lucide-react";
+import { WhatsappIcon } from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/site/icon";
 import { getTranslations } from "next-intl/server";
 
 /**
@@ -25,11 +26,7 @@ export async function StickyContact({ href }: { href: string | null }) {
         rel="noopener noreferrer"
         className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-3 font-medium text-accent-foreground shadow-lg transition-transform duration-150 hover:scale-105 motion-reduce:transition-none motion-reduce:hover:scale-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
       >
-        <MessageCircle
-          aria-hidden="true"
-          strokeWidth={1.75}
-          className="size-5"
-        />
+        <Icon icon={WhatsappIcon} size={20} aria-hidden="true" />
         <span className="hidden sm:inline">{t("whatsapp")}</span>
         <span className="sr-only sm:hidden">{t("whatsapp")}</span>
       </a>

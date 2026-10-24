@@ -1,14 +1,16 @@
 "use client";
 
 import {
-  BadgeCheck,
-  CircleDashed,
-  Package,
-  PhoneCall,
-  RotateCcw,
-  Truck,
-  XCircle,
-} from "lucide-react";
+  Call02Icon,
+  CancelCircleIcon,
+  CheckmarkCircle02Icon,
+  CircleDashedIcon,
+  Package01Icon,
+  RefreshIcon,
+  TruckIcon,
+  WhatsappIcon,
+} from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/site/icon";
 import { useLocale, useTranslations } from "next-intl";
 import * as React from "react";
 
@@ -38,27 +40,21 @@ import type { PublicOrder } from "@/server/orders";
  * a component identity that was chosen during render.
  */
 function StatusIcon({ status }: { status: string }) {
-  const props = {
-    "aria-hidden": true,
-    strokeWidth: 1.75,
-    className: "size-4",
-  } as const;
-  switch (status) {
-    case "confirmed":
-      return <PhoneCall {...props} />;
-    case "processing":
-      return <Package {...props} />;
-    case "shipped":
-      return <Truck {...props} />;
-    case "delivered":
-      return <BadgeCheck {...props} />;
-    case "cancelled":
-      return <XCircle {...props} />;
-    case "returned":
-      return <RotateCcw {...props} />;
-    default:
-      return <CircleDashed {...props} />;
-  }
+  const icon =
+    status === "confirmed"
+      ? Call02Icon
+      : status === "processing"
+        ? Package01Icon
+        : status === "shipped"
+          ? TruckIcon
+          : status === "delivered"
+            ? CheckmarkCircle02Icon
+            : status === "cancelled"
+              ? CancelCircleIcon
+              : status === "returned"
+                ? RefreshIcon
+                : CircleDashedIcon;
+  return <Icon icon={icon} size={16} aria-hidden="true" />;
 }
 
 export function OrderStatus({
@@ -102,21 +98,18 @@ export function OrderStatus({
             {t(`status.${order.status}`)}
           </span>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 px-3 py-1 text-sm">
-            <PhoneCall
-              aria-hidden="true"
-              strokeWidth={1.75}
-              className="size-4"
-            />
+            <Icon icon={Call02Icon} size={16} aria-hidden="true" />
             {t(`payment.${order.paymentStatus}`)}
           </span>
         </div>
 
         {justPlaced ? (
           <p className="mt-4 flex items-start gap-2 rounded-control bg-brand/10 px-3 py-2 text-sm">
-            <PhoneCall
+            <Icon
+              icon={Call02Icon}
+              size={16}
               aria-hidden="true"
-              strokeWidth={1.75}
-              className="mt-0.5 size-4 shrink-0 text-gold-text"
+              className="mt-0.5 shrink-0 text-gold-text"
             />
             <span>{t("callNote")}</span>
           </p>
@@ -261,11 +254,7 @@ export function OrderStatus({
             target="_blank"
             rel="noopener noreferrer"
           >
-            <PhoneCall
-              aria-hidden="true"
-              strokeWidth={1.75}
-              className="size-4"
-            />
+            <Icon icon={WhatsappIcon} size={16} aria-hidden="true" />
             {t("contactUs")}
           </a>
         </Button>

@@ -1,4 +1,5 @@
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag01Icon } from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/site/icon";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,7 @@ export function CartLink() {
           dir={locale === "bn" ? "rtl" : "ltr"}
           className="relative inline-flex"
         >
-          <ShoppingBag strokeWidth={1.75} className="size-5" />
+          <Icon icon={ShoppingBag01Icon} size={20} />
           {count > 0 ? (
             <span className="absolute -right-2 -top-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-gold-deep px-1 text-[10px] font-bold leading-none text-gold-soft">
               {count > 99 ? "99+" : count}

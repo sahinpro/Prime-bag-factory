@@ -1,14 +1,19 @@
-import { ChevronDown, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
+import {
+  ArrowDown01Icon,
+  Call02Icon,
+  Facebook02Icon,
+  InstagramIcon,
+  Linkedin02Icon,
+  Location01Icon,
+  Mail01Icon,
+  WhatsappIcon,
+  YoutubeIcon,
+} from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/site/icon";
 import { getTranslations } from "next-intl/server";
 
 import type { HeaderCategory } from "@/components/site/header-category";
 import { Logo } from "@/components/site/logo";
-import {
-  FacebookIcon,
-  InstagramIcon,
-  LinkedinIcon,
-  YoutubeIcon,
-} from "@/components/site/social-icons";
 import { YearStamp } from "@/components/site/year-stamp";
 import { Separator } from "@/components/ui/separator";
 import { Link } from "@/i18n/navigation";
@@ -59,10 +64,11 @@ function FooterAccordion({
     <details className="group border-b border-ivory/20">
       <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between text-base font-semibold text-ivory [&::-webkit-details-marker]:hidden">
         {title}
-        <ChevronDown
+        <Icon
+          icon={ArrowDown01Icon}
+          size={16}
           aria-hidden="true"
-          strokeWidth={1.75}
-          className="size-4 transition-transform duration-150 group-open:rotate-180 motion-reduce:transition-none"
+          className="transition-transform duration-150 group-open:rotate-180 motion-reduce:transition-none"
         />
       </summary>
       <ul className="space-y-1 pb-3">
@@ -129,10 +135,10 @@ export async function SiteFooter({
 
   const social = (
     [
-      { href: company.facebook, label: t("facebook"), Icon: FacebookIcon },
-      { href: company.instagram, label: t("instagram"), Icon: InstagramIcon },
-      { href: company.youtube, label: t("youtube"), Icon: YoutubeIcon },
-      { href: company.linkedin, label: t("linkedin"), Icon: LinkedinIcon },
+      { href: company.facebook, label: t("facebook"), icon: Facebook02Icon },
+      { href: company.instagram, label: t("instagram"), icon: InstagramIcon },
+      { href: company.youtube, label: t("youtube"), icon: YoutubeIcon },
+      { href: company.linkedin, label: t("linkedin"), icon: Linkedin02Icon },
     ] as const
   ).filter((s) => s.href);
 
@@ -151,7 +157,7 @@ export async function SiteFooter({
             <p className="max-w-sm text-base text-ivory/80">{t("tagline")}</p>
             {social.length > 0 ? (
               <ul className="flex flex-wrap gap-2" aria-label={t("social")}>
-                {social.map(({ href, label, Icon }) => (
+                {social.map(({ href, label, icon }) => (
                   <li key={label}>
                     <a
                       href={href}
@@ -160,7 +166,7 @@ export async function SiteFooter({
                       aria-label={label}
                       className="inline-flex size-11 items-center justify-center rounded-md text-ivory/80 hover:bg-ivory/10 hover:text-ivory"
                     >
-                      <Icon className="size-4" />
+                      <Icon icon={icon} size={16} />
                     </a>
                   </li>
                 ))}
@@ -179,7 +185,7 @@ export async function SiteFooter({
           <p className="mt-4 text-base text-ivory/80">{t("tagline")}</p>
           {social.length > 0 ? (
             <ul className="mt-4 flex flex-wrap gap-2" aria-label={t("social")}>
-              {social.map(({ href, label, Icon }) => (
+              {social.map(({ href, label, icon }) => (
                 <li key={label}>
                   <a
                     href={href}
@@ -188,7 +194,7 @@ export async function SiteFooter({
                     aria-label={label}
                     className="inline-flex size-11 items-center justify-center rounded-md text-ivory/80 hover:bg-ivory/10 hover:text-ivory"
                   >
-                    <Icon className="size-4" />
+                    <Icon icon={icon} size={16} />
                   </a>
                 </li>
               ))}
@@ -213,7 +219,12 @@ export async function SiteFooter({
             <address className="space-y-2 text-base text-ivory/80 not-italic">
               {company.phone ? (
                 <p className="flex min-h-11 items-center gap-2">
-                  <Phone aria-hidden="true" strokeWidth={1.75} className="size-4 shrink-0" />
+                  <Icon
+                    icon={Call02Icon}
+                    size={16}
+                    aria-hidden="true"
+                    className="shrink-0"
+                  />
                   <a href={`tel:${company.phone}`} className="hover:text-ivory">
                     <span className="sr-only">{t("phone")}: </span>
                     {company.phone}
@@ -222,10 +233,11 @@ export async function SiteFooter({
               ) : null}
               {wa ? (
                 <p className="flex min-h-11 items-center gap-2">
-                  <MessageCircle
+                  <Icon
+                    icon={WhatsappIcon}
+                    size={16}
                     aria-hidden="true"
-                    strokeWidth={1.75}
-                    className="size-4 shrink-0"
+                    className="shrink-0"
                   />
                   <a
                     href={wa}
@@ -239,7 +251,12 @@ export async function SiteFooter({
               ) : null}
               {company.email ? (
                 <p className="flex min-h-11 items-center gap-2">
-                  <Mail aria-hidden="true" strokeWidth={1.75} className="size-4 shrink-0" />
+                  <Icon
+                    icon={Mail01Icon}
+                    size={16}
+                    aria-hidden="true"
+                    className="shrink-0"
+                  />
                   <a
                     href={`mailto:${company.email}`}
                     className="hover:text-ivory"
@@ -251,10 +268,11 @@ export async function SiteFooter({
               ) : null}
               {address ? (
                 <p className="flex items-start gap-2">
-                  <MapPin
+                  <Icon
+                    icon={Location01Icon}
+                    size={16}
                     aria-hidden="true"
-                    strokeWidth={1.75}
-                    className="mt-1 size-4 shrink-0"
+                    className="mt-1 shrink-0"
                   />
                   <span>
                     <span className="sr-only">{t("addressLabel")}: </span>

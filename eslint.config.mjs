@@ -13,6 +13,27 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    files: [
+      "src/components/site/**/*.{ts,tsx}",
+      // Brackets are a glob character class; escape so this is the locale segment.
+      "src/app/\\[locale\\]/**/*.{ts,tsx}",
+    ],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "lucide-react",
+              message:
+                "Public pages use Hugeicons through @/components/site/icon. lucide-react stays on the admin kit and shadcn primitives.",
+            },
+          ],
+        },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;
