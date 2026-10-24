@@ -3,8 +3,9 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
+import { PillButton } from "@/components/site/pill-button";
 import { ProductGrid } from "@/components/site/product-grid";
-import { Button } from "@/components/ui/button";
+import { SectionShell } from "@/components/site/section-shell";
 import { Link } from "@/i18n/navigation";
 import { isLocale, type Locale } from "@/i18n/routing";
 import {
@@ -31,34 +32,28 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
     <main id="main" className="flex flex-1 flex-col">
       {/* Hero */}
       <section className="border-b bg-surface">
-        <div className="mx-auto flex w-full container flex-col gap-6 px-4 py-14 sm:py-20">
-          <p className="text-sm font-medium uppercase tracking-wide text-gold-text">
+        <SectionShell as="div" className="py-14 sm:py-20">
+          <p className="type-secondary font-medium text-muted-foreground">
             {t("eyebrow")}
           </p>
-          <h1 className="max-w-2xl text-3xl font-semibold tracking-tight text-balance sm:text-4xl md:text-5xl">
+          <h1 className="type-display text-balance text-foreground">
             {t("heroTitle")}
           </h1>
           <p className="max-w-2xl text-lg text-muted-foreground">
             {t("heroSubtitle")}
           </p>
           <div className="flex flex-wrap gap-3">
-            <Button size="lg" asChild>
-              <Link href="/search" locale={locale}>
-                {t("ctaShop")}
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild>
-              <Link href="/quote" locale={locale}>
-                {t("ctaQuote")}
-              </Link>
-            </Button>
-            <Button size="lg" variant="ghost" asChild>
-              <Link href="/builder" locale={locale}>
-                {t("ctaBuilder")}
-              </Link>
-            </Button>
+            <PillButton href="/search" locale={locale}>
+              {t("ctaShop")}
+            </PillButton>
+            <PillButton href="/quote" locale={locale} variant="outline">
+              {t("ctaQuote")}
+            </PillButton>
+            <PillButton href="/builder" locale={locale} variant="outline">
+              {t("ctaBuilder")}
+            </PillButton>
           </div>
-        </div>
+        </SectionShell>
       </section>
 
       {/* DB-driven sections stream behind this boundary (PPR); the hero above
@@ -69,10 +64,8 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
 
       {/* Why */}
       <section className="bg-surface">
-        <div className="mx-auto w-full container px-4 py-12">
-          <h2 className="mb-6 text-2xl font-semibold tracking-tight">
-            {t("whyTitle")}
-          </h2>
+        <SectionShell as="div">
+          <h2 className="type-section text-foreground">{t("whyTitle")}</h2>
           <div className="grid gap-4 sm:grid-cols-3">
             {(["1", "2", "3"] as const).map((n) => (
               <div key={n} className="rounded-card border bg-surface-2 p-5">
@@ -83,7 +76,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
               </div>
             ))}
           </div>
-        </div>
+        </SectionShell>
       </section>
     </main>
   );
@@ -108,9 +101,7 @@ async function HomeSections({ locale }: { locale: Locale }) {
       {products.length > 0 ? (
         <section className="mx-auto w-full container px-4 py-12">
           <div className="mb-6 flex items-center justify-between gap-4">
-            <h2 className="text-2xl font-semibold tracking-tight">
-              {t("featured")}
-            </h2>
+            <h2 className="type-section text-foreground">{t("featured")}</h2>
             <Link
               href="/search"
               locale={locale}
@@ -127,7 +118,7 @@ async function HomeSections({ locale }: { locale: Locale }) {
       {categories.length > 0 ? (
         <section>
           <div className="mx-auto w-full container px-4 py-12">
-            <h2 className="mb-6 text-2xl font-semibold tracking-tight">
+            <h2 className="type-section mb-6 text-foreground">
               {t("categoriesTitle")}
             </h2>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -142,7 +133,7 @@ async function HomeSections({ locale }: { locale: Locale }) {
       {/* Shop by industry */}
       {collections.length > 0 ? (
         <section className="mx-auto w-full container px-4 py-12">
-          <h2 className="mb-6 text-2xl font-semibold tracking-tight">
+          <h2 className="type-section mb-6 text-foreground">
             {t("collectionsTitle")}
           </h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
