@@ -73,6 +73,19 @@
     "cart": "Cart",
     "cartAria": "Cart, {count} items"
   },
+  "header": {
+    "shop": "Shop",
+    "industries": "Industries",
+    "buildYourBag": "Build your bag",
+    "searchPlaceholder": "Search bags",
+    "searchDialog": "Search",
+    "call": "Call {number}",
+    "callLabel": "Call",
+    "viewAll": "View all",
+    "featureTitle": "Build your bag",
+    "featureLine": "Choose fabric, size and a logo.",
+    "noIndustries": "Industries are being added."
+  },
   "contact": {
     "whatsapp": "Chat on WhatsApp",
     "messenger": "Message on Messenger",

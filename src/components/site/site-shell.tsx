@@ -1,10 +1,15 @@
 import { getTranslations } from "next-intl/server";
 
+import type { HeaderCollection } from "@/components/site/header-collection";
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader, type HeaderCategory } from "@/components/site/site-header";
 import { StickyContact } from "@/components/site/sticky-contact";
 import { publicEnv } from "@/lib/env";
-import { getNavCategories } from "@/server/catalog";
+import {
+  getNavCategories,
+  listFeaturedProducts,
+  listPublicCollections,
+} from "@/server/catalog";
 import {
   getPublicCompany,
   PUBLIC_COMPANY_FALLBACK,
@@ -34,6 +39,25 @@ export async function SiteShell({
     categories = [];
   }
 
+  let collections: HeaderCollection[] = [];
+  try {
+    collections = (await listPublicCollections()).map((row) => ({
+      slug: row.slug,
+      name_en: row.name_en,
+      name_bn: row.name_bn,
+    }));
+  } catch {
+    collections = [];
+  }
+
+  let featureImage: string | null = null;
+  try {
+    const featured = await listFeaturedProducts(1);
+    featureImage = featured[0]?.thumbnail ?? null;
+  } catch {
+    featureImage = null;
+  }
+
   let company = PUBLIC_COMPANY_FALLBACK;
   try {
     company = await getPublicCompany();
@@ -53,7 +77,14 @@ export async function SiteShell({
       >
         {a11y("skipToContent")}
       </a>
-      <SiteHeader categories={categories} whatsappHref={headerWhatsapp} />
+      <SiteHeader
+        categories={categories}
+        collections={collections}
+        featureImage={featureImage}
+        phone={company.phone}
+        whatsappHref={headerWhatsapp}
+        locale={locale}
+      />
       {children}
       <SiteFooter locale={locale} categories={categories} company={company} />
       <StickyContact href={headerWhatsapp} />

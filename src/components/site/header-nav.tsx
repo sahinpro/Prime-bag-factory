@@ -1,50 +1,43 @@
 "use client";
 
 import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
-import { Icon } from "@/components/site/icon";
-import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
+import { useEffect, useId, useRef, useState } from "react";
 
-import type { HeaderCategory } from "@/components/site/header-category";
+import { Icon } from "@/components/site/icon";
 import { Link, usePathname } from "@/i18n/navigation";
 
-const MEGA_ID = "site-mega-panel";
-
-function categoryLabel(locale: string, c: HeaderCategory) {
-  return locale === "bn" && c.name_bn && c.name_bn.trim() !== ""
-    ? c.name_bn
-    : c.name_en;
-}
-
-function navLinkClass(active: boolean) {
-  return `inline-flex min-h-11 items-center rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150 motion-reduce:transition-none ${
+function itemClass(active: boolean) {
+  return `inline-flex min-h-11 items-center gap-1 whitespace-nowrap px-2 text-sm font-medium text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
     active
-      ? "bg-muted text-gold-text"
-      : "text-foreground hover:bg-muted"
+      ? "underline decoration-gold-text decoration-2 underline-offset-8"
+      : ""
   }`;
 }
 
-export function HeaderNav({ categories }: { categories: HeaderCategory[] }) {
-  const t = useTranslations("nav");
-  const locale = useLocale();
+export function HeaderNav({
+  shopPanel,
+  industriesPanel,
+}: {
+  shopPanel: React.ReactNode;
+  industriesPanel: React.ReactNode;
+}) {
+  const t = useTranslations("header");
+  const nav = useTranslations("nav");
   const pathname = usePathname();
-  const [megaOpen, setMegaOpen] = useState(false);
-  const megaRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const homeActive = pathname === "/";
-  const categoryActive = pathname.startsWith("/category");
+  const [open, setOpen] = useState<"shop" | "industries" | null>(null);
+  const rootRef = useRef<HTMLElement>(null);
+  const shopId = useId();
+  const industryId = useId();
 
   useEffect(() => {
-    if (!megaOpen) return;
+    if (!open) return;
     function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setMegaOpen(false);
-        triggerRef.current?.focus();
-      }
+      if (event.key === "Escape") setOpen(null);
     }
     function onPointerDown(event: PointerEvent) {
-      if (megaRef.current && !megaRef.current.contains(event.target as Node)) {
-        setMegaOpen(false);
+      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
+        setOpen(null);
       }
     }
     document.addEventListener("keydown", onKey);
@@ -53,86 +46,119 @@ export function HeaderNav({ categories }: { categories: HeaderCategory[] }) {
       document.removeEventListener("keydown", onKey);
       document.removeEventListener("pointerdown", onPointerDown);
     };
-  }, [megaOpen]);
+  }, [open]);
 
-  const closeMega = () => setMegaOpen(false);
+  const panelId = open === "shop" ? shopId : industryId;
+  const panelLabel = open === "shop" ? t("shop") : t("industries");
 
   return (
     <nav
-      aria-label={t("primaryNav")}
-      className="hidden items-center gap-1 md:flex"
+      ref={rootRef}
+      aria-label={nav("primaryNav")}
+      className="hidden h-full min-w-0 items-center lg:flex"
+      onPointerLeave={(event) => {
+        if (event.pointerType === "mouse") setOpen(null);
+      }}
+      onBlur={(event) => {
+        if (!rootRef.current?.contains(event.relatedTarget as Node)) {
+          setOpen(null);
+        }
+      }}
     >
+      <MenuButton
+        id={shopId}
+        label={t("shop")}
+        open={open === "shop"}
+        active={pathname.startsWith("/category")}
+        onToggle={() => setOpen((value) => (value === "shop" ? null : "shop"))}
+        onOpen={() => setOpen("shop")}
+      />
+      <MenuButton
+        id={industryId}
+        label={t("industries")}
+        open={open === "industries"}
+        active={pathname.startsWith("/collection")}
+        onToggle={() =>
+          setOpen((value) => (value === "industries" ? null : "industries"))
+        }
+        onOpen={() => setOpen("industries")}
+      />
       <Link
-        href="/"
-        aria-current={homeActive ? "page" : undefined}
-        className={navLinkClass(homeActive)}
+        href="/builder"
+        aria-current={pathname === "/builder" ? "page" : undefined}
+        className={itemClass(pathname === "/builder")}
       >
-        {t("home")}
+        {t("buildYourBag")}
       </Link>
-      <div ref={megaRef} className="relative">
-        <button
-          ref={triggerRef}
-          type="button"
-          aria-expanded={megaOpen}
-          aria-controls={MEGA_ID}
-          aria-current={categoryActive ? "page" : undefined}
-          onClick={() => setMegaOpen((o) => !o)}
-          className={navLinkClass(categoryActive)}
-        >
-          {t("categories")}
-          <Icon
-            icon={ArrowDown01Icon}
-            size={16}
-            aria-hidden="true"
-            className={`ml-1 transition-transform duration-150 motion-reduce:transition-none ${
-              megaOpen ? "rotate-180" : ""
-            }`}
-          />
-        </button>
-        {megaOpen ? (
+      <Link
+        href="/about"
+        aria-current={pathname === "/about" ? "page" : undefined}
+        className={itemClass(pathname === "/about")}
+      >
+        {nav("about")}
+      </Link>
+      <Link
+        href="/contact"
+        aria-current={pathname === "/contact" ? "page" : undefined}
+        className={itemClass(pathname === "/contact")}
+      >
+        {nav("contact")}
+      </Link>
+      {open ? (
+        <div className="fixed inset-x-0 top-16 z-40 px-4 md:px-6 lg:px-8">
           <div
-            id={MEGA_ID}
+            id={panelId}
             role="region"
-            aria-label={t("shopByCategory")}
-            className="absolute left-0 top-full z-50 mt-2 w-[min(52rem,90vw)] rounded-card border border-border bg-surface p-5 shadow-lg"
+            aria-label={panelLabel}
+            className="mx-auto w-full max-w-[1440px] rounded-b-[var(--radius-panel)] bg-surface p-6 shadow-md dark:border dark:border-border dark:shadow-none"
           >
-            {categories.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                {t("noCategories")}
-              </p>
-            ) : (
-              <ul className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3">
-                {categories.map((c) => (
-                  <li key={c.slug}>
-                    <Link
-                      href={`/category/${c.slug}`}
-                      onClick={closeMega}
-                      className="text-sm font-semibold text-gold-text hover:underline"
-                    >
-                      {categoryLabel(locale, c)}
-                    </Link>
-                    {c.children.length > 0 ? (
-                      <ul className="mt-2 space-y-1.5">
-                        {c.children.map((child) => (
-                          <li key={child.slug}>
-                            <Link
-                              href={`/category/${child.slug}`}
-                              onClick={closeMega}
-                              className="block min-h-11 py-2 text-sm text-muted-foreground hover:text-foreground"
-                            >
-                              {categoryLabel(locale, child)}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            )}
+            {open === "shop" ? shopPanel : industriesPanel}
           </div>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
     </nav>
+  );
+}
+
+function MenuButton({
+  id,
+  label,
+  open,
+  active,
+  onToggle,
+  onOpen,
+}: {
+  id: string;
+  label: string;
+  open: boolean;
+  active: boolean;
+  onToggle: () => void;
+  onOpen: () => void;
+}) {
+  return (
+    <div
+      className="flex items-center"
+      onPointerEnter={(event) => {
+        if (event.pointerType === "mouse") onOpen();
+      }}
+    >
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={id}
+        aria-current={active ? "page" : undefined}
+        onClick={onToggle}
+        className={itemClass(active)}
+      >
+        {label}
+        <Icon
+          icon={ArrowDown01Icon}
+          size={16}
+          className={`transition-transform duration-150 motion-reduce:transition-none ${
+            open ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+    </div>
   );
 }

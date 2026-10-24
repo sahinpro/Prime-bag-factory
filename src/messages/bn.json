@@ -73,6 +73,19 @@
     "cart": "কার্ট",
     "cartAria": "কার্ট, {count}টি পণ্য"
   },
+  "header": {
+    "shop": "শপ",
+    "industries": "ইন্ডাস্ট্রি",
+    "buildYourBag": "ব্যাগ বানান",
+    "searchPlaceholder": "ব্যাগ খুঁজুন",
+    "searchDialog": "খুঁজুন",
+    "call": "{number} নম্বরে কল করুন",
+    "callLabel": "কল",
+    "viewAll": "সব দেখুন",
+    "featureTitle": "নিজের ব্যাগ বানান",
+    "featureLine": "কাপড়, সাইজ ও লোগো বেছে নিন।",
+    "noIndustries": "ইন্ডাস্ট্রি যোগ করা হচ্ছে।"
+  },
   "contact": {
     "whatsapp": "হোয়াটসঅ্যাপে চ্যাট করুন",
     "messenger": "মেসেঞ্জারে বার্তা পাঠান",

@@ -1,8 +1,8 @@
 import { ShoppingBag01Icon } from "@hugeicons/core-free-icons";
-import { Icon } from "@/components/site/icon";
 import { useLocale, useTranslations } from "next-intl";
+import { useSyncExternalStore } from "react";
 
-import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/site/icon";
 import { Link } from "@/i18n/navigation";
 import { cartCount, useCartItems } from "@/lib/cart";
 
@@ -16,23 +16,26 @@ export function CartLink() {
   const locale = useLocale();
   const items = useCartItems();
   const count = cartCount(items);
+  const ready = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
   return (
-    <Button variant="ghost" size="icon" asChild>
-      <Link href="/cart" aria-label={t("cartAria", { count: String(count) })}>
-        <span
-          aria-hidden="true"
-          dir={locale === "bn" ? "rtl" : "ltr"}
-          className="relative inline-flex"
-        >
-          <Icon icon={ShoppingBag01Icon} size={20} />
-          {count > 0 ? (
-            <span className="absolute -right-2 -top-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-gold-deep px-1 text-[10px] font-bold leading-none text-gold-soft">
-              {count > 99 ? "99+" : count}
-            </span>
-          ) : null}
-        </span>
-      </Link>
-    </Button>
+    <Link
+      href="/cart"
+      aria-label={t("cartAria", { count: String(count) })}
+      className="relative inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+    >
+      <Icon icon={ShoppingBag01Icon} size={18} />
+      <span
+        aria-hidden="true"
+        dir={locale === "bn" ? "rtl" : "ltr"}
+        className="absolute -top-1 -right-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-ink px-1 text-[13px] leading-none font-medium text-ivory"
+      >
+        {ready ? (count > 99 ? "99+" : count) : ""}
+      </span>
+    </Link>
   );
 }
