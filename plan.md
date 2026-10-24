@@ -114,7 +114,7 @@
 - Package manager: **bun** (repo already has `bun.lock`).
 - Next.js App Router, TypeScript strict.
 - Tailwind (check `package.json`; if v4 define tokens with `@theme` in `globals.css`).
-- shadcn/ui, `lucide-react`.
+- shadcn/ui. Public site icons: Hugeicons free stroke (`@hugeicons/react` + `@hugeicons/core-free-icons`). Admin kit and shadcn primitives stay on `lucide-react` (plan 9c).
 - Supabase: Postgres, Auth, Storage, RLS, Supabase CLI migrations in `supabase/migrations`.
 - Cloudinary: public catalog media (product/category/collection images, swatch textures) via server-signed SDK uploads; Supabase Storage is retained only for private quote attachments (owner decision 2026-10-17 — see Decision Log).
 - Forms: `react-hook-form` + `zod`. Tables: `@tanstack/react-table`. Server state: server components and server actions first.
@@ -1178,6 +1178,8 @@ A, then B, then C (C1 to C3), then D1, D3, D4, D5, then E, F, then D2, D6, then 
 ## Decision Log
 
 _(Agents: append dated notes here when you make a choice the plan did not specify.)_
+
+- 2026-10-24: **Public icons → Hugeicons free stroke** (`@hugeicons/react` + `@hugeicons/core-free-icons`). Replaced lucide and hand-drawn social SVGs on the public site. Admin + shadcn/ui stay lucide (9c). Rule: `.cursor/rules/hugeicons.mdc`.
 
 - 2026-10-24: **Public header/footer redesign.** Visual reference: shadcn-space navbar-12 (CLI is license-gated; not vendored) and footer-01 (structure only, then deleted). G3 policy slugs `/terms` `/privacy` `/returns` `/shipping` `/custom-order` **permanent-redirect to `/legal`** until G3 is written. Contact comes from a new cookie-free `getPublicCompany()` (`"use cache"` + `CACHE_TAGS.settings`); extra social/address/hours keys render only when present in `settings.company`. Language/theme stay in the header, not the footer.
 
