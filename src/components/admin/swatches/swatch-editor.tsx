@@ -233,6 +233,7 @@ export function SwatchEditor({
               value={form.texture_image_path}
               onChange={(url) => set("texture_image_path", url)}
               hint="A square crop works best. PNG, JPG, WebP or AVIF, up to 5 MB."
+              allowLibrary
             />
           </FormSection>
 

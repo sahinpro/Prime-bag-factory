@@ -28,7 +28,7 @@ export function HeroFeaturedCard({ items }: { items: HeroFeaturedItem[] }) {
   const many = items.length > 1;
 
   return (
-    <div className="hero-glass hero-card-rise flex items-center gap-3 rounded-[var(--radius-card)] p-3">
+    <div className="hero-glass hero-card-rise flex items-center gap-3 rounded-card p-3">
       <div className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-surface">
         {item.thumbnail ? (
           <Image

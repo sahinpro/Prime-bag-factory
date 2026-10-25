@@ -1,10 +1,9 @@
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
-import { IconCircleButton } from "@/components/site/icon-circle-button";
+import { CategoryTileGrid } from "@/components/site/category-tile-grid";
 import {
   FabricSwatchRow,
   HeroBento,
@@ -14,13 +13,12 @@ import {
   HeroPhotoSkeleton,
   HeroSide,
   HeroSideSkeleton,
-  HeroWhatsApp,
   pageWidth,
   SwatchRowSkeleton,
 } from "@/components/site/home-hero";
+import { IconCircleButton } from "@/components/site/icon-circle-button";
 import { ProductCarousel } from "@/components/site/product-carousel";
 import { ProductTile } from "@/components/site/product-tile";
-import { Link } from "@/i18n/navigation";
 import { isLocale, type Locale } from "@/i18n/routing";
 import { formatMoney, formatNumber } from "@/lib/format";
 import {
@@ -30,7 +28,6 @@ import {
   listRecentProducts,
   listTopLevelCategoryCards,
   localize,
-  type CategoryCard,
   type ProductSummary,
 } from "@/server/catalog";
 
@@ -68,11 +65,6 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
             <HeroFeatured locale={locale} />
           </Suspense>
         }
-        whatsapp={
-          <Suspense fallback={null}>
-            <HeroWhatsApp locale={locale} />
-          </Suspense>
-        }
         side={
           <Suspense fallback={<HeroSideSkeleton />}>
             <HeroSide locale={locale} />
@@ -86,7 +78,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
 
       <section>
         <div className={`${pageWidth} py-6 lg:py-8`}>
-          <div className="rounded-[var(--radius-panel)] bg-surface p-6 shadow-sm lg:p-8">
+          <div className="rounded-panel bg-surface p-6 shadow-sm lg:p-8">
             <h2 className="type-section text-foreground">{t("whyTitle")}</h2>
             <div className="mt-6 grid gap-6 md:grid-cols-3">
               {(["1", "2", "3"] as const).map((n) => (
@@ -170,11 +162,11 @@ async function HomeSections({ locale }: { locale: Locale }) {
             <h2 className="type-section mb-6 text-foreground">
               {t("categoriesTitle")}
             </h2>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {categories.map((cat) => (
-                <CategoryTile key={cat.slug} card={cat} locale={locale} />
-              ))}
-            </div>
+            <CategoryTileGrid
+              cards={categories}
+              locale={locale}
+              kind="category"
+            />
           </div>
         </section>
       ) : null}
@@ -185,16 +177,11 @@ async function HomeSections({ locale }: { locale: Locale }) {
             <h2 className="type-section mb-6 text-foreground">
               {t("collectionsTitle")}
             </h2>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {collections.map((col) => (
-                <CategoryTile
-                  key={col.slug}
-                  card={col}
-                  locale={locale}
-                  collection
-                />
-              ))}
-            </div>
+            <CategoryTileGrid
+              cards={collections}
+              locale={locale}
+              kind="collection"
+            />
           </div>
         </section>
       ) : null}
@@ -210,9 +197,7 @@ function tileLabels(
 ) {
   const title = localize(locale, product.title_en, product.title_bn);
   const price =
-    product.priceMin == null
-      ? ""
-      : formatMoney(product.priceMin, locale);
+    product.priceMin == null ? "" : formatMoney(product.priceMin, locale);
   return {
     fromPrice: t("fromPrice", { price }),
     priceOnRequest: common("priceOnRequest"),
@@ -237,7 +222,7 @@ function FavoritesBand({
 }) {
   return (
     <section className={`${pageWidth} py-6 lg:py-8`}>
-      <div className="rounded-[var(--radius-panel)] bg-surface-2 p-6 lg:p-8">
+      <div className="rounded-panel bg-surface-2 p-6 lg:p-8">
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]">
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between gap-3">
@@ -262,7 +247,7 @@ function FavoritesBand({
 function HomeSectionsSkeleton() {
   return (
     <div className={`${pageWidth} py-6 lg:py-8`} aria-hidden>
-      <div className="rounded-[var(--radius-panel)] bg-surface-2 p-6 lg:p-8">
+      <div className="rounded-panel bg-surface-2 p-6 lg:p-8">
         <div className="grid gap-6 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]">
           <div className="flex flex-col gap-3">
             <div className="h-8 w-48 rounded-full bg-surface" />
@@ -270,57 +255,11 @@ function HomeSectionsSkeleton() {
           </div>
           <div className="grid grid-cols-3 gap-4">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="aspect-square rounded-[var(--radius-card)] bg-surface" />
+              <div key={i} className="aspect-square rounded-card bg-surface" />
             ))}
           </div>
         </div>
       </div>
     </div>
-  );
-}
-
-async function CategoryTile({
-  card,
-  locale,
-  collection = false,
-}: {
-  card: CategoryCard;
-  locale: Locale;
-  collection?: boolean;
-}) {
-  const name = localize(locale, card.name_en, card.name_bn);
-  return (
-    <Link
-      href={`/${collection ? "collection" : "category"}/${card.slug}`}
-      locale={locale}
-      className="group relative flex min-h-45 flex-col justify-end overflow-hidden rounded-[var(--radius-card)] border bg-surface transition-shadow hover:shadow-md"
-    >
-      {card.image_path ? (
-        <>
-          <div aria-hidden className="absolute inset-0">
-            <Image
-              src={card.image_path}
-              alt=""
-              fill
-              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-              className="object-cover transition-transform duration-300 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
-            />
-          </div>
-          <div
-            aria-hidden
-            className="absolute inset-0 bg-linear-to-t from-ink/70 via-ink/25 to-transparent"
-          />
-        </>
-      ) : null}
-      <div className="relative p-3">
-        <h3
-          className={`line-clamp-2 text-lg font-bold ${
-            card.image_path ? "text-ivory" : ""
-          }`}
-        >
-          {name}
-        </h3>
-      </div>
-    </Link>
   );
 }

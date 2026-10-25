@@ -4,6 +4,7 @@ import {
   Boxes,
   FileText,
   FolderTree,
+  Images,
   Layers,
   LayoutDashboard,
   Package,
@@ -84,6 +85,14 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Swatches",
         href: "/admin/swatches",
         icon: Palette,
+        roles: OWNER_MANAGER,
+      },
+      {
+        // Media Library (owner request 2026-10-25): browse / upload / delete /
+        // reuse every Cloudinary asset. Same owner/manager gate as uploads.
+        label: "Media",
+        href: "/admin/media",
+        icon: Images,
         roles: OWNER_MANAGER,
       },
     ],

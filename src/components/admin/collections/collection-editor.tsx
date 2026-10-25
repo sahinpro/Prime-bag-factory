@@ -212,6 +212,7 @@ export function CollectionEditor({
               value={form.image_path}
               onChange={(url) => set("image_path", url)}
               hint="Shown on the collection tile. PNG, JPG, WebP or AVIF, up to 5 MB."
+              allowLibrary
             />
           </FormSection>
 

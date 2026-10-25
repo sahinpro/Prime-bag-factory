@@ -144,7 +144,7 @@ export async function SiteFooter({
 
   return (
     <footer className="mt-auto bg-ink text-ivory">
-      <div className="mx-auto container px-4 pt-12">
+      <div className="mx-auto container px-4 pt-12 md:px-6 lg:px-8">
         <div className="hidden gap-10 sm:grid sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-4 sm:col-span-2 lg:col-span-1">
             <Link href="/" locale={locale} aria-label={siteName}>

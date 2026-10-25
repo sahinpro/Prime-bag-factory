@@ -1,9 +1,9 @@
 import { ArrowDown01Icon, Building03Icon } from "@hugeicons/core-free-icons";
 import { getTranslations } from "next-intl/server";
 
-import { Icon } from "@/components/site/icon";
 import type { HeaderCategory } from "@/components/site/header-category";
 import type { HeaderCollection } from "@/components/site/header-collection";
+import { Icon } from "@/components/site/icon";
 import { Media } from "@/components/site/media";
 import { SheetClose } from "@/components/ui/sheet";
 import { Link } from "@/i18n/navigation";
@@ -68,21 +68,23 @@ export async function ShopPanel({
       </ul>
       <Link
         href="/builder"
-        className="flex flex-col justify-end gap-2 overflow-hidden rounded-[var(--radius-tile)] bg-surface-2 p-4"
+        className="flex flex-col justify-end gap-2 overflow-hidden rounded-tile bg-surface-2 p-4"
       >
         {featureImage ? (
           <Media
             src={featureImage}
             alt=""
             sizes="256px"
-            className="mb-2 aspect-4/3 w-full rounded-[var(--radius-card)]"
+            className="mb-2 aspect-4/3 w-full rounded-card"
             imgClassName="object-cover"
           />
         ) : null}
         <span className="text-base font-medium text-foreground">
           {t("featureTitle")}
         </span>
-        <span className="text-sm text-muted-foreground">{t("featureLine")}</span>
+        <span className="text-sm text-muted-foreground">
+          {t("featureLine")}
+        </span>
       </Link>
     </div>
   );
@@ -97,9 +99,7 @@ export async function IndustriesPanel({
 }) {
   const t = await getTranslations({ locale, namespace: "header" });
   if (collections.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">{t("noIndustries")}</p>
-    );
+    return <p className="text-sm text-muted-foreground">{t("noIndustries")}</p>;
   }
   return (
     <ul className="grid gap-1 sm:grid-cols-2">
@@ -142,7 +142,9 @@ export async function MobileCatalog({
           />
         </summary>
         {categories.length === 0 ? (
-          <p className="px-3 pb-3 text-muted-foreground">{nav("noCategories")}</p>
+          <p className="px-3 pb-3 text-muted-foreground">
+            {nav("noCategories")}
+          </p>
         ) : (
           <ul className="space-y-3 px-3 pb-3">
             {categories.map((category) => (

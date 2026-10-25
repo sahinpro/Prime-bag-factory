@@ -175,7 +175,10 @@ test("opening a pending order marks it seen and drops the badge (no reload)", as
     );
     await settleBadge(page, "Orders", before > 0 ? before : null);
 
-    await page.getByRole("link", { name: /Orders/ }).first().click();
+    await page
+      .getByRole("link", { name: /Orders/ })
+      .first()
+      .click();
     await expect(
       page.getByRole("heading", { level: 1, name: "Orders" }),
     ).toBeVisible();

@@ -51,7 +51,9 @@ export async function completePasswordReset(
   if (error) {
     // Generic — GoTrue messages can leak account state. Most common cause is
     // an expired/rotated recovery session: the user just asks for a new link.
-    return { error: "Could not update the password. Request a new reset link." };
+    return {
+      error: "Could not update the password. Request a new reset link.",
+    };
   }
 
   await logAudit(supabase, {

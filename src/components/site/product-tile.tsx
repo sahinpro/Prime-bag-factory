@@ -43,7 +43,7 @@ export function ProductTile({
           alt={title}
           loading={eager ? "eager" : "lazy"}
           sizes="(min-width: 1280px) 280px, (min-width: 768px) 40vw, 85vw"
-          className="aspect-square w-full rounded-[var(--radius-card)] bg-surface"
+          className="aspect-square w-full rounded-card bg-surface"
           imgClassName="object-contain p-3 transition-transform duration-200 group-hover:scale-[1.02] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
         />
         <h3 className="type-card-title truncate text-foreground" title={title}>

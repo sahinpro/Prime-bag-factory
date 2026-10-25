@@ -2,10 +2,10 @@
 
 import { useActionState, useState, type FormEvent } from "react";
 
-import { changePassword, type ChangePasswordState } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { changePasswordSchema } from "@/lib/validators/password-reset";
+import { changePassword, type ChangePasswordState } from "./actions";
 
 const initialState: ChangePasswordState = { error: null, success: false };
 

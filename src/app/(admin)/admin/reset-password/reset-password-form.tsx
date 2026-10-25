@@ -2,10 +2,10 @@
 
 import { useActionState, useState, type FormEvent } from "react";
 
-import { completePasswordReset, type ResetPasswordState } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { resetPasswordSchema } from "@/lib/validators/password-reset";
+import { completePasswordReset, type ResetPasswordState } from "./actions";
 
 const initialState: ResetPasswordState = { error: null };
 
@@ -65,9 +65,7 @@ export function ResetPasswordForm() {
           minLength={12}
           required
           aria-describedby={
-            error
-              ? "reset-password-error"
-              : "reset-password-hint"
+            error ? "reset-password-error" : "reset-password-hint"
           }
         />
         <p id="reset-password-hint" className="text-xs text-muted-foreground">

@@ -110,7 +110,7 @@ export function HeaderNav({
             id={panelId}
             role="region"
             aria-label={panelLabel}
-            className="mx-auto w-full max-w-[1440px] rounded-b-[var(--radius-panel)] bg-surface p-6 shadow-md dark:border dark:border-border dark:shadow-none"
+            className="container mx-auto rounded-b-[var(--radius-panel)] bg-surface p-6 shadow-md dark:border dark:border-border dark:shadow-none"
           >
             {open === "shop" ? shopPanel : industriesPanel}
           </div>

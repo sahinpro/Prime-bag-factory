@@ -6,10 +6,7 @@ import { z } from "zod";
  * gate. The 12-char floor matches the plan's password policy for staff.
  */
 
-const password = z
-  .string()
-  .min(12, "Use at least 12 characters.")
-  .max(256);
+const password = z.string().min(12, "Use at least 12 characters.").max(256);
 
 export const forgotPasswordSchema = z.object({
   // Trimmed by the caller (`String(...).trim()`) before parsing — zod v4

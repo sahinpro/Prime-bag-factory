@@ -2,10 +2,10 @@
 
 import { useActionState, useState, type FormEvent } from "react";
 
-import { requestPasswordReset, type ForgotPasswordState } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { forgotPasswordSchema } from "@/lib/validators/password-reset";
+import { requestPasswordReset, type ForgotPasswordState } from "./actions";
 
 const initialState: ForgotPasswordState = { sent: false, error: null };
 
@@ -41,9 +41,8 @@ export function ForgotPasswordForm() {
       >
         <p className="font-medium">Check your email</p>
         <p className="mt-1 text-muted-foreground">
-          If that email belongs to an admin account, a password reset link is
-          on its way. The link expires shortly and must be opened in this
-          browser.
+          If that email belongs to an admin account, a password reset link is on
+          its way. The link expires shortly and must be opened in this browser.
         </p>
       </div>
     );

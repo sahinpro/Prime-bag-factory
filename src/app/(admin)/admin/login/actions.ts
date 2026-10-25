@@ -2,9 +2,9 @@
 
 import { redirect } from "next/navigation";
 
-import { staffLoginSchema } from "@/lib/validators/staff-login";
-import { createClient } from "@/lib/supabase/server";
 import { getSafeAdminRedirectPath } from "@/lib/auth-redirect";
+import { createClient } from "@/lib/supabase/server";
+import { staffLoginSchema } from "@/lib/validators/staff-login";
 
 export type StaffLoginState = {
   error: string | null;

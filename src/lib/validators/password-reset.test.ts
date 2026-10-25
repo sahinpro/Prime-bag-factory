@@ -16,9 +16,9 @@ describe("forgotPasswordSchema", () => {
   });
 
   it("rejects a non-email string", () => {
-    expect(forgotPasswordSchema.safeParse({ email: "not-an-email" }).success).toBe(
-      false,
-    );
+    expect(
+      forgotPasswordSchema.safeParse({ email: "not-an-email" }).success,
+    ).toBe(false);
   });
 });
 

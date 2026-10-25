@@ -4,9 +4,9 @@ import { createHash } from "node:crypto";
 
 import { headers } from "next/headers";
 
+import { toAsciiDigits } from "@/lib/format";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createPublicClient } from "@/lib/supabase/server";
-import { toAsciiDigits } from "@/lib/format";
 
 /**
  * Plan 15.2 B2 — the abuse-protection surface used by server actions and route
@@ -112,10 +112,7 @@ export function pickClientIp(
  */
 export async function getClientKey(): Promise<string | null> {
   const h = await headers();
-  const ip = pickClientIp(
-    (name) => h.get(name),
-    Boolean(process.env.VERCEL),
-  );
+  const ip = pickClientIp((name) => h.get(name), Boolean(process.env.VERCEL));
   return ip ? hashClientIp(ip) : null;
 }
 
@@ -225,13 +222,19 @@ export async function limit(
       p_window_seconds: rule.windowSeconds,
     });
     if (error || data === null || data === undefined) {
-      console.error(limiterFailureLine(key, rule, error?.message ?? "empty result"));
+      console.error(
+        limiterFailureLine(key, rule, error?.message ?? "empty result"),
+      );
       return true;
     }
     return data;
   } catch (error) {
     console.error(
-      limiterFailureLine(key, rule, error instanceof Error ? error.message : String(error)),
+      limiterFailureLine(
+        key,
+        rule,
+        error instanceof Error ? error.message : String(error),
+      ),
     );
     return true;
   }

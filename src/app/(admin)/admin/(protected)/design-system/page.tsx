@@ -3,6 +3,7 @@
 import {
   Boxes,
   FileText,
+  FolderOpen,
   LayoutDashboard,
   Package,
   Pencil,
@@ -42,6 +43,8 @@ import { FormSection } from "@/components/admin/forms/form-section";
 import { ImageUploader } from "@/components/admin/forms/image-uploader";
 import { StickySaveBar } from "@/components/admin/forms/sticky-save-bar";
 import { TierEditor, type TierRow } from "@/components/admin/forms/tier-editor";
+import { ImagePickerDialog } from "@/components/admin/media/image-picker-dialog";
+import { MediaGridSkeleton } from "@/components/admin/media/media-grid";
 import {
   PrintChecklist,
   PrintRow,
@@ -271,6 +274,7 @@ function DataTableDemo() {
 
 // Self-contained ImageUploader demo (Media task). Local state only — a real
 // upload posts to the server-signed Cloudinary action, but nothing here is saved.
+// `allowLibrary` shows the Media Library reuse path (owner request 2026-10-25).
 function ImageUploaderDemo() {
   const [url, setUrl] = React.useState("");
   return (
@@ -282,7 +286,37 @@ function ImageUploaderDemo() {
         value={url}
         onChange={setUrl}
         hint="Uploads resize and compress via Cloudinary. Demo only — nothing is saved."
+        allowLibrary
       />
+    </div>
+  );
+}
+
+// MediaGrid demo: the /admin/media tile grid and the in-form picker dialog.
+function MediaLibraryDemo() {
+  const [picked, setPicked] = React.useState<string | null>(null);
+  return (
+    <div className="space-y-3">
+      <ImagePickerDialog
+        folderHint="products"
+        trigger={
+          <Button variant="outline" size="sm">
+            <FolderOpen
+              aria-hidden="true"
+              strokeWidth={1.75}
+              className="size-4"
+            />
+            Open Media Library
+          </Button>
+        }
+        onSelect={(asset) => setPicked(asset.publicId)}
+      />
+      <p className="text-xs text-muted-foreground">
+        {picked
+          ? `Selected: ${picked}`
+          : "Nothing selected yet — the picker lists real Cloudinary assets."}
+      </p>
+      <MediaGridSkeleton count={3} />
     </div>
   );
 }
@@ -405,7 +439,11 @@ function ChartCardDemo() {
           ]}
         />
       </ChartCard>
-      <ChartCard title="Loading chart" subtitle="Skeleton matches height" height="md">
+      <ChartCard
+        title="Loading chart"
+        subtitle="Skeleton matches height"
+        height="md"
+      >
         <ChartSkeleton height="md" />
       </ChartCard>
     </div>
@@ -632,6 +670,10 @@ export default function DesignSystemPage() {
 
         <DemoCard title="Image uploader (Media)">
           <ImageUploaderDemo />
+        </DemoCard>
+
+        <DemoCard title="Media Library (grid + picker)">
+          <MediaLibraryDemo />
         </DemoCard>
 
         <DemoCard title="Print sheet parts (9c.5)">

@@ -67,7 +67,10 @@ export async function changePassword(
   });
 
   if (error) {
-    return { success: false, error: "Could not update the password. Try again." };
+    return {
+      success: false,
+      error: "Could not update the password. Try again.",
+    };
   }
 
   await logAudit(supabase, {

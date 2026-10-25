@@ -5,10 +5,16 @@ import {
   Cancel01Icon,
   Menu01Icon,
   Search01Icon,
-  WhatsappIcon,
 } from "@hugeicons/core-free-icons";
 import { useLocale, useTranslations } from "next-intl";
-import { useCallback, useEffect, useId, useRef, useState, Suspense } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 
 import { CartLink } from "@/components/site/cart-link";
 import { Icon } from "@/components/site/icon";
@@ -66,7 +72,6 @@ function SearchForm({
 
 export function HeaderActions({
   phone,
-  whatsappHref,
   sheetCatalog,
 }: {
   phone: string | null;
@@ -75,7 +80,6 @@ export function HeaderActions({
 }) {
   const t = useTranslations("header");
   const nav = useTranslations("nav");
-  const contact = useTranslations("contact");
   const locale = useLocale();
   const pathname = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
@@ -94,7 +98,7 @@ export function HeaderActions({
       panel
         ? Array.from(
             panel.querySelectorAll<HTMLElement>(
-              'a[href], button:not([disabled]), input:not([disabled])',
+              "a[href], button:not([disabled]), input:not([disabled])",
             ),
           )
         : [];
@@ -134,7 +138,7 @@ export function HeaderActions({
       <SearchForm
         locale={locale}
         inputId={searchId}
-        className="hidden w-[220px] xl:flex"
+        className="hidden w-55 xl:flex"
       />
       <IconCircleButton
         icon={Search01Icon}
@@ -200,7 +204,11 @@ export function HeaderActions({
             </SheetClose>
           </SheetHeader>
           <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
-            <SearchForm locale={locale} inputId={dialogSearchId} className="w-full" />
+            <SearchForm
+              locale={locale}
+              inputId={dialogSearchId}
+              className="w-full"
+            />
             <nav aria-label={nav("primaryNav")} className="flex flex-col">
               {sheetCatalog}
               <SheetClose asChild>
@@ -236,37 +244,11 @@ export function HeaderActions({
                 {nav("getQuote")}
               </PillButton>
             </SheetClose>
-            {tel || whatsappHref ? (
-              <div
-                className={
-                  tel && whatsappHref ? "grid grid-cols-2 gap-2" : "grid gap-2"
-                }
-              >
-                {tel ? (
-                  <a
-                    href={`tel:${tel}`}
-                    aria-label={t("call", { number: phone ?? tel })}
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-foreground px-3 text-foreground"
-                  >
-                    <Icon icon={Call02Icon} size={18} />
-                    {t("callLabel")}
-                  </a>
-                ) : null}
-                {whatsappHref ? (
-                  <a
-                    href={whatsappHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-foreground px-3 text-foreground"
-                  >
-                    <Icon icon={WhatsappIcon} size={18} />
-                    {contact("whatsapp")}
-                  </a>
-                ) : null}
-              </div>
-            ) : null}
+
             <div className="mt-auto flex items-center gap-2">
-              <Suspense fallback={<span className="inline-block size-8 shrink-0" />}>
+              <Suspense
+                fallback={<span className="inline-block size-8 shrink-0" />}
+              >
                 <LanguageSwitcher />
               </Suspense>
               <span className="inline-flex size-8 shrink-0 items-center justify-center">

@@ -19,11 +19,9 @@ function HeaderChromeFallback({ phone }: { phone: boolean }) {
     <div className="flex min-w-0 flex-1 items-center">
       <div className="hidden h-11 flex-1 lg:block" />
       <div className="ml-auto flex h-11 items-center gap-2">
-        <span className="hidden h-10 w-[220px] rounded-full bg-surface-2 xl:inline-flex" />
+        <span className="hidden h-10 w-55 rounded-full bg-surface-2 xl:inline-flex" />
         <span className="size-10 rounded-full bg-surface-2 xl:hidden" />
-        {phone ? (
-          <span className="hidden size-10 xl:inline-flex" />
-        ) : null}
+        {phone ? <span className="hidden size-10 xl:inline-flex" /> : null}
         <span className="hidden h-10 w-28 rounded-full bg-primary lg:inline-flex" />
         <span className="size-10 rounded-full bg-surface-2" />
         <span className="hidden size-8 lg:inline-flex" />
@@ -53,10 +51,12 @@ export function SiteHeader({
 
   return (
     <HeaderFrame>
-      <div className="mx-auto flex h-16 w-full max-w-[1440px] items-center gap-3 px-4 md:px-6 lg:px-8">
-        <ThemeLogo imageClassName="h-6 w-auto max-h-6 max-w-none" />
-        <Suspense fallback={<HeaderChromeFallback phone={Boolean(trimmedPhone)} />}>
-          <div className="flex min-w-0 flex-1 items-center">
+      <div className="mx-auto flex h-16 container items-center gap-3 px-4 md:px-6 lg:px-8">
+        <ThemeLogo imageClassName="h-12 w-auto max-h-12 max-w-none" />
+        <Suspense
+          fallback={<HeaderChromeFallback phone={Boolean(trimmedPhone)} />}
+        >
+          <div className="flex min-w-0 flex-1 ml-4 items-center">
             <HeaderNav
               shopPanel={
                 <ShopPanel

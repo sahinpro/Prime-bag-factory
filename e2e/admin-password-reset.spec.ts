@@ -56,9 +56,7 @@ test("reset password without a recovery session bounces to forgot with the gener
   await expect(page).toHaveURL(/\/admin\/forgot-password\?reason=invalid$/);
   // Scoped to `main`: the redirect also fires Next's route announcer, another
   // `role="alert"` outside the page content (strict mode).
-  await expect(
-    page.getByRole("main").getByRole("alert"),
-  ).toContainText(
+  await expect(page.getByRole("main").getByRole("alert")).toContainText(
     "That reset link is invalid or has expired. Request a new one.",
   );
 });

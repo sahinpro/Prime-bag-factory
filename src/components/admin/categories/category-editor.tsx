@@ -246,6 +246,7 @@ export function CategoryEditor({
           value={form.image_path}
           onChange={(url) => set("image_path", url)}
           hint="Shown on category tiles. PNG, JPG, WebP or AVIF, up to 5 MB."
+          allowLibrary
         />
       </FormSection>
 

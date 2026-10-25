@@ -19,9 +19,7 @@ export default function ChangePasswordPage() {
 
       <Card className="max-w-lg">
         <CardHeader>
-          <h2 className="text-sm font-medium text-foreground">
-            New password
-          </h2>
+          <h2 className="text-sm font-medium text-foreground">New password</h2>
         </CardHeader>
         <CardContent>
           <ChangePasswordForm />

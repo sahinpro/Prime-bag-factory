@@ -1,7 +1,7 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { updateTag } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { requireRole } from "@/lib/auth";

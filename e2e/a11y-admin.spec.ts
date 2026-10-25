@@ -16,6 +16,7 @@ const pages = [
   { path: "/admin/categories", heading: "Categories" },
   { path: "/admin/collections", heading: "Collections" },
   { path: "/admin/swatches", heading: "Swatch Library" },
+  { path: "/admin/media", heading: "Media Library" },
   { path: "/admin/products", heading: "Products" },
   { path: "/admin/products/new", heading: "New product" },
   { path: "/admin/quotes", heading: "Quotes" },

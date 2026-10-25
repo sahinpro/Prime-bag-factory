@@ -188,6 +188,7 @@ export function ImagesTab({ product }: Readonly<{ product: AdminProduct }>) {
                   folder="products"
                   value={row.path}
                   onChange={(url) => update(row.key, { path: url })}
+                  allowLibrary
                 />
 
                 <div className="grid gap-3 lg:grid-cols-2">

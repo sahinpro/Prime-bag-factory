@@ -1,10 +1,11 @@
 "use client";
 
-import { ImagePlus, Loader2, Trash2, Upload } from "lucide-react";
+import { FolderOpen, ImagePlus, Loader2, Trash2, Upload } from "lucide-react";
 import Image from "next/image";
 import * as React from "react";
 
 import { uploadMedia } from "@/app/(admin)/admin/media/actions";
+import { ImagePickerDialog } from "@/components/admin/media/image-picker-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,6 +41,12 @@ type ImageUploaderProps = {
   hint?: string;
   /** Preview box shape. Defaults to a 16:9 tile. */
   aspect?: "square" | "wide" | "video";
+  /**
+   * Media Library reuse (Shopify-style, owner request 2026-10-25): shows a
+   * "Library" button that opens the Cloudinary picker so an already-uploaded
+   * image can be attached instead of uploaded twice.
+   */
+  allowLibrary?: boolean;
 };
 
 function formatBytes(bytes: number): string {
@@ -53,7 +60,7 @@ const ASPECT_CLASS: Record<
   string
 > = {
   square: "aspect-square",
-  wide: "aspect-[16/9]",
+  wide: "aspect-16/9",
   video: "aspect-video",
 };
 
@@ -74,6 +81,7 @@ export function ImageUploader({
   label = "Image",
   hint = "PNG, JPG, WebP or AVIF, up to 5 MB.",
   aspect = "wide",
+  allowLibrary = false,
 }: ImageUploaderProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = React.useState(false);
@@ -82,6 +90,23 @@ export function ImageUploader({
   const [fileName, setFileName] = React.useState<string | null>(null);
 
   const busy = uploading;
+
+  const libraryButton = allowLibrary ? (
+    <ImagePickerDialog
+      folderHint={folder}
+      trigger={
+        <Button type="button" variant="outline" size="sm" disabled={busy}>
+          <FolderOpen
+            aria-hidden="true"
+            strokeWidth={1.75}
+            className="size-3.5"
+          />
+          Library
+        </Button>
+      }
+      onSelect={(asset) => onChange(asset.secureUrl)}
+    />
+  ) : null;
 
   async function handleFile(file: File | null | undefined) {
     if (!file) return;
@@ -187,25 +212,28 @@ export function ImageUploader({
               />
               {busy ? "Uploading…" : "Replace"}
             </label>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="text-destructive hover:text-destructive"
-              disabled={busy}
-              onClick={() => {
-                onChange("");
-                setFileName(null);
-                setError(null);
-              }}
-            >
-              <Trash2
-                aria-hidden="true"
-                strokeWidth={1.75}
-                className="size-3.5"
-              />
-              Remove
-            </Button>
+            <div className="flex items-center gap-1">
+              {libraryButton}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive"
+                disabled={busy}
+                onClick={() => {
+                  onChange("");
+                  setFileName(null);
+                  setError(null);
+                }}
+              >
+                <Trash2
+                  aria-hidden="true"
+                  strokeWidth={1.75}
+                  className="size-3.5"
+                />
+                Remove
+              </Button>
+            </div>
           </div>
         </div>
       ) : (

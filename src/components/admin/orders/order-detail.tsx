@@ -27,12 +27,12 @@ import {
   PRODUCTION_STATUS_META,
   StatusBadge,
 } from "@/components/admin/data/status-badge";
+import { ConfirmDialog } from "@/components/admin/forms/confirm-dialog";
 import {
   ORDER_PROGRESS_STEPS,
   OrderProgress,
   PRODUCTION_PROGRESS_STEPS,
 } from "@/components/admin/orders/order-progress";
-import { ConfirmDialog } from "@/components/admin/forms/confirm-dialog";
 import {
   FlashLine,
   useActionSave,
@@ -172,9 +172,7 @@ export function OrderDetail({ order }: Readonly<{ order: AdminOrder }>) {
   // The next pipeline step drives the primary "Mark …" action; the date of the
   // last move to the current status is shown under the active progress step.
   const pipelineIndex = PIPELINE.indexOf(order.status);
-  const nextStatus:
-    | OrderStatus
-    | null =
+  const nextStatus: OrderStatus | null =
     pipelineIndex >= 0 && pipelineIndex < PIPELINE.length - 1
       ? PIPELINE[pipelineIndex + 1]
       : null;
