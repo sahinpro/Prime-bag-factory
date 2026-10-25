@@ -14,6 +14,7 @@ export function Media({
   imgClassName,
   priority = false,
   sizes,
+  loading,
 }: {
   src: string | null;
   alt: string;
@@ -21,6 +22,7 @@ export function Media({
   imgClassName?: string;
   priority?: boolean;
   sizes?: string;
+  loading?: "eager" | "lazy";
 }) {
   if (!src) {
     return (
@@ -40,6 +42,7 @@ export function Media({
         fill
         sizes={sizes ?? "100vw"}
         priority={priority}
+        loading={priority ? undefined : loading}
         className={cn("h-full w-full object-cover", imgClassName)}
       />
     </div>

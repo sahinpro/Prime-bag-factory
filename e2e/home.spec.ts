@@ -124,6 +124,36 @@ test("G3 policy slugs redirect to /legal", async ({ page }) => {
   await expect(page).toHaveURL(/\/en\/legal$/);
 });
 
+test("home quote CTA reaches the quote form", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/en");
+  await page.getByRole("main").getByRole("link", { name: "Request a quote" }).click();
+  await expect(page).toHaveURL(/\/en\/quote$/);
+});
+
+test("fabric swatch opens the builder when swatches are published", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/en");
+  const swatch = page.getByRole("link", { name: /Customize with / });
+  if ((await swatch.count()) === 0) return;
+  await swatch.first().click();
+  await expect(page).toHaveURL(/\/en\/builder\?fabric=/);
+});
+
+test("ready-stock carousel advances when at least three products exist", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/en");
+  const region = page.getByRole("region", { name: "Ready-stock favorites" });
+  if ((await region.count()) === 0) return;
+  await expect(region).toContainText(/1\s*\//);
+  await region.getByRole("button", { name: "Next" }).click();
+  await expect(region).toContainText(/2\s*\//);
+});
+
 test("site shell screenshots", async ({ page }) => {
   await page.goto("/en");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();

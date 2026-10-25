@@ -181,14 +181,19 @@ async function fetchProductsByIds(
   return ((data ?? []) as unknown as SummaryRow[]).map(toSummary);
 }
 
-/** Featured published products (home rail). */
-async function fetchFeatured(limit: number): Promise<ProductSummary[]> {
+/** Featured published products (home rail). Optional type keeps quote-only rows out of the ready-stock strip. */
+async function fetchFeatured(
+  limit: number,
+  type?: ProductType,
+): Promise<ProductSummary[]> {
   const supabase = createPublicClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("products")
     .select(SUMMARY_SELECT)
     .eq("status", "published")
-    .eq("is_featured", true)
+    .eq("is_featured", true);
+  if (type) query = query.eq("type", type);
+  const { data, error } = await query
     .order("updated_at", { ascending: false })
     .limit(limit);
   if (error)
