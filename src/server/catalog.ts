@@ -225,6 +225,70 @@ export async function listRecentProducts(limit = 8): Promise<ProductSummary[]> {
   return fetchRecent(limit);
 }
 
+/** Featured `buy_now` products for the ready-stock strip. Newest first. */
+export async function listFeaturedBuyNow(limit = 8): Promise<ProductSummary[]> {
+  "use cache";
+  cacheLife("catalog");
+  cacheTag(CACHE_TAGS.catalog);
+  return fetchFeatured(limit, "buy_now");
+}
+
+export type FabricSwatch = {
+  code: string;
+  name_en: string;
+  name_bn: string | null;
+  color_hex: string | null;
+  texture_image_path: string | null;
+};
+
+/** Active swatches in the fabric group that have a builder code. Up to `limit`. */
+export async function listFabricSwatches(limit = 4): Promise<FabricSwatch[]> {
+  "use cache";
+  cacheLife("catalog");
+  cacheTag(CACHE_TAGS.catalog);
+  const supabase = createPublicClient();
+  const { data: group, error: groupError } = await supabase
+    .from("swatch_groups")
+    .select("id")
+    .eq("key", "fabric")
+    .maybeSingle();
+  if (groupError) {
+    throw new Error("Failed to load fabric swatches.", { cause: groupError });
+  }
+  if (!group) return [];
+
+  const { data, error } = await supabase
+    .from("swatches")
+    .select("code, name_en, name_bn, color_hex, texture_image_path")
+    .eq("group_id", group.id)
+    .eq("is_active", true)
+    .order("sort_order")
+    .limit(limit);
+  if (error) throw new Error("Failed to load fabric swatches.", { cause: error });
+
+  const rows = (data ?? []) as {
+    code: string | null;
+    name_en: string;
+    name_bn: string | null;
+    color_hex: string | null;
+    texture_image_path: string | null;
+  }[];
+
+  return rows.flatMap((row) => {
+    const code = row.code?.trim();
+    if (!code) return [];
+    return [
+      {
+        code,
+        name_en: row.name_en,
+        name_bn: row.name_bn,
+        color_hex: row.color_hex,
+        texture_image_path: row.texture_image_path,
+      },
+    ];
+  });
+}
+
 // ------------------------------------------------------ category / collection ----
 
 export type CategoryCard = {

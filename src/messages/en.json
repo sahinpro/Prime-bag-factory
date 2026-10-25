@@ -109,7 +109,15 @@
     "why2Title": "Custom printing",
     "why2Body": "Your logo and colors, on every bag you order.",
     "why3Title": "Made in Dhaka",
-    "why3Body": "Local production with reliable lead times."
+    "why3Body": "Local production with reliable lead times.",
+    "pickFabric": "Pick a fabric",
+    "customizeWith": "Customize with {name}",
+    "shopNow": "Shop now",
+    "sideTitle": "Made for your business",
+    "sideBody": "Explore bag solutions designed for branding, everyday use, corporate needs, and bulk production.",
+    "shopByUse": "Shop by use",
+    "whatsappCta": "Message us on WhatsApp",
+    "heroImageAlt": "A bag made by Prime Bag Factory"
   },
   "product": {
     "overview": "Overview",

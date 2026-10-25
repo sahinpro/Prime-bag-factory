@@ -425,6 +425,44 @@ html:lang(bn) [data-slot="tabs-trigger"] {
   transform-box: view-box;
 }
 
+/* Hero glass card (plan 8b.4.1). Solid on small screens and when transparency is reduced. */
+.hero-glass {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+@media (min-width: 768px) {
+  .hero-glass {
+    background: var(--glass-bg);
+    border-color: var(--glass-border);
+    backdrop-filter: blur(12px);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .hero-glass {
+    background: var(--surface);
+    border-color: var(--border);
+    backdrop-filter: none;
+  }
+}
+@keyframes hero-card-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.hero-card-rise {
+  animation: hero-card-rise 200ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-card-rise {
+    animation: none;
+  }
+}
+
 /*
   Print documents (plan 9c.5 PrintSheet): A4 sheets printed from the admin
   print routes. Margins live on the page, not the sheet, so the document
