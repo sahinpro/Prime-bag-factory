@@ -25,7 +25,7 @@ export function SwatchDot({
       href={href}
       aria-label={label}
       className={cn(
-        "inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-surface ring-2 ring-primary",
+        "inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-surface ring-2 ring-primary",
         className,
       )}
     >

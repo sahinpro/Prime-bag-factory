@@ -53,7 +53,7 @@ async function openLibrary(page: Page): Promise<boolean> {
   const failed = page.getByText("Could not reach Cloudinary");
   if (await failed.isVisible()) return false;
   await expect(
-    page.getByRole("tab", { name: "All", exact: true }),
+    page.getByRole("link", { name: "All", exact: true }),
   ).toBeVisible();
   return true;
 }
@@ -90,8 +90,11 @@ test("lists only the Primebagfactory tree, with folder tabs and a search box", a
   await expect(page.getByText("portfolios/")).toHaveCount(0);
   await expect(page.getByText(/Page \d+ · \d+ images?/)).toBeVisible();
 
-  // Folder tab navigation is URL-synced and re-roots the Cloudinary prefix.
-  await page.getByRole("tab", { name: "products", exact: true }).click();
+  // Folder navigation is URL-synced and re-roots the Cloudinary prefix.
+  await page
+    .getByRole("navigation", { name: "Filter media by folder" })
+    .getByRole("link", { name: "products", exact: true })
+    .click();
   await expect(page).toHaveURL(/folder=products/);
   await expect
     .poll(() => tiles(page).count(), { timeout: 30_000 })

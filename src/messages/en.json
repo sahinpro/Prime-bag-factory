@@ -126,7 +126,10 @@
     "previous": "Previous",
     "next": "Next",
     "whatsappCta": "Message us on WhatsApp",
-    "heroImageAlt": "A bag made by Prime Bag Factory"
+    "heroImageAlt": "A bag made by Prime Bag Factory",
+    "heroCollectionAlt": "A collection of custom bags made by Prime Bag Factory: a backpack, jute tote, handbag, sling bag and an insulated delivery bag",
+    "sideImageAlt": "Corporate laptop bag, backpack and insulated bag range made by Prime Bag Factory",
+    "workshopAlt": "A Prime Bag Factory artisan stitching a bag at a sewing machine in the Dhaka workshop"
   },
   "product": {
     "overview": "Overview",

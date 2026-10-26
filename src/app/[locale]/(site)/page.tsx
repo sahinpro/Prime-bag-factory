@@ -1,5 +1,6 @@
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
@@ -78,19 +79,30 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
 
       <section>
         <div className={`${pageWidth} py-6 lg:py-8`}>
-          <div className="rounded-panel bg-surface p-6 shadow-sm lg:p-8">
-            <h2 className="type-section text-foreground">{t("whyTitle")}</h2>
-            <div className="mt-6 grid gap-6 md:grid-cols-3">
-              {(["1", "2", "3"] as const).map((n) => (
-                <div key={n} className="flex flex-col gap-1">
-                  <h3 className="type-card-title text-foreground">
-                    {t(`why${n}Title`)}
-                  </h3>
-                  <p className="type-secondary text-muted-foreground">
-                    {t(`why${n}Body`)}
-                  </p>
-                </div>
-              ))}
+          <div className="grid gap-6 rounded-panel bg-surface p-6 shadow-sm lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-center lg:p-8">
+            <div className="relative aspect-16/10 overflow-hidden rounded-tile bg-gold-soft dark:bg-surface-2">
+              <Image
+                src="/images/bags/10-bag-production-workshop.png"
+                alt={t("workshopAlt")}
+                fill
+                sizes="(min-width: 1024px) 45vw, 100vw"
+                className="object-cover"
+              />
+            </div>
+            <div className="flex min-w-0 flex-col gap-6">
+              <h2 className="type-section text-foreground">{t("whyTitle")}</h2>
+              <div className="grid gap-6 sm:grid-cols-3">
+                {(["1", "2", "3"] as const).map((n) => (
+                  <div key={n} className="flex flex-col gap-1">
+                    <h3 className="type-card-title text-foreground">
+                      {t(`why${n}Title`)}
+                    </h3>
+                    <p className="type-secondary text-muted-foreground">
+                      {t(`why${n}Body`)}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

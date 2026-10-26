@@ -1,6 +1,7 @@
 "use client";
 
 import { Images, Upload } from "lucide-react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 
@@ -23,7 +24,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import type { MediaAsset, MediaFolder } from "@/lib/media.types";
 import { MEDIA_FOLDERS } from "@/lib/media.types";
 
@@ -51,6 +52,28 @@ export type MediaSearchParams = {
   cursor?: string;
 };
 
+/**
+ * URL for one folder view: the search text carries over, the cursor never
+ * does (a folder change restarts the listing at page 1).
+ */
+function folderHref(key: MediaFolder | "all", q: string): string {
+  const params = new URLSearchParams();
+  if (key !== "all") params.set("folder", key);
+  if (q) params.set("q", q);
+  const qs = params.toString();
+  return qs ? `/admin/media?${qs}` : "/admin/media";
+}
+
+/** Same underlined strip as the orders/quotes status tabs (plan 9c). */
+function folderTabClass(isActive: boolean): string {
+  return cn(
+    "-mb-px flex shrink-0 items-center border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+    isActive
+      ? "border-foreground text-foreground"
+      : "border-transparent text-muted-foreground hover:text-foreground",
+  );
+}
+
 export function MediaLibrary({
   assets,
   nextCursor,
@@ -73,15 +96,6 @@ export function MediaLibrary({
       else params.delete(key);
     }
     router.push(`/admin/media?${params.toString()}`);
-  }
-
-  function changeFolder(next: MediaFolder | "all") {
-    setPageDepth(0);
-    pushParams({
-      folder: next === "all" ? null : next,
-      cursor: null,
-      q: q || null,
-    });
   }
 
   function search(next: string) {
@@ -175,25 +189,30 @@ export function MediaLibrary({
       />
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <Tabs
-          value={folder ?? "all"}
-          onValueChange={(v) => changeFolder(v as MediaFolder | "all")}
+        {/* Folder switcher is navigation, not a tabset: it changes the URL and
+            the server re-renders one shared grid. Real links (kit convention,
+            same as the orders status nav) keep middle-click/open-in-tab and
+            avoid the aria-controls that a tab strip without TabsContent points
+            at nothing. */}
+        <nav
+          aria-label="Filter media by folder"
+          className="flex flex-wrap items-center gap-1 border-b border-border"
         >
-          <TabsList className="max-w-full flex-wrap justify-start gap-1 bg-transparent p-0 h-auto">
-            <TabsTrigger value="all" className="rounded-md px-2.5 text-xs">
-              All
-            </TabsTrigger>
-            {MEDIA_FOLDERS.map((f) => (
-              <TabsTrigger
-                key={f}
-                value={f}
-                className="rounded-md px-2.5 text-xs capitalize"
+          {(["all", ...MEDIA_FOLDERS] as const).map((key) => {
+            const isActive = key === (folder ?? "all");
+            return (
+              <Link
+                key={key}
+                href={folderHref(key, q)}
+                onClick={() => setPageDepth(0)}
+                aria-current={isActive ? "page" : undefined}
+                className={folderTabClass(isActive)}
               >
-                {f}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+                {key === "all" ? "All" : key}
+              </Link>
+            );
+          })}
+        </nav>
         <FilterBar
           value={q}
           onSearch={search}

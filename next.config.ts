@@ -51,6 +51,12 @@ const nextConfig: NextConfig = {
     },
   },
   experimental: {
+    // Upgrade policy for `next upgrade --agent` (Next.js docs:
+    // app/api-reference/config/next-config-js/agentUpgrade). "security" means
+    // the CLI only ever nudges this app onto a stable release that fixes a
+    // published advisory — set while applying 16.4.0 → 16.4.3 on 2026-10-25.
+    // Set to false to stop the upgrade reminders entirely.
+    agentUpgrade: "security",
     // Inline the small atomic (Tailwind) stylesheet into the <head> so the
     // hero text — the LCP element on the public pages — paints without waiting
     // on a render-blocking CSS request. Production builds only. See plan §Phase 3 T8.

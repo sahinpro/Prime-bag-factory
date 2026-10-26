@@ -1,4 +1,3 @@
-import type { IconSvgElement } from "@hugeicons/react";
 import {
   Backpack01Icon,
   Building03Icon,
@@ -6,9 +5,9 @@ import {
   Leaf01Icon,
   ShoppingBag01Icon,
 } from "@hugeicons/core-free-icons";
+import type { IconSvgElement } from "@hugeicons/react";
 import Image from "next/image";
 
-import { BagArt } from "@/components/site/bag-art";
 import { Icon } from "@/components/site/icon";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
@@ -25,6 +24,27 @@ function iconForSlug(slug: string): IconSvgElement {
     return Building03Icon;
   }
   return ShoppingBag01Icon;
+}
+
+/**
+ * Static placeholder photo for a tile that has no image in the database yet
+ * (plan 8b.6: lifestyle photos live in /public, product/category images from
+ * Cloudinary always take precedence). Matched on the same slug families as
+ * `iconForSlug`; the crossbody shot is the neutral default.
+ */
+function fallbackImageForSlug(slug: string): string {
+  const value = slug.toLowerCase();
+  if (/jute|eco|leaf|tote|canvas|carry|grocery|milk|groc/.test(value)) {
+    return "/images/bags/08-canvas-tote-bags.png";
+  }
+  if (
+    /backpack|laptop|travel|corp|office|event|seminar|conference|industr|ngo|deliver|food|pizza|cold|pharma/.test(
+      value,
+    )
+  ) {
+    return "/images/bags/09-corporate-backpack-insulated-bag-range.png";
+  }
+  return "/images/bags/07-black-crossbody-product.png";
 }
 
 /**
@@ -72,7 +92,7 @@ function CategoryTile({
     <Link
       href={`/${kind}/${card.slug}`}
       locale={locale}
-      className={`group relative flex min-h-45 flex-col justify-end overflow-hidden rounded-card bg-surface-2 ring-1 ring-border/60 transition-shadow hover:shadow-md ${
+      className={`group relative flex min-h-45 flex-col justify-end overflow-hidden rounded-cardng-1 ring-border/60 transition-shadow hover:shadow-md ${
         feature ? "col-span-2 row-span-2" : ""
       }`}
     >
@@ -91,8 +111,18 @@ function CategoryTile({
           />
         </div>
       ) : (
-        <div aria-hidden className="absolute inset-0 flex items-center justify-center p-8 opacity-70">
-          <BagArt variant={kind === "collection" ? "backpack" : "delivery"} />
+        <div aria-hidden className="absolute inset-0">
+          <Image
+            src={fallbackImageForSlug(card.slug)}
+            alt=""
+            fill
+            sizes={
+              feature
+                ? "(min-width: 1024px) 50vw, 100vw"
+                : "(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+            }
+            className="object-cover transition-transform duration-300 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+          />
         </div>
       )}
       <div className="relative p-3">

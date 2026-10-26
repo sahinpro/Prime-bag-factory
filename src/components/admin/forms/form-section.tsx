@@ -31,7 +31,7 @@ export function FormSection({
           <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         ) : null}
       </div>
-      <div className="space-y-4 sm:col-span-2">{children}</div>
+      <div className="space-y-4 sm:col-span-2 overflow-hidden">{children}</div>
     </section>
   );
 }

@@ -7,7 +7,6 @@ import * as React from "react";
 import { uploadMedia } from "@/app/(admin)/admin/media/actions";
 import { ImagePickerDialog } from "@/components/admin/media/image-picker-dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
@@ -149,8 +148,13 @@ export function ImageUploader({
     if (inputRef.current) inputRef.current.value = "";
   }
 
+  // A plain element, not the shared `Input`: `Input` carries `w-full h-9`, which
+  // (via tailwind-merge) overrides `sr-only`'s 1px width and turns this hidden
+  // file picker into a full-width absolutely-positioned box that overflows the
+  // admin area and enables a horizontal scrollbar. `sr-only` alone collapses it
+  // correctly while keeping the `peer` focus hook for the dropzone label.
   const input = (
-    <Input
+    <input
       ref={inputRef}
       id={id}
       type="file"
@@ -237,6 +241,7 @@ export function ImageUploader({
           </div>
         </div>
       ) : (
+        <div className="space-y-2">
         <label
           htmlFor={id}
           onDragOver={(e) => {
@@ -278,6 +283,15 @@ export function ImageUploader({
           </span>
           <span className="text-xs text-muted-foreground">{hint}</span>
         </label>
+          {libraryButton ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">
+                or reuse from your library
+              </span>
+              {libraryButton}
+            </div>
+          ) : null}
+        </div>
       )}
 
       <p

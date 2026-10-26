@@ -20,7 +20,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import type { MediaAsset, MediaFolder } from "@/lib/media.types";
 import { MEDIA_FOLDERS } from "@/lib/media.types";
 
@@ -89,29 +89,37 @@ export function ImagePickerDialog({
         </DialogHeader>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <Tabs
-            value={folder}
-            onValueChange={(v) => {
-              const next = v as MediaFolder | "all";
-              setFolder(next);
-              void load(next);
-            }}
+          {/* Toggle buttons, not tabs: the folder switch filters one grid in
+              place, so there is no tab panel for aria-controls to point at. */}
+          <div
+            role="group"
+            aria-label="Filter library by folder"
+            className="flex max-w-full flex-wrap items-center gap-1"
           >
-            <TabsList className="h-auto max-w-full flex-wrap justify-start gap-1 bg-transparent p-0">
-              <TabsTrigger value="all" className="rounded-md px-2.5 text-xs">
-                All
-              </TabsTrigger>
-              {MEDIA_FOLDERS.map((f) => (
-                <TabsTrigger
-                  key={f}
-                  value={f}
-                  className="rounded-md px-2.5 text-xs capitalize"
+            {(["all", ...MEDIA_FOLDERS] as const).map((key) => {
+              const isActive = key === folder;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  aria-pressed={isActive}
+                  onClick={() => {
+                    setFolder(key);
+                    void load(key);
+                  }}
+                  className={cn(
+                    "rounded-md border px-2.5 py-1 text-sm font-medium transition-colors",
+                    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                    isActive
+                      ? "border-sidebar-border bg-surface-2 text-foreground"
+                      : "border-transparent text-muted-foreground hover:bg-surface-2 hover:text-foreground",
+                  )}
                 >
-                  {f}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+                  {key === "all" ? "All" : key}
+                </button>
+              );
+            })}
+          </div>
           <FilterBar
             value={q}
             onSearch={setQ}

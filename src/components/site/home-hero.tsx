@@ -10,7 +10,6 @@ import type { IconSvgElement } from "@hugeicons/react";
 import { getTranslations } from "next-intl/server";
 import Image from "next/image";
 
-import { BagArt } from "@/components/site/bag-art";
 import { ChipLink } from "@/components/site/chip-link";
 import {
   HeroFeaturedCard,
@@ -232,9 +231,16 @@ export async function HeroPhoto({ locale }: { locale: Locale }) {
           className="object-contain p-4"
         />
       ) : (
-        <div role="img" aria-label={alt} className="absolute inset-6">
-          <BagArt variant="delivery" />
-        </div>
+        // Static hero art (plan 8b.6): a real collection photo shown only when
+        // the catalog has no featured thumbnail yet. A DB product always wins.
+        <Image
+          src="/images/bags/06-homepage-hero-bag-collection.png"
+          alt={t("heroCollectionAlt")}
+          fill
+          priority
+          sizes="(min-width: 1280px) 560px, (min-width: 768px) 45vw, 100vw"
+          className="object-cover"
+        />
       )}
     </div>
   );
@@ -326,13 +332,15 @@ export async function HeroSide({ locale }: { locale: Locale }) {
             className="object-cover"
           />
         ) : (
-          <div
-            role="img"
-            aria-label={t("heroImageAlt")}
-            className="absolute inset-6"
-          >
-            <BagArt variant="backpack" />
-          </div>
+          // Static lifestyle photo (plan 8b.4.1) when no collection/category
+          // image exists yet. A DB picture always takes precedence.
+          <Image
+            src="/images/bags/09-corporate-backpack-insulated-bag-range.png"
+            alt={t("sideImageAlt")}
+            fill
+            sizes="(min-width: 1280px) 420px, (min-width: 768px) 50vw, 100vw"
+            className="object-cover"
+          />
         )}
       </div>
       <div className="flex min-w-0 flex-col gap-4 rounded-panel bg-surface p-5 shadow-sm lg:p-6">
