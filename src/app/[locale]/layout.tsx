@@ -68,7 +68,8 @@ export async function generateMetadata(
       },
     },
     icons: {
-      icon: "/brand/favicon-source.svg",
+      // Crisp vector mark; `src/app/favicon.ico` still covers legacy browsers.
+      icon: [{ url: "/brand/logo-mark.svg", type: "image/svg+xml" }],
     },
   };
 }

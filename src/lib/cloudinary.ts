@@ -72,17 +72,47 @@ export type UploadedMedia = {
 };
 
 /**
+ * Turn an uploaded file's name into a Cloudinary `public_id` so assets keep
+ * their original name (owner request 2026-10-26) instead of an auto-generated
+ * hash. Keeps the name readable: spaces become hyphens, the extension and any
+ * path separators are stripped, and characters Cloudinary rejects
+ * (`\ * ^ ( ) { } % # & = < > ? ! ' " : ; , [ ]` and control chars) are
+ * dropped. Returns "" when nothing usable is left, so the caller falls back to
+ * Cloudinary's generated name rather than failing the upload.
+ */
+export function derivePublicId(originalName: string): string {
+  const base = originalName
+    // Strip directory components a browser may include in `File.name`.
+    .split(/[\\/]/)
+    .pop() ?? "";
+  const name = base
+    // Drop a (single) trailing extension like .png / .jpeg.
+    .replace(/\.[A-Za-z0-9]{1,5}$/u, "")
+    // Drop control characters and characters illegal in a public id.
+    .replace(/[\]\u0000-\u001f\u007f\\*^(){}%#&=<>?!'":;,\[]/gu, "")
+    .replace(/\s+/gu, "-")
+    // Cloudinary trims leading/trailing spaces and dots; collapse repeats.
+    .replace(/-{2,}/gu, "-")
+    .replace(/^[.-]+|[ .-]+$/gu, "")
+    .slice(0, 120);
+  return /^[A-Za-z0-9][A-Za-z0-9 ._-]*$/u.test(name) ? name : "";
+}
+
+/**
  * Upload an image buffer to Cloudinary and return a resized, auto-compressed
  * delivery URL. `folder` is validated by the caller (never free text), so the
- * storage layout stays fixed and injection-safe.
+ * storage layout stays fixed and injection-safe. When `filename` is given the
+ * asset keeps its original name as the public id (re-uploading the same name
+ * into the same folder replaces the old asset, CDN caches invalidated).
  */
 export async function uploadImage(
   bytes: Buffer,
-  options: { folder: string; preset?: MediaPreset },
+  options: { folder: string; preset?: MediaPreset; filename?: string },
 ): Promise<UploadedMedia> {
   ensureConfigured();
   const preset = options.preset ?? "standard";
   const targetFolder = `${ROOT_FOLDER}/${options.folder}`;
+  const originalName = options.filename ? derivePublicId(options.filename) : "";
 
   const result = await new Promise<UploadApiResponse>((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
@@ -95,6 +125,9 @@ export async function uploadImage(
         asset_folder: targetFolder,
         use_asset_folder_as_public_id_prefix: true,
         resource_type: "image",
+        ...(originalName
+          ? { public_id: originalName, overwrite: true, invalidate: true }
+          : {}),
       },
       (error, res) => {
         if (error || !res) {

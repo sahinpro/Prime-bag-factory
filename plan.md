@@ -1449,6 +1449,8 @@ A, then B, then C (C1 to C3), then D1, D3, D4, D5, then E, F, then D2, D6, then 
 
 _(Agents: append dated notes here when you make a choice the plan did not specify.)_
 
+- 2026-10-26: **Cloudinary uploads keep their original file name** (owner request). `uploadImage` now passes the sanitized source file name as the `public_id` (`derivePublicId` in `src/lib/cloudinary.ts`: extension and path stripped, Cloudinary-illegal chars dropped, spaces → hyphens) with `overwrite: true` + `invalidate: true`, so `Primebagfactory/<folder>/<original-name>` replaces the auto-generated hash. Same name + folder re-upload replaces the old asset; a name with nothing usable (e.g. Bangla-only) falls back to a generated id rather than failing.
+
 - 2026-10-24: **Public icons → Hugeicons free stroke** (`@hugeicons/react` + `@hugeicons/core-free-icons`). Replaced lucide and hand-drawn social SVGs on the public site. Admin + shadcn/ui stay lucide (9c). Rule: `.cursor/rules/hugeicons.mdc`.
 
 - 2026-10-24: **Public header/footer redesign.** Visual reference: shadcn-space navbar-12 (CLI is license-gated; not vendored) and footer-01 (structure only, then deleted). G3 policy slugs `/terms` `/privacy` `/returns` `/shipping` `/custom-order` **permanent-redirect to `/legal`** until G3 is written. Contact comes from a new cookie-free `getPublicCompany()` (`"use cache"` + `CACHE_TAGS.settings`); extra social/address/hours keys render only when present in `settings.company`. Language/theme stay in the header, not the footer.

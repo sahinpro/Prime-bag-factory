@@ -242,47 +242,47 @@ export function ImageUploader({
         </div>
       ) : (
         <div className="space-y-2">
-        <label
-          htmlFor={id}
-          onDragOver={(e) => {
-            e.preventDefault();
-            if (!busy) setDragging(true);
-          }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDragging(false);
-            if (!busy) void handleFile(e.dataTransfer.files?.[0]);
-          }}
-          className={cn(
-            "flex min-h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-control border border-dashed px-4 py-6 text-center transition-colors motion-reduce:transition-none",
-            dragging
-              ? "border-ring bg-surface-2"
-              : "border-sidebar-border bg-surface-2/50 hover:bg-surface-2",
-            "peer-focus-visible:border-ring peer-focus-visible:ring-3 peer-focus-visible:ring-ring/50",
-            busy && "pointer-events-none opacity-60",
-          )}
-        >
-          {busy ? (
-            <Loader2
-              aria-hidden="true"
-              strokeWidth={1.75}
-              className="size-5 animate-spin text-muted-foreground motion-reduce:animate-none"
-            />
-          ) : (
-            <ImagePlus
-              aria-hidden="true"
-              strokeWidth={1.75}
-              className="size-5 text-muted-foreground"
-            />
-          )}
-          <span className="text-sm font-medium text-foreground">
-            {busy
-              ? `Uploading ${fileName ?? "image"}…`
-              : "Drag an image here or click to upload"}
-          </span>
-          <span className="text-xs text-muted-foreground">{hint}</span>
-        </label>
+          <label
+            htmlFor={id}
+            onDragOver={(e) => {
+              e.preventDefault();
+              if (!busy) setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragging(false);
+              if (!busy) void handleFile(e.dataTransfer.files?.[0]);
+            }}
+            className={cn(
+              "flex min-h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-control border border-dashed px-4 py-6 text-center transition-colors motion-reduce:transition-none",
+              dragging
+                ? "border-ring bg-surface-2"
+                : "border-sidebar-border bg-surface-2/50 hover:bg-surface-2",
+              "peer-focus-visible:border-ring peer-focus-visible:ring-3 peer-focus-visible:ring-ring/50",
+              busy && "pointer-events-none opacity-60",
+            )}
+          >
+            {busy ? (
+              <Loader2
+                aria-hidden="true"
+                strokeWidth={1.75}
+                className="size-5 animate-spin text-muted-foreground motion-reduce:animate-none"
+              />
+            ) : (
+              <ImagePlus
+                aria-hidden="true"
+                strokeWidth={1.75}
+                className="size-5 text-muted-foreground"
+              />
+            )}
+            <span className="text-sm font-medium text-foreground">
+              {busy
+                ? `Uploading ${fileName ?? "image"}…`
+                : "Drag an image here or click to upload"}
+            </span>
+            <span className="text-xs text-muted-foreground">{hint}</span>
+          </label>
           {libraryButton ? (
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">

@@ -78,6 +78,10 @@ export async function uploadMedia(
     const uploaded = await uploadImage(bytes, {
       folder: parsedFolder.data,
       preset,
+      // Keep the asset's original file name as its public id (owner request
+      // 2026-10-26); `derivePublicId` sanitizes it, empty falls back to a
+      // Cloudinary-generated name.
+      filename: file.name,
     });
     return {
       ok: true,
