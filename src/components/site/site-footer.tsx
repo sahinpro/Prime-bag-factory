@@ -1,3 +1,4 @@
+import { Icon } from "@/components/site/icon";
 import {
   ArrowDown01Icon,
   Call02Icon,
@@ -9,7 +10,6 @@ import {
   WhatsappIcon,
   YoutubeIcon,
 } from "@hugeicons/core-free-icons";
-import { Icon } from "@/components/site/icon";
 import { getTranslations } from "next-intl/server";
 
 import type { HeaderCategory } from "@/components/site/header-category";
@@ -148,11 +148,7 @@ export async function SiteFooter({
         <div className="hidden gap-10 sm:grid sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-4 sm:col-span-2 lg:col-span-1">
             <Link href="/" locale={locale} aria-label={siteName}>
-              <Logo
-                variant="dark"
-                alt={siteName}
-                className="h-auto max-w-40"
-              />
+              <Logo variant="dark" alt={siteName} className="h-auto max-w-40" />
             </Link>
             <p className="max-w-sm text-base text-ivory/80">{t("tagline")}</p>
             {social.length > 0 ? (
@@ -174,7 +170,11 @@ export async function SiteFooter({
             ) : null}
           </div>
           <FooterNav title={t("shop")} links={shop} locale={locale} />
-          <FooterNav title={t("company")} links={companyLinks} locale={locale} />
+          <FooterNav
+            title={t("company")}
+            links={companyLinks}
+            locale={locale}
+          />
           <FooterNav title={t("legal")} links={legal} locale={locale} />
         </div>
 
@@ -216,7 +216,7 @@ export async function SiteFooter({
             <h2 className="text-base font-semibold text-ivory">
               {t("getInTouch")}
             </h2>
-            <address className="space-y-2 text-base text-ivory/80 not-italic">
+            <address className="text-base text-ivory/80 not-italic">
               {company.phone ? (
                 <p className="flex min-h-11 items-center gap-2">
                   <Icon

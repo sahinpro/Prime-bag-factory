@@ -57,8 +57,13 @@ export function ProductTile({
           </p>
           <p className="type-secondary text-muted-foreground">{labels.moq}</p>
           {product.customization_enabled ? (
-            <p className="mt-1 inline-flex items-center gap-1 text-sm text-accent">
-              <Icon icon={Tick02Icon} size={16} />
+            <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-accent">
+              <span
+                aria-hidden
+                className="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground"
+              >
+                <Icon icon={Tick02Icon} size={12} strokeWidth={2.5} />
+              </span>
               {labels.customizable}
             </p>
           ) : null}

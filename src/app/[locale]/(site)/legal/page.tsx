@@ -5,7 +5,11 @@ import { isLocale, type Locale } from "@/i18n/routing";
 import { formatDate } from "@/lib/format";
 import { buildMetadata } from "@/lib/seo";
 import { listLegalDocuments } from "@/server/content";
-
+// Public locale pages sit under the [locale] segment, which next-intl reads above
+// every page (root layout + provider). Navigations into this route may block on
+// that URL data; the route is fully prerendered via generateStaticParams. See
+// src/app/[locale]/layout.tsx for the full rationale.
+export const instant = false;
 export async function generateMetadata({
   params,
 }: {

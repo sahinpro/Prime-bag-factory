@@ -28,8 +28,8 @@ export function HeroFeaturedCard({ items }: { items: HeroFeaturedItem[] }) {
   const many = items.length > 1;
 
   return (
-    <div className="hero-glass hero-card-rise flex items-center gap-3 rounded-card p-3">
-      <div className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-surface">
+    <div className="hero-card-rise backdrop-blur-sm border border-l-white/20 border-t-white/20 border-r-white/30 border-b-white/30 bg-white/30 flex items-center gap-3 rounded-card p-3">
+      <div className="bg-white/80 relative size-14 shrink-0 overflow-hidden rounded-lg">
         {item.thumbnail ? (
           <Image
             src={item.thumbnail}
@@ -41,12 +41,12 @@ export function HeroFeaturedCard({ items }: { items: HeroFeaturedItem[] }) {
         ) : null}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="type-card-title truncate text-foreground" aria-live="polite">
+        <p className="type-card-title truncate text-white" aria-live="polite">
           {item.title}
         </p>
         <Link
           href={item.href}
-          className="type-secondary font-medium text-foreground underline underline-offset-4"
+          className="type-secondary font-medium text-white underline underline-offset-4"
         >
           {item.cta}
         </Link>
@@ -59,7 +59,7 @@ export function HeroFeaturedCard({ items }: { items: HeroFeaturedItem[] }) {
             size={44}
             tone="ghost"
             disabled={index === 0}
-            className="disabled:opacity-40"
+            className="text-white hover:bg-white/15 disabled:opacity-40"
             onClick={() => setIndex((current) => Math.max(0, current - 1))}
           />
           <IconCircleButton
@@ -68,7 +68,7 @@ export function HeroFeaturedCard({ items }: { items: HeroFeaturedItem[] }) {
             size={44}
             tone="ghost"
             disabled={index >= items.length - 1}
-            className="disabled:opacity-40"
+            className="text-white hover:bg-white/15 disabled:opacity-40"
             onClick={() =>
               setIndex((current) => Math.min(items.length - 1, current + 1))
             }

@@ -16,12 +16,15 @@ export function ChipLink({
   icon?: IconSvgElement;
   children: React.ReactNode;
   className?: string;
-} & Omit<React.ComponentProps<typeof Link>, "href" | "className" | "children">) {
+} & Omit<
+  React.ComponentProps<typeof Link>,
+  "href" | "className" | "children"
+>) {
   return (
     <Link
       href={href}
       className={cn(
-        "inline-flex h-11 min-h-11 items-center gap-2 rounded-full border border-foreground bg-surface px-4 text-sm font-medium text-foreground transition-colors duration-150 hover:bg-surface-2 motion-reduce:transition-none md:h-10 md:min-h-10",
+        "inline-flex h-10 min-h-10 items-center gap-2 rounded-lg border border-gray-300/60 bg-white px-2 text-sm font-medium text-foreground transition-colors duration-300 hover:bg-gold-soft motion-reduce:transition-none md:h-8 md:min-h-8",
         className,
       )}
       {...props}

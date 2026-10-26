@@ -1,5 +1,4 @@
 import {
-  ArrowRight01Icon,
   Backpack01Icon,
   Building03Icon,
   DeliveryTruck01Icon,
@@ -15,12 +14,9 @@ import {
   HeroFeaturedCard,
   type HeroFeaturedItem,
 } from "@/components/site/hero-featured-card";
-import { Icon } from "@/components/site/icon";
 import { PillButton } from "@/components/site/pill-button";
 import { SwatchDot } from "@/components/site/swatch-dot";
-import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
-import { publicEnv } from "@/lib/env";
 import {
   listFabricSwatches,
   listFeaturedProducts,
@@ -30,9 +26,12 @@ import {
   localize,
   type CategoryCard,
 } from "@/server/catalog";
-import { getPublicCompany, whatsappHref } from "@/server/public-settings";
 
 const pageWidth = "container mx-auto px-4 md:px-6 lg:px-8";
+
+// Static hero art lives in `public/`, so it is referenced by its public URL
+// path (not imported as a module, which would resolve under `src/`).
+const heroBg = "/images/bags/06-homepage-hero-bag-collection.png";
 
 function iconForSlug(slug: string): IconSvgElement {
   const value = slug.toLowerCase();
@@ -54,9 +53,7 @@ export function HeroBento({
   subtitle,
   quoteLabel,
   builderLabel,
-  shopLabel,
   swatches,
-  photo,
   card,
   side,
 }: {
@@ -77,11 +74,19 @@ export function HeroBento({
       <div
         className={`${pageWidth} grid min-w-0 gap-4 py-6 lg:py-8 xl:grid-cols-12`}
       >
-        <div className="relative overflow-hidden rounded-panel bg-surface shadow-sm xl:col-span-8">
+        <div
+          style={{
+            backgroundImage: `url(${heroBg})`,
+            backgroundPosition: "center",
+            backgroundSize: "cover",
+          }}
+          className="relative overflow-hidden rounded-panel bg-surface shadow-sm xl:col-span-8"
+        >
+          <div className="absolute inset-0 z-0 bg-black/55 md:bg-black/40" />
           <svg
             aria-hidden="true"
             viewBox="0 0 280 240"
-            className="pointer-events-none absolute -left-6 top-6 h-48 w-64 text-border"
+            className="pointer-events-none absolute -left-6 top-6 h-48 w-64 text-white/20"
             fill="none"
           >
             <path
@@ -91,46 +96,40 @@ export function HeroBento({
               strokeDasharray="4 7"
             />
           </svg>
-          <div className="relative flex flex-col gap-5 p-5 md:grid md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)] md:items-center md:gap-8 md:p-8 xl:min-h-130">
-            <div className="contents md:flex md:flex-col md:justify-center md:gap-5">
-              <div className="order-3 md:order-0">{swatches}</div>
-              <div className="order-1 flex flex-col gap-4 md:order-0">
-                <p className="type-secondary font-medium text-muted-foreground">
+
+          <div className=" flex flex-col gap-5 p-3 md:grid md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)] md:items-center md:gap-8 md:p-8 xl:min-h-120">
+            <div className=" contents z-10 md:flex md:flex-col md:justify-center md:gap-5">
+              <div className="relative z-10 order-3 md:order-0">{swatches}</div>
+              <div className="relative z-10 order-1 flex flex-col gap-4 md:order-0">
+                <p className="type-secondary font-medium text-white/80 [text-shadow:0_1px_6px_rgb(0_0_0/0.6)]">
                   {eyebrow}
                 </p>
-                <h1 className="type-display max-w-full text-balance text-foreground">
+                <h1 className="type-display max-w-full text-balance text-white ">
                   {title}
                 </h1>
               </div>
-              <p className="type-secondary order-2 max-w-md text-muted-foreground md:order-0">
+              <p className="type-secondary relative z-10 order-2 max-w-md text-white/85 [text-shadow:0_1px_6px_rgb(0_0_0/0.6)] md:order-0">
                 {subtitle}
               </p>
-              <div className="order-4 flex flex-col gap-3 md:order-0">
+              <div className="relative z-10 order-4 flex flex-col gap-3 md:order-0">
                 <div className="flex flex-wrap gap-3">
                   <PillButton href="/quote" locale={locale}>
                     {quoteLabel}
                   </PillButton>
-                  <PillButton href="/builder" locale={locale} variant="outline">
+                  {/* Pinned light-on-dark: the hero art never follows the theme. */}
+                  <PillButton
+                    href="/builder"
+                    locale={locale}
+                    variant="outline"
+                    className="border-white/70 bg-white/10 text-white hover:bg-white/20"
+                  >
                     {builderLabel}
                   </PillButton>
                 </div>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                  <Link
-                    href="/search"
-                    locale={locale}
-                    className="type-secondary inline-flex items-center gap-1 font-medium text-foreground underline underline-offset-4"
-                  >
-                    {shopLabel}
-                    <Icon icon={ArrowRight01Icon} size={16} />
-                  </Link>
-                </div>
               </div>
             </div>
-            <div className="relative order-5 min-w-0 md:order-0">
-              {photo}
-              <div className="mt-4 md:absolute md:inset-x-3 md:bottom-3 md:mt-0">
-                {card}
-              </div>
+            <div className="relative z-10 order-5 mt-4 md:absolute md:bottom-3 md:right-3 md:mt-0 md:w-96">
+              {card}
             </div>
           </div>
         </div>
@@ -148,7 +147,7 @@ export function HeroPhotoSkeleton() {
   return (
     <div
       aria-hidden
-      className="aspect-4/3 w-full rounded-tile bg-gold-soft md:aspect-4/5 dark:bg-surface-2"
+      className="aspect-4/3 w-full rounded-tile bg-white/10 md:aspect-4/5"
     />
   );
 }
@@ -182,7 +181,9 @@ export async function FabricSwatchRow({ locale }: { locale: Locale }) {
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <p className="type-secondary text-muted-foreground">{t("pickFabric")}</p>
+      <p className="type-secondary text-white/85 [text-shadow:0_1px_6px_rgb(0_0_0/0.6)]">
+        {t("pickFabric")}
+      </p>
       <ul className="flex flex-wrap gap-2">
         {swatches.map((swatch) => {
           const name = localize(locale, swatch.name_en, swatch.name_bn);
@@ -220,7 +221,7 @@ export async function HeroPhoto({ locale }: { locale: Locale }) {
   }
 
   return (
-    <div className="relative aspect-4/3 w-full overflow-hidden rounded-tile bg-gold-soft md:aspect-4/5 dark:bg-surface-2">
+    <div className="relative aspect-3/2 w-full overflow-hidden rounded-tile bg-white/10 backdrop-blur-sm border border-white/20 md:aspect-4/5 ">
       {src ? (
         <Image
           src={src}
@@ -231,8 +232,6 @@ export async function HeroPhoto({ locale }: { locale: Locale }) {
           className="object-contain p-4"
         />
       ) : (
-        // Static hero art (plan 8b.6): a real collection photo shown only when
-        // the catalog has no featured thumbnail yet. A DB product always wins.
         <Image
           src="/images/bags/06-homepage-hero-bag-collection.png"
           alt={t("heroCollectionAlt")}
@@ -268,33 +267,10 @@ export async function HeroFeatured({ locale }: { locale: Locale }) {
   return <HeroFeaturedCard items={items} />;
 }
 
-export async function HeroWhatsApp({ locale }: { locale: Locale }) {
-  let href: string | null = null;
-  try {
-    const company = await getPublicCompany();
-    href =
-      whatsappHref(company.whatsapp) ??
-      whatsappHref(publicEnv.NEXT_PUBLIC_WHATSAPP_NUMBER);
-  } catch {
-    href = whatsappHref(publicEnv.NEXT_PUBLIC_WHATSAPP_NUMBER);
-  }
-  if (!href) return null;
-  const t = await getTranslations({ locale, namespace: "home" });
-  return (
-    <a
-      href={href}
-      className="type-secondary font-medium text-foreground underline underline-offset-4"
-    >
-      {t("whatsappCta")}
-    </a>
-  );
-}
-
 export async function HeroSide({ locale }: { locale: Locale }) {
   const t = await getTranslations({ locale, namespace: "home" });
   let chips: CategoryCard[] = [];
   let chipKind: "collection" | "category" = "category";
-  let picture: { src: string; alt: string } | null = null;
 
   try {
     const [collections, categories] = await Promise.all([
@@ -307,49 +283,28 @@ export async function HeroSide({ locale }: { locale: Locale }) {
     } else {
       chips = categories.slice(0, 8);
     }
-    const pictured = [...collections, ...categories].find(
-      (card) => card.image_path,
-    );
-    if (pictured?.image_path) {
-      picture = {
-        src: pictured.image_path,
-        alt: localize(locale, pictured.name_en, pictured.name_bn),
-      };
-    }
   } catch {
     chips = [];
   }
 
   return (
     <aside className="grid min-w-0 gap-4 md:grid-cols-2 xl:col-span-4 xl:grid-cols-1">
-      <div className="relative aspect-16/10 overflow-hidden rounded-tile bg-gold-soft dark:bg-surface-2">
-        {picture ? (
-          <Image
-            src={picture.src}
-            alt={picture.alt}
-            fill
-            sizes="(min-width: 1280px) 420px, (min-width: 768px) 50vw, 100vw"
-            className="object-cover"
-          />
-        ) : (
-          // Static lifestyle photo (plan 8b.4.1) when no collection/category
-          // image exists yet. A DB picture always takes precedence.
-          <Image
-            src="/images/bags/09-corporate-backpack-insulated-bag-range.png"
-            alt={t("sideImageAlt")}
-            fill
-            sizes="(min-width: 1280px) 420px, (min-width: 768px) 50vw, 100vw"
-            className="object-cover"
-          />
-        )}
+      <div className="relative aspect-video type-secondary inline-flex items-center gap-1 font-medium text-foreground underline underline-offset-4ideo overflow-hidden rounded-tile bg-gold-soft dark:bg-surface-2">
+        <Image
+          src="/images/bags/black-business-briefcase-in-warm-interior.png"
+          alt={t("sideImageAlt")}
+          fill
+          sizes="(min-width: 1280px) 420px, (min-width: 768px) 50vw, 100vw"
+          className="object-cover"
+        />
       </div>
-      <div className="flex min-w-0 flex-col gap-4 rounded-panel bg-surface p-5 shadow-sm lg:p-6">
-        <h2 className="type-section text-foreground">{t("sideTitle")}</h2>
-        <p className="type-secondary text-muted-foreground">{t("sideBody")}</p>
+      <div className="flex min-w-0 flex-col gap-4 rounded-panel bg-primary p-5 shadow-sm lg:p-6">
+        <h2 className="type-section text-white">{t("sideTitle")}</h2>
+        <p className="type-secondary text-white/90">{t("sideBody")}</p>
         {chips.length > 0 ? (
           <>
             <hr className="border-border" />
-            <h3 className="type-card-title text-foreground">
+            <h3 className="type-card-title font-semibold text-foreground">
               {t("shopByUse")}
             </h3>
             <ul className="flex min-w-0 snap-x snap-mandatory gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible">

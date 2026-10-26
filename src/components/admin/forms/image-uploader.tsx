@@ -188,7 +188,7 @@ export function ImageUploader({
               src={value}
               alt="Selected image preview"
               fill
-              sizes={aspect === "square" ? "112px" : "160px"}
+              sizes={aspect === "square" ? "200px" : "250px"}
               className="size-full object-cover"
             />
             {busy ? (

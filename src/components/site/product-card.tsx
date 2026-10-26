@@ -56,7 +56,7 @@ export async function ProductCard({
                 <span className="text-xs text-muted-foreground">
                   {t("from")}
                 </span>
-                <span className="font-semibold text-gold-text">
+                <span className="font-semibold text-2xl text-gold-text">
                   {formatMoney(product.priceMin, locale)}
                 </span>
               </>

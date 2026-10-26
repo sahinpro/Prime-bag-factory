@@ -32,6 +32,12 @@ import {
   type ProductSummary,
 } from "@/server/catalog";
 
+// Public locale pages read the [locale] segment above every page via the
+// next-intl provider in the root layout; navigations into this route may block
+// on that URL data. Fully prerendered via generateStaticParams — see
+// src/app/[locale]/layout.tsx for the full rationale.
+export const instant = false;
+
 export default async function HomePage({ params }: PageProps<"/[locale]">) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
@@ -154,7 +160,7 @@ async function HomeSections({ locale }: { locale: Locale }) {
           actionLabel={common("viewAll")}
           locale={locale}
         >
-          <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid min-w-0 gap-8 sm:grid-cols-2 xl:grid-cols-4">
             {products.slice(0, 3).map((product, index) => (
               <ProductTile
                 key={product.slug}
@@ -234,23 +240,21 @@ function FavoritesBand({
 }) {
   return (
     <section className={`${pageWidth} py-6 lg:py-8`}>
-      <div className="rounded-panel bg-surface-2 p-6 lg:p-8">
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]">
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="type-section text-foreground">{title}</h2>
-              <IconCircleButton
-                href="/search"
-                locale={locale}
-                icon={ArrowRight01Icon}
-                label={actionLabel}
-                size={40}
-              />
-            </div>
-            <p className="type-secondary text-muted-foreground">{body}</p>
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="type-section text-foreground">{title}</h2>
+            <IconCircleButton
+              href="/search"
+              locale={locale}
+              icon={ArrowRight01Icon}
+              label={actionLabel}
+              size={40}
+            />
           </div>
-          {children}
+          <p className="type-secondary text-muted-foreground">{body}</p>
         </div>
+        {children}
       </div>
     </section>
   );
@@ -260,10 +264,10 @@ function HomeSectionsSkeleton() {
   return (
     <div className={`${pageWidth} py-6 lg:py-8`} aria-hidden>
       <div className="rounded-panel bg-surface-2 p-6 lg:p-8">
-        <div className="grid gap-6 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]">
+        <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-3">
             <div className="h-8 w-48 rounded-full bg-surface" />
-            <div className="h-12 w-full rounded-xl bg-surface" />
+            <div className="h-5 w-72 rounded-full bg-surface" />
           </div>
           <div className="grid grid-cols-3 gap-4">
             {Array.from({ length: 3 }).map((_, i) => (

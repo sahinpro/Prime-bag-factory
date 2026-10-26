@@ -240,7 +240,7 @@ html[lang="bn"] body,
 }
 .type-section {
   font-weight: 500;
-  font-size: clamp(1.75rem, 1.2rem + 1.6vw, 2.5rem);
+  font-size: clamp(1.75rem, 1.2rem + 1.6vw, 1.8rem);
   line-height: 1.15;
 }
 .type-card-title {
@@ -425,25 +425,8 @@ html:lang(bn) [data-slot="tabs-trigger"] {
   transform-box: view-box;
 }
 
-/* Hero glass card (plan 8b.4.1). Solid on small screens and when transparency is reduced. */
-.hero-glass {
-  background: var(--surface);
-  border: 1px solid var(--border);
-}
-@media (min-width: 768px) {
-  .hero-glass {
-    background: var(--glass-bg);
-    border-color: var(--glass-border);
-    backdrop-filter: blur(12px);
-  }
-}
-@media (prefers-reduced-transparency: reduce) {
-  .hero-glass {
-    background: var(--surface);
-    border-color: var(--border);
-    backdrop-filter: none;
-  }
-}
+/* Hero glass card (plan 8b.4.1). Solid on small screens and when transparency is reduced.
+   Pinned to the dark-glass look: the hero sits on dark art and must not flip with the theme. */
 @keyframes hero-card-rise {
   from {
     opacity: 0;

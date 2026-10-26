@@ -50,19 +50,22 @@ describe("basenameOf", () => {
 });
 
 // Minimal stand-in for the Supabase client: every table answers with the
-// counts in `counts`, an error when the key is listed in `failing`, and a
-// missing count when it is listed in `blank` (a 200 without a count header).
+// counts in `counts`, an error when the key is listed in `failing`, a
+// missing count when it is listed in `blank` (a 200 without a count header),
+// and every ilike pattern is pushed into `captured` when given.
 function fakeSupabase(
   counts: Record<string, number>,
   failing: string[] = [],
   blank: string[] = [],
+  captured?: string[],
 ) {
   return {
     from(table: string) {
       return {
         select() {
           return {
-            ilike() {
+            ilike(_column: string, pattern: string) {
+              captured?.push(pattern);
               const promise = failing.includes(table)
                 ? { error: { message: "boom" }, count: null }
                 : blank.includes(table)
@@ -103,6 +106,21 @@ describe("findAssetUsage", () => {
     expect(usage.total).toBe(0);
     expect(usage.hits).toEqual([]);
     expect(usage.failedTables).toEqual([]);
+  });
+
+  it("scans by the full public id, not just the file name", async () => {
+    // Two uploads of the same photo land as categories/bag5 and
+    // products/bag5; a basename scan made the category block the product
+    // copy's delete. Every table must match the exact asset path.
+    const captured: string[] = [];
+    await findAssetUsage(
+      fakeSupabase({}, [], [], captured),
+      "Primebagfactory/products/bag5",
+    );
+    expect(captured).toHaveLength(6);
+    for (const pattern of captured) {
+      expect(pattern).toBe("%Primebagfactory/products/bag5%");
+    }
   });
 
   it("treats a failed scan as in use, so delete stays safe", async () => {

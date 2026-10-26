@@ -49,6 +49,19 @@ export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
 
+// Next 16 instant-navigation validation (instant-shell-url-data): this root
+// layout reads the [locale] URL param above every public page (the server half
+// of next-intl's NextIntlClientProvider also awaits request data while it
+// renders), so a locale-switch navigation can never show instant UI from here.
+// A <Suspense> fallback at this level would blank the whole page shell (theme
+// script + JSON-LD + header), so this is the documented [block] escape hatch —
+// same opt-out style as the admin pages. The layout's own config does not cover
+// navigations whose boundary is this segment; each page under [locale] exports
+// `instant = false` as well (that is what silences the dev validation). The
+// routes are fully prerendered via generateStaticParams, so real users still
+// get complete static HTML.
+export const instant = false;
+
 export async function generateMetadata(
   props: LayoutProps<"/[locale]">,
 ): Promise<Metadata> {
@@ -116,7 +129,11 @@ export default async function LocaleLayout({
         {jsonLd(organization)}
         <ThemeScript />
         <ThemeProvider>
-          <NextIntlClientProvider messages={messages}>
+          {/* locale + messages are passed explicitly so the provider's server
+              wrapper never has to await request data (it would fall back to
+              reading the locale from headers) — keeps it resolution-free for
+              locale-switch navigations. */}
+          <NextIntlClientProvider locale={locale} messages={messages}>
             {children}
           </NextIntlClientProvider>
         </ThemeProvider>

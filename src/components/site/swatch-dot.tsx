@@ -25,11 +25,13 @@ export function SwatchDot({
       href={href}
       aria-label={label}
       className={cn(
-        "inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-surface ring-2 ring-primary",
+        // Only used on the dark hero art: the white ring is pinned so the
+        // swatches read the same in both themes.
+        "inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-white ring-2 ring-primary",
         className,
       )}
     >
-      <span className="relative size-8 overflow-hidden rounded-full bg-surface-2">
+      <span className="relative size-7 overflow-hidden rounded-full bg-surface-2">
         {imageSrc ? (
           <Image
             src={imageSrc}

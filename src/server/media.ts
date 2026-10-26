@@ -142,7 +142,7 @@ export function prefixFor(folder?: MediaFolder | null): string {
   return folder ? `${MEDIA_ROOT_FOLDER}/${folder}` : MEDIA_ROOT_FOLDER;
 }
 
-/** Last path segment of a public id; used for "is this asset in use?" scans. */
+/** Last path segment of a public id; the display name on grid tiles. */
 export function basenameOf(publicId: string): string {
   return publicId.split("/").pop() ?? publicId;
 }
@@ -355,16 +355,19 @@ const USAGE_SCANS: {
 ];
 
 /**
- * Count catalog rows whose stored image path contains the asset basename
- * (Cloudinary URLs embed the public id, so a `%basename%` ilike finds every
- * delivery-URL variant). Runs on the caller's session — staff RLS read only.
+ * Count catalog rows whose stored image path references this exact asset.
+ * Cloudinary URLs embed the full public id, so a `%publicId%` ilike finds
+ * every delivery-URL variant — of THIS asset only. Matching the basename
+ * instead made every duplicate file name block its siblings' deletes
+ * (categories/bag5 refused the delete of products/bag5, owner report
+ * 2026-10-26). Runs on the caller's session — staff RLS read only.
  * `supabase` is injected so this stays testable and the action owns the client.
  */
 export async function findAssetUsage(
   supabase: Awaited<ReturnType<typeof createClient>>,
   publicId: string,
 ): Promise<AssetUsage> {
-  const pattern = `%${basenameOf(publicId)}%`;
+  const pattern = `%${publicId}%`;
 
   const results = await Promise.all(
     USAGE_SCANS.map(async (scan) => {

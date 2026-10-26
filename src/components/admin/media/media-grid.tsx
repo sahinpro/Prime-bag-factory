@@ -96,7 +96,7 @@ export function MediaGrid({
       role="list"
       aria-label={onSelect ? "Choose an image" : "Media assets"}
       className={cn(
-        "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5",
+        "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7",
         className,
       )}
     >
@@ -225,7 +225,7 @@ function Thumb({ asset }: { asset: MediaAsset }) {
       src={asset.thumbUrl || asset.secureUrl}
       alt=""
       fill
-      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 240px"
+      sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 160px"
       className="size-full object-cover"
     />
   );
@@ -236,7 +236,7 @@ export function MediaGridSkeleton({ count = 10 }: { count?: number }) {
   return (
     <div
       aria-hidden="true"
-      className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+      className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7"
     >
       {Array.from({ length: count }, (_, i) => (
         <div
